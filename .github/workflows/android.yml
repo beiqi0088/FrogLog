@@ -174,9 +174,12 @@ jobs:
             ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40 || true
             exit 1
           fi
+          # pyside-setup 就在仓库根目录里，部署工具会把它当项目源码扫描并解析失败；
+          # docs/design/.github 也跟运行无关，一起跳过（顺便减小 APK）。
           pyside6-android-deploy --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
+            --extra-ignore-dirs pyside-setup,docs,design,.github,dist,dist_android \
             --force \
             -v
           echo "=== 产物 ==="
