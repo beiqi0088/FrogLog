@@ -27,6 +27,9 @@ jobs:
             libssl-dev libffi-dev libncurses5-dev libtinfo5 \
             libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 \
             libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 \
+            autoconf automake libtool bzip2 xz-utils zlib1g-dev \
+            liblzma-dev libbz2-dev libsqlite3-dev libreadline-dev \
+            libgdbm-dev libnss3-dev libffi-dev \
             openjdk-17-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version
@@ -55,13 +58,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.pyside6-android-deploy
+            ~/.pyside6_android_deploy
             pyside-setup/dist_android
           key: pyside-android-${{ runner.os }}-6.11.1
 
       - name: 交叉编译 PySide6 / shiboken6 的 Android 轮子
         shell: bash
         run: |
+          set -o pipefail
+          exec > >(tee cross.log) 2>&1
+          set -x
           if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
             ls -lh pyside-setup/dist_android/*.whl
@@ -71,12 +77,20 @@ jobs:
           cd pyside-setup
           python3 -m pip install -r requirements.txt
           python3 -m pip install -r tools/cross_compile_android/requirements.txt
-          # 先下载 NDK r28c / SDK / python.org 的 Android CPython，再编译轮子
           python3 tools/cross_compile_android/main.py \
             --plat-name=aarch64 \
             --qt-install-path="$HOME/Qt/6.11.1" \
-            --auto-accept-license --skip-update
+            --auto-accept-license --skip-update --verbose
           ls -lh dist_android/*.whl
+
+      - name: 失败时打印交叉编译日志尾部
+        if: failure()
+        shell: bash
+        run: |
+          echo "==================== cross.log (tail 150) ===================="
+          tail -n 150 cross.log || true
+          echo "==================== Qt 目录 ===================="
+          ls "$HOME/Qt/6.11.1" || true
 
       - name: 安装部署工具
         run: python3 -m pip install "pyside6==6.11.1" buildozer cython
