@@ -25,6 +25,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential cmake ninja-build git curl unzip zip \
             libssl-dev libffi-dev libncurses5-dev libtinfo5 \
+            libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 \
             openjdk-17-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version
@@ -42,7 +44,12 @@ jobs:
             # 参数顺序：install-qt <host> <target> <version> <arch>
             python3 -m aqt install-qt linux android 6.11.1 android_arm64_v8a -O "$HOME/Qt"
           fi
-          ls "$HOME/Qt/6.11.1/android_arm64_v8a"
+          if [ ! -d "$HOME/Qt/6.11.1/gcc_64" ]; then
+            # Android 包里只有目标库，交叉编译要用的主机工具（moc/rcc 等）在桌面版里
+            python3 -m aqt install-qt linux desktop 6.11.1 linux_gcc_64 -O "$HOME/Qt"
+          fi
+          ls "$HOME/Qt/6.11.1"
+          ls "$HOME/Qt/6.11.1/gcc_64/bin" | head -5
 
       - name: 缓存 NDK / SDK / 已经编好的轮子
         uses: actions/cache@v4
