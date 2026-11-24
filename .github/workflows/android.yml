@@ -96,6 +96,7 @@ jobs:
         with:
           path: |
             ~/.pyside6_android_deploy
+            pyside-setup/dist
             pyside-setup/dist_android
           key: pyside-android-${{ runner.os }}-6.11.1
 
@@ -112,9 +113,9 @@ jobs:
           java -version
           python3 --version
           ls /usr/lib/llvm-18/lib/libclang.so*
-          if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
+          if ls pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
-            ls -lh pyside-setup/dist_android/*.whl
+            ls -lh pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl 2>/dev/null || true
             exit 0
           fi
           git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
@@ -136,7 +137,7 @@ jobs:
             --plat-name=aarch64 \
             --qt-install-path="$HOME/Qt/6.11.1" \
             --auto-accept-license --skip-update --verbose
-          ls -lh dist_android/*.whl
+          ls -lh dist/*.whl 2>/dev/null || ls -lh dist_android/*.whl
 
       - name: 失败时打印交叉编译日志尾部
         if: failure()
@@ -153,8 +154,8 @@ jobs:
       - name: 打 APK（debug 模式）
         shell: bash
         run: |
-          PS=$(ls pyside-setup/dist_android/PySide6-*.whl | head -1)
-          SH=$(ls pyside-setup/dist_android/shiboken6-*.whl | head -1)
+          PS=$(ls pyside-setup/dist/PySide6-*.whl pyside-setup/dist_android/PySide6-*.whl 2>/dev/null | head -1)
+          SH=$(ls pyside-setup/dist/shiboken6-*.whl pyside-setup/dist_android/shiboken6-*.whl 2>/dev/null | head -1)
           echo "PySide6 wheel: $PS"
           echo "shiboken6 wheel: $SH"
           pyside6-android-deploy --name FrogLog \
