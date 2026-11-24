@@ -37,6 +37,12 @@ jobs:
             openjdk-17-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version
+          # shiboken 用 libclang 解析头文件；NDK r27 的 libc++ 头需要 clang 18 才能读懂
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/llvm.asc >/dev/null
+          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm18.list
+          sudo apt-get update
+          sudo apt-get install -y libclang-18-dev llvm-18-dev clang-18
+          ls /usr/lib/llvm-18/lib/cmake/clang
 
       - name: 缓存 Qt for Android
         uses: actions/cache@v4
@@ -100,8 +106,12 @@ jobs:
           exec > >(tee cross.log) 2>&1
           set -x
           export PATH="$JAVA_HOME/bin:$PATH"
+          export LLVM_INSTALL_DIR=/usr/lib/llvm-18
+          export CLANG_INSTALL_DIR=/usr/lib/llvm-18
+          export CMAKE_PREFIX_PATH=/usr/lib/llvm-18
           java -version
           python3 --version
+          ls /usr/lib/llvm-18/lib/libclang.so*
           if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
             ls -lh pyside-setup/dist_android/*.whl
