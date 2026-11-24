@@ -54,6 +54,27 @@ jobs:
           ls "$HOME/Qt/6.11.1"
           ls "$HOME/Qt/6.11.1/gcc_64/bin" | head -5
 
+      - name: 预装新版 Android 命令行工具
+        shell: bash
+        run: |
+          # 交叉编译脚本默认下 2021 年的 sdkmanager，它在 JDK 17 上会抛
+          # NoClassDefFoundError: javax/xml/bind/annotation/XmlSchema
+          # 这里先放一份新版进去，脚本检测到就会直接用
+          SDK="$HOME/.pyside6_android_deploy/android-sdk"
+          mkdir -p "$SDK"
+          if [ ! -x "$SDK/tools/bin/sdkmanager" ]; then
+            curl -fsSL -o /tmp/clt.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q /tmp/clt.zip -d "$SDK"
+            if [ -d "$SDK/cmdline-tools/bin" ]; then
+              mv "$SDK/cmdline-tools" "$SDK/tools"
+            elif [ -d "$SDK/cmdline-tools/latest" ]; then
+              mv "$SDK/cmdline-tools/latest" "$SDK/tools"
+            fi
+          fi
+          yes | "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" --licenses >/dev/null 2>&1 || true
+          "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" --version || true
+          java -version
+
       - name: 缓存 NDK / SDK / 已经编好的轮子
         uses: actions/cache@v4
         with:
