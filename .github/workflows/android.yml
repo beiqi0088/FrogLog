@@ -39,9 +39,10 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip aqtinstall
           if [ ! -d "$HOME/Qt/6.11.1/android_arm64_v8a" ]; then
-            python3 -m aqt install-qt linux android android_arm64_v8a 6.11.1 -O "$HOME/Qt"
+            # 参数顺序：install-qt <host> <target> <version> <arch>
+            python3 -m aqt install-qt linux android 6.11.1 android_arm64_v8a -O "$HOME/Qt"
           fi
-          ls "$HOME/Qt/6.11.1"
+          ls "$HOME/Qt/6.11.1/android_arm64_v8a"
 
       - name: 缓存 NDK / SDK / 已经编好的轮子
         uses: actions/cache@v4
