@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>征途 · 设计稿（打卡改名 + Habitica 玩法融合）</title>
+<style>
+/* =========================================================================
+   征途 · 设计稿
+   配色沿用「艾宾浩斯记忆曲线」APK 逆向结果（纸白 + 墨绿 + 赭石），
+   玩法结构来自 Habitica（习惯 / 每日 / 待办、HP·XP·金币、连击、副本、奖励商店）。
+   截图：?only=journey|quests|party|rewards|levelup  &theme=dark  &scale=2
+   ========================================================================= */
+:root{
+  --paper:#FBF8F1; --paper2:#F2F1E7; --panel:#FFFFFF;
+  --ink:#242721; --sub:#73766F; --faint:#A8A79E; --line:#E4E1D6;
+  --brand:#2F6A43; --brand2:#245637; --brand-soft:#E9EFE6;
+  --accent:#BF5B38; --accent-soft:#F4E7DF;
+  --hp:#D9503C; --hp-soft:#FBEAE6;
+  --xp:#3E7CB1; --xp-soft:#E7EFF6;
+  --gold:#B8862B; --gold-soft:#F8EFD9;
+  --gem:#7C63B8; --gem-soft:#EEE9F8;
+  --green:#2E9E67; --red:#D9503C;
+  --hero-ink:#F2F7F0; --hero-sub:#C6DAC7;
+  --shadow:0 6px 18px rgba(36,39,33,.07);
+  --shadow-lg:0 14px 40px rgba(36,39,33,.16);
+  --r-sm:12px; --r-md:18px; --r-lg:26px;
+}
+html[data-theme="dark"]{
+  --paper:#161A17; --paper2:#20251F; --panel:#1E241F;
+  --ink:#F0F1EA; --sub:#B7BDB5; --faint:#7C857D; --line:#333B34;
+  --brand:#91C89C; --brand2:#274B31; --brand-soft:#22301F;
+  --accent:#F2A17F; --accent-soft:#3A241A;
+  --hp:#FF8A75; --hp-soft:#3A211E;
+  --xp:#8FB6CE; --xp-soft:#22303A;
+  --gold:#E0B341; --gold-soft:#3A2F18;
+  --gem:#B9A6E8; --gem-soft:#2A2340;
+  --green:#7FD3A6; --red:#FF8A75;
+  --hero-ink:#EAF3EA; --hero-sub:#A9C4AE;
+  --shadow:0 6px 18px rgba(0,0,0,.35);
+  --shadow-lg:0 14px 40px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html,body{margin:0;padding:0;background:var(--paper);}
+body{
+  font-family:"Microsoft YaHei UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  color:var(--ink);
+}
+/* ---------- 画廊（非截图模式） ---------- */
+.gallery{
+  display:flex;flex-wrap:wrap;gap:34px;justify-content:center;
+  padding:48px 40px 70px;
+}
+.frame-wrap{display:flex;flex-direction:column;gap:10px;align-items:center}
+.frame-cap{font-size:12px;color:var(--sub);letter-spacing:.5px}
+.device{
+  width:390px;height:844px;background:var(--paper);position:relative;overflow:hidden;
+  border-radius:34px;box-shadow:var(--shadow-lg);border:1px solid var(--line);
+}
+body.capture .gallery{padding:0;gap:0;background:var(--paper)}
+body.capture .device{border-radius:0;border:none;box-shadow:none}
+body.capture .frame-cap{display:none}
+
+/* ---------- 通用 ---------- */
+.screen{height:100%;width:100%;display:flex;flex-direction:column;position:relative}
+.scroll{flex:1;overflow-y:auto;padding:12px 16px 6px}
+.scroll::-webkit-scrollbar{width:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.4px;color:var(--sub);text-transform:uppercase}
+h1{margin:2px 0 2px;font-size:30px;line-height:1.15;letter-spacing:-.4px;font-weight:800}
+.sub{font-size:11.5px;color:var(--sub)}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:13px;margin-top:9px;box-shadow:var(--shadow);
+}
+.card.tight{padding:12px}
+.row{display:flex;align-items:center}
+.between{justify-content:space-between}
+.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}
+.grow{flex:1;min-width:0}
+.h3{font-size:13px;font-weight:700}
+.h2{font-size:15px;font-weight:800}
+.tiny{font-size:10.5px;color:var(--faint)}
+.muted{color:var(--sub)}
+.mono{font-variant-numeric:tabular-nums}
+.ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 药丸 / 标签 */
+.pill{
+  display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:999px;
+  font-size:10.5px;font-weight:700;background:var(--paper2);color:var(--sub);white-space:nowrap;
+}
+.pill.brand{background:var(--brand-soft);color:var(--brand)}
+.pill.hp{background:var(--hp-soft);color:var(--hp)}
+.pill.xp{background:var(--xp-soft);color:var(--xp)}
+.pill.gold{background:var(--gold-soft);color:var(--gold)}
+.pill.gem{background:var(--gem-soft);color:var(--gem)}
+.pill.accent{background:var(--accent-soft);color:var(--accent)}
+
+/* 进度条 */
+.bar{height:8px;border-radius:999px;background:var(--paper2);overflow:hidden;position:relative}
+.bar > i{display:block;height:100%;border-radius:999px;background:var(--brand)}
+.bar.hp > i{background:var(--hp)}
+.bar.xp > i{background:var(--xp)}
+.bar.gold > i{background:var(--gold)}
+.bar.gem > i{background:var(--gem)}
+.bar.on-dark{background:rgba(255,255,255,.20)}
+.bar.thin{height:6px}
+.bar.seg{display:flex;gap:3px;background:transparent;overflow:visible}
+.bar.seg > i{flex:1;height:8px;border-radius:4px;background:var(--paper2)}
+.bar.seg > i.on{background:var(--hp)}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:40px;padding:0 16px;border-radius:14px;border:none;cursor:pointer;
+  font-size:13px;font-weight:800;background:var(--brand);color:#fff;width:100%;
+}
+.btn.ghost{background:var(--panel);border:1px solid var(--line);color:var(--ink)}
+.btn.sm{height:32px;font-size:12px;border-radius:11px;width:auto;padding:0 12px}
+.btn.accent{background:var(--accent)}
+.btn.off{background:var(--paper2);color:var(--faint);cursor:default}
+/* 任务开关 */
+.sw{width:46px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:0 0 46px;display:inline-block}
+.sw.on{background:var(--brand)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.sw.on::after{left:23px}
+.btn.dark{background:var(--brand2)}
+.btn .k{font-weight:700;opacity:.85}
+
+/* 顶部 hero（角色卡） */
+.hero{
+  margin-top:10px;border-radius:var(--r-lg);padding:16px;
+  background:linear-gradient(135deg,var(--brand2),var(--brand));
+  color:var(--hero-ink);box-shadow:0 12px 26px rgba(36,86,55,.22);
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:"";position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.22),transparent 62%);
+}
+.hero .lv{font-size:11px;letter-spacing:1.2px;color:var(--hero-sub);font-weight:700}
+.hero .name{font-size:17px;font-weight:800;margin-top:1px}
+.hero .bar{background:rgba(255,255,255,.20)}
+.hero .bar.hp > i{background:#FFB3A2}
+.hero .bar.xp > i{background:#BFE3FF}
+.hero .bar-cap{font-size:10px;color:var(--hero-sub);display:flex;justify-content:space-between;margin:0 0 4px}
+.avatar{
+  width:48px;height:48px;border-radius:16px;flex:0 0 48px;
+  background:linear-gradient(135deg,#EAF3E6,#C9DFC6);color:#245637;
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55);
+}
+.coinbox{display:flex;gap:8px}
+.coin svg{width:14px;height:14px;opacity:.92}
+.pill svg{width:11px;height:11px;vertical-align:-1.5px}
+.streak svg{width:11px;height:11px;vertical-align:-1px}
+.btn svg{width:15px;height:15px}
+.modal .burst svg{width:38px;height:38px;stroke:var(--gold)}
+.coin{
+  display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 9px;border-radius:999px;
+  background:rgba(255,255,255,.16);font-size:12px;font-weight:800;
+}
+.attrs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.attr{
+  background:rgba(255,255,255,.12);border-radius:12px;padding:6px 4px;text-align:center;
+}
+.attr b{display:block;font-size:14px;line-height:1.2}
+.attr span{font-size:9.5px;color:var(--hero-sub);letter-spacing:.5px}
+
+/* 番茄计时 */
+.timer-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.timer{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1}
+.chips{display:flex;gap:6px}
+.chip{
+  height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--panel);color:var(--sub);font-size:11px;font-weight:700;
+  display:inline-flex;align-items:center;cursor:pointer;
+}
+.chip.on{background:var(--brand2);border-color:var(--brand2);color:#fff}
+
+/* 清单行 */
+.list{margin-top:8px}
+.item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:none}
+.check{
+  width:22px;height:22px;border-radius:8px;border:1.8px solid var(--line);flex:0 0 22px;
+  display:flex;align-items:center;justify-content:center;background:var(--panel);color:#fff;
+}
+.check svg{width:13px;height:13px}
+.check.done{background:var(--brand);border-color:var(--brand)}
+html[data-theme="dark"] .hero{background:linear-gradient(135deg,#1E2C21,#2E4834);box-shadow:0 12px 26px rgba(0,0,0,.45)}
+html[data-theme="dark"] .btn{color:#0F1A12}
+html[data-theme="dark"] .check.done{color:#0F1A12}
+.hab-acts{display:flex;gap:6px}
+.hab{
+  width:30px;height:30px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--sub);
+}
+.hab.up{color:var(--green);border-color:rgba(46,158,103,.35);background:rgba(46,158,103,.08)}
+.hab.down{color:var(--red);border-color:rgba(217,80,60,.32);background:rgba(217,80,60,.07)}
+.streak{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--accent)}
+
+/* 分段控件 */
+.seg{display:flex;background:var(--paper2);border-radius:14px;padding:3px;margin-top:10px}
+.seg > div{
+  flex:1;text-align:center;font-size:12px;font-weight:800;color:var(--sub);
+  padding:7px 0;border-radius:11px;
+}
+.seg > div.on{background:var(--panel);color:var(--ink);box-shadow:0 2px 8px rgba(36,39,33,.08)}
+
+/* 最近 7 天 */
+.week{display:flex;gap:4px;margin-top:8px}
+.day{flex:1;text-align:center}
+.day i{
+  display:flex;align-items:center;justify-content:center;height:30px;border-radius:11px;
+  background:var(--paper2);color:var(--faint);font-size:12px;font-weight:800;font-style:normal;
+}
+.day i.has{background:var(--brand-soft);color:var(--brand)}
+.day i.today{background:var(--brand);color:#fff}
+.day span{display:block;font-size:9px;color:var(--faint);margin-top:3px}
+
+/* Boss */
+.boss-wrap{display:flex;align-items:center;gap:12px;margin-top:6px}
+.boss-art{width:104px;height:96px;flex:0 0 104px;position:relative}
+.boss-meta{min-width:0;flex:1}
+
+/* 队伍 */
+.member{display:flex;align-items:center;gap:9px;padding:7px 0}
+.mavatar{
+  width:30px;height:30px;border-radius:10px;flex:0 0 30px;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:900;color:#fff;
+}
+.member .bar{height:6px;margin-top:4px}
+
+/* 奖励 */
+.reward{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.reward:last-child{border-bottom:none}
+.price{font-size:12px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:3px}
+.price svg{width:12px;height:12px}
+.reward .pill.brand{margin-left:6px}
+.addr{
+  border:1.5px dashed var(--line);border-radius:14px;padding:11px;text-align:center;
+  color:var(--sub);font-size:12px;font-weight:700;margin-top:10px;
+}
+
+/* 徽章 */
+.badges{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:9px}
+.badge{text-align:center}
+.badge i{
+  display:flex;align-items:center;justify-content:center;height:38px;border-radius:12px;
+  background:var(--paper2);font-size:17px;font-style:normal;filter:grayscale(1);opacity:.45;
+}
+.badge i.on{filter:none;opacity:1;background:var(--gold-soft)}
+.badge span{display:block;font-size:8.5px;color:var(--faint);margin-top:2px}
+
+/* 底部导航 */
+.nav{
+  height:64px;flex:0 0 64px;background:var(--panel);border-top:1px solid var(--line);
+  display:flex;align-items:center;padding:0 6px;border-radius:0 0 0 0;
+}
+.nav .tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;color:var(--faint);font-weight:700;
+}
+.nav .tab.on{color:var(--brand)}
+.nav svg{width:20px;height:20px}
+
+/* 升级弹层 */
+.scrim{position:absolute;inset:0;background:rgba(20,26,20,.55);backdrop-filter:blur(2px);z-index:5}
+.modal{
+  position:absolute;left:22px;right:22px;top:190px;z-index:6;border-radius:26px;
+  background:var(--panel);box-shadow:var(--shadow-lg);padding:22px 20px 18px;text-align:center;
+  border:1px solid var(--line);
+}
+.modal .burst{font-size:34px;line-height:1}
+.modal h2{margin:8px 0 2px;font-size:23px;letter-spacing:-.3px}
+.lvl-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 6px}
+.lvl-num{font-size:26px;font-weight:900;color:var(--brand)}
+.lvl-arrow{color:var(--faint);font-size:18px}
+.gain{background:var(--paper2);border-radius:14px;padding:10px 12px;margin-top:12px;text-align:left}
+.gain div{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.gain b{color:var(--brand)}
+
+/* ---------- 学习页（复习）---------- */
+.topbar{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+.tb-close{
+  width:30px;height:30px;border-radius:10px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--sub);
+  background:var(--panel);flex:0 0 30px;
+}
+.tb-title{font-size:15px;font-weight:800;flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.tb-pill{
+  display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 11px;border-radius:13px;
+  background:var(--brand-soft);color:var(--brand);font-size:11.5px;font-weight:800;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.tb-pill.paused{background:var(--paper2);color:var(--sub)}
+.tb-pill.idle{background:var(--paper2);color:var(--sub)}
+.tb-pill.done{background:var(--green-soft,rgba(46,158,103,.12));color:var(--green)}
+.tb-icon{width:30px;height:30px;border-radius:10px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--sub);
+  background:var(--panel);flex:0 0 30px}
+.studyarea{flex:1;background:#B3E5FC;padding:16px 14px;overflow:hidden}
+.qcard{background:#FDECF2;border-radius:16px;padding:14px 14px 12px;position:relative}
+.ribbon{
+  display:inline-flex;align-items:center;height:20px;padding:0 10px;border-radius:999px;
+  background:#C2185B;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;
+}
+.ribbon.green{background:#2E7D5B}
+.qtext{font-size:15px;font-weight:800;line-height:1.5;margin-top:10px;color:#3B2A31}
+.opt{
+  display:flex;align-items:center;gap:9px;background:#fff;border-radius:12px;
+  padding:10px 12px;margin-top:8px;font-size:13px;color:#3B2A31;
+  border:1px solid rgba(0,0,0,.06);
+}
+.opt i{width:16px;height:16px;border-radius:50%;border:1.6px solid #C9C2C6;flex:0 0 16px}
+.acard{background:#E7F5E4;border-radius:16px;padding:14px;margin-top:12px}
+.aribbon{display:inline-flex;height:20px;padding:0 10px;border-radius:999px;
+  background:#2E7D5B;color:#fff;font-size:10.5px;font-weight:800;align-items:center}
+.abar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 12px;
+  background:var(--paper);border-top:1px solid var(--line);gap:8px}
+.rate{flex:1;height:52px;border-radius:14px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:12.5px;font-weight:800;border:1px solid var(--line)}
+.rate span{font-size:9.5px;font-weight:600;opacity:.72;margin-top:2px}
+.rate.r1{background:#FDECEA;color:#C0392B;border-color:#F5D3CE}
+.rate.r2{background:#FCF1E3;color:#B9772A;border-color:#EFDCC3}
+.rate.r3{background:#EAF3EC;color:#2F6A43;border-color:#D3E4D8}
+.rate.r4{background:#E8F4EE;color:#1F7A55;border-color:#CCE7DA}
+</style>
+</head>
+<body>
+
+<div class="gallery" id="stage"></div>
+
+<script>
+/* ============================ 图标 ============================ */
+const I = {
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5.2c2.6-1.1 5.2-1.1 8 0 2.8-1.1 5.4-1.1 8 0v13.6c-2.6-1.1-5.2-1.1-8 0-2.8-1.1-5.4-1.1-8 0z"/><path d="M12 5.2v13.6"/></svg>',
+  map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M9 4.5 3.6 6.4v13.1L9 17.6l6 1.9 5.4-1.9V4.5L15 6.4z"/><path d="M9 4.5v13.1M15 6.4v13.1"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19V9M12 19V5M19 19v-6"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>',
+  coin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 9.6h4a1.8 1.8 0 0 1 0 3.6h-3.2" stroke-linecap="round"/></svg>',
+  gem: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 4h10l4 6-9 10L3 10z"/><path d="M3 10h18M9.5 4 8 10l4 10 4-10-1.5-6"/></svg>',
+  flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.3 2.6c.4 3-1.2 4.4-2.6 5.9-1.5 1.6-3.1 3.2-3.1 6.1a6.4 6.4 0 0 0 12.8 0c0-2.2-.8-3.7-1.7-5-.3-.5-.9-.4-1.1.1-.3.8-.8 1.6-1.5 2 0-3.3-.6-6.6-2.8-9.1z"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.2 2"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H5.4V8A3.2 3.2 0 0 0 8 11.1M16 5.5h2.6V8A3.2 3.2 0 0 1 16 11.1"/><path d="M12 13v4M8.6 20h6.8"/></svg>',
+  sword: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5 20.5 3.5 20.5 9.5 10 20 4 14z"/><path d="M4 20l3-3"/></svg>',
+};
+
+/* ============================ 数据 ============================ */
+const D = {
+  me: { level:12, title:"见习旅人", hp:42, hpMax:50, xp:320, xpMax:560, gold:128, gems:4,
+        str:12, int:9, con:11, per:8, streak:12, todaySessions:3 },
+  days: [["一",4],["二",2],["三",0],["四",3],["五",5],["六",1],["今天",3]],
+  records: [
+    ["今天", [
+      {t:"专注 25 分钟", time:"13:40", xp:15, gold:10},
+      {t:"专注 15 分钟", time:"10:40", xp:9,  gold:6},
+      {t:"专注 45 分钟", time:"08:40", xp:27, gold:18},
+    ]],
+    ["昨天", [
+      {t:"专注 25 分钟", time:"11:40", xp:15, gold:10},
+    ]],
+  ],
+  boss: { name:"拖延巨兽", lv:12, hp:68, hpMax:100, days:2, gold:40, gems:1 },
+  habits: [
+    { t:"晨间拉伸 10 分钟", xp:6, gold:2, sign:"+" },
+    { t:"刷手机超过 1 小时", xp:-8, gold:0, sign:"−" },
+  ],
+  dailies: [
+    { t:"复习到期卡片", meta:"中等 · +12 经验 · +4 金币", streak:12, done:true },
+    { t:"专注 25 分钟", meta:"困难 · +18 经验 · +6 金币", streak:5, done:true },
+    { t:"整理今日笔记", meta:"简单 · +8 经验 · +2 金币", streak:0, done:false },
+  ],
+  todos: [
+    { t:"整理「细胞结构」错题", due:"今天", xp:15, gold:5 },
+    { t:"给记忆库补 20 张新卡", due:"明天", xp:25, gold:10 },
+  ],
+  party: [
+    { n:"你", d:38, c:"#2F6A43", me:true },
+    { n:"阿岚", d:27, c:"#426A80" },
+    { n:"小满", d:19, c:"#B85D3C" },
+    { n:"Kite", d:16, c:"#7C63B8" },
+  ],
+  rewards: [
+    { t:"看一集剧", p:20, tag:"娱乐" },
+    { t:"一杯奶茶", p:35, tag:"犒赏" },
+    { t:"周末睡到自然醒", p:60, tag:"休息" },
+  ],
+  badges: [
+    { n:"见习", on:true, e:"🌱" }, { n:"青铜", on:true, e:"🥉" }, { n:"白银", on:true, e:"🥈" },
+    { n:"黄金", on:false, e:"🥇" }, { n:"铂金", on:false, e:"💠" }, { n:"钻石", on:false, e:"💎" },
+  ],
+};
+
+/* Boss 插画：圆滚滚身体 + 犄角 + 眼睛（与 app 里 QPainter 画的小怪同构） */
+function bossSVG(size){
+  return `<svg viewBox="0 0 104 96" width="${size}" height="${size*96/104}" fill="none">
+    <ellipse cx="52" cy="88" rx="34" ry="6" fill="rgba(36,39,33,.10)"/>
+    <path d="M26 36 L16 16 L40 27 Z" fill="#5E4A7A"/>
+    <path d="M78 36 L88 16 L64 27 Z" fill="#5E4A7A"/>
+    <path d="M52 20 C74 20 88 40 88 62 C88 82 72 90 52 90 C32 90 16 82 16 62 C16 40 30 20 52 20 Z" fill="#8E76B8" stroke="#5E4A7A" stroke-width="2.5"/>
+    <ellipse cx="40" cy="58" rx="11" ry="12" fill="#fff"/><ellipse cx="64" cy="58" rx="11" ry="12" fill="#fff"/>
+    <ellipse cx="42" cy="60" rx="5" ry="6" fill="#2B2B26"/><ellipse cx="62" cy="60" rx="5" ry="6" fill="#2B2B26"/>
+    <path d="M42 76 Q52 84 62 76" stroke="#4B3A63" stroke-width="3" stroke-linecap="round"/>
+    <path d="M34 30 Q52 24 70 30" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* 头像 */
+function avatar(){
+  return `<div class="avatar">旅</div>`;
+}
+
+function nav(active){
+  const tabs = [
+    ["today","今日",I.sun],["library","记忆",I.book],
+    ["journey","征途",I.map],["insights","洞察",I.chart],
+  ];
+  return `<div class="nav">` + tabs.map(([k,n,ic]) =>
+    `<div class="tab ${k===active?'on':''}">${ic}<span>${n}</span></div>`).join('') + `</div>`;
+}
+
+function header(eyebrow, title, sub){
+  return `<div class="eyebrow">${eyebrow}</div><h1>${title}</h1><div class="sub">${sub}</div>`;
+}
+
+/* 征途内的四个分段：总览 / 任务 / 副本 / 奖励 */
+function segTabs(active){
+  const tabs = [["overview","总览"],["tasks","记录"],["party","副本"],["rewards","奖励"]];
+  return `<div class="seg">` + tabs.map(([k,n]) =>
+    `<div class="${k===active?'on':''}">${n}</div>`).join('') + `</div>`;
+}
+
+/* ============================ 任务卡（三态） ============================ */
+function questMode(){
+  const m = new URLSearchParams(location.search).get('quest');
+  return (m === 'active' || m === 'paused' || m === 'done') ? m : 'idle';
+}
+
+function questCard(mode){
+  const on = (mode === 'active' || mode === 'paused');
+  const running = (mode === 'active');
+  const head = `<div class="row between">
+      <div class="h3">今日任务</div>
+      <span class="sw ${on ? 'on' : ''}"></span>
+    </div>`;
+  const chips = (locked) => `<div class="chips" style="${locked ? 'opacity:.55;' : ''}">
+      <span class="chip">15</span>
+      <span class="chip ${locked ? '' : 'on'}">25</span>
+      <span class="chip">45</span>
+    </div>`;
+  if (on) {
+    return `<div class="card">
+      ${head}
+      <div class="timer-row" style="margin-top:8px">
+        <div class="timer mono" style="font-size:34px;font-weight:800;color:var(--brand)">18:42</div>
+        ${chips(true)}
+      </div>
+      <div class="tiny" style="margin-top:7px">${running
+        ? '计时中 · 共 25 分钟，离开学习页会自动暂停'
+        : '已暂停 · 回到学习页继续计时'}</div>
+    </div>`;
+  }
+  if (mode === 'done') {
+    return `<div class="card">
+      ${head}
+      <div class="timer-row" style="margin-top:8px">
+        <div class="timer mono" style="font-size:34px;font-weight:800;color:var(--green)">00:00</div>
+        ${chips(false)}
+      </div>
+      <div class="tiny" style="margin-top:7px">已完成 · 经验 +15 · 金币 +10</div>
+    </div>`;
+  }
+  return `<div class="card">
+    ${head}
+    <div class="timer-row" style="margin-top:8px">
+      <div class="timer mono" style="font-size:34px;font-weight:800">25:00</div>
+      ${chips(false)}
+    </div>
+    <div class="tiny" style="margin-top:7px">打开开关后，进学习页才开始计时</div>
+  </div>`;
+}
+
+/* ============================ 01 征途 · 总览 ============================ */
+function journeyBody(){
+  const m = D.me;
+  const hpPct = Math.round(m.hp/m.hpMax*100);
+  const xpPct = Math.round(m.xp/m.xpMax*100);
+  const bossHits = Math.ceil((100-D.boss.hp)/34);
+  return `<div class="screen">
+    <div class="scroll">
+      ${header("征途 · 第 12 天","征途",`今日 ${m.todaySessions} 次专注 · 连续 ${m.streak} 天`)}
+      ${segTabs('overview')}
+      <div class="hero">
+        <div class="row between">
+          <div class="row gap10">
+            ${avatar()}
+            <div>
+              <div class="lv">LEVEL ${m.level}</div>
+              <div class="name">${m.title}</div>
+            </div>
+          </div>
+          <div class="coinbox">
+            <span class="coin">${I.coin} ${m.gold}</span>
+            <span class="coin">${I.gem} ${m.gems}</span>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div class="bar-cap"><span>生命</span><span class="mono">${m.hp} / ${m.hpMax}</span></div>
+          <div class="bar hp on-dark"><i style="width:${hpPct}%"></i></div>
+        </div>
+        <div style="margin-top:9px">
+          <div class="bar-cap"><span>经验</span><span class="mono">${m.xp} / ${m.xpMax}</span></div>
+          <div class="bar xp on-dark"><i style="width:${xpPct}%"></i></div>
+        </div>
+        <div class="attrs">
+          <div class="attr"><b>${m.str}</b><span>力量</span></div>
+          <div class="attr"><b>${m.int}</b><span>智力</span></div>
+          <div class="attr"><b>${m.con}</b><span>体质</span></div>
+          <div class="attr"><b>${m.per}</b><span>感知</span></div>
+        </div>
+      </div>
+
+      ${questCard(questMode())}
+
+      <div class="card">
+        <div class="row between">
+          <div class="h3">今日首领 · ${D.boss.name}</div>
+          <span class="pill hp">剩 ${D.boss.days} 天</span>
+        </div>
+        <div class="boss-wrap">
+          ${bossSVG(96)}
+          <div class="boss-meta">
+            <div class="row between" style="margin-bottom:5px">
+              <span class="tiny">Lv.${D.boss.lv} · 队伍 4 人</span>
+              <span class="tiny mono">${D.boss.hp} / ${D.boss.hpMax}</span>
+            </div>
+            <div class="bar hp"><i style="width:${D.boss.hp}%"></i></div>
+            <div class="tiny" style="margin-top:7px">再专注 ${bossHits} 次击败 · 奖励 ${D.boss.gold} 金币 · ${D.boss.gems} 宝石</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card tight">
+        <div class="row between"><span class="h3">最近 7 天</span><span class="tiny">共 18 次专注</span></div>
+        <div class="week">
+          ${D.days.map(([d,n],i)=>`<div class="day"><i class="${n?'has':''} ${i===6?'today':''}">${n||'·'}</i><span>${d}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function screenJourney(){
+  return `<div class="screen">${journeyBody()}${nav('journey')}</div>`;
+}
+
+/* ============================ 02 学习页（复习） ============================ */
+function studyPill(){
+  const p = new URLSearchParams(location.search).get('pill');
+  if (p === 'idle' || p === 'done') return ['', ''];   // 没领任务：这块留空白
+  if (p === 'paused') return ['paused', '18:42'];
+  return ['', '18:42'];
+}
+
+function screenStudy(){
+  const [cls, text] = studyPill();
+  return `<div class="screen">
+    <div class="topbar">
+      <div class="tb-close">✕</div>
+      <div class="tb-title">第一章 关于人性</div>
+      ${text ? `<div class="tb-pill ${cls}">${text}</div>` : ''}
+      <div class="tb-icon">⋯</div>
+      <div class="tb-icon">⛶</div>
+    </div>
+    <div class="studyarea">
+      <div class="qcard">
+        <span class="ribbon">问题</span>
+        <div class="qtext">原文主张的期待管理方法包括哪些？</div>
+        <div class="opt"><i></i>A. 社交初期不抬高期待</div>
+        <div class="opt"><i></i>B. 一开始就全力付出</div>
+        <div class="opt"><i></i>C. 请客安排前轻后重</div>
+        <div class="opt"><i></i>D. 施恩自薄而厚</div>
+      </div>
+    </div>
+    <div class="abar">
+      <div class="rate r1">重来<span>10 分钟</span></div>
+      <div class="rate r2">困难<span>8 天</span></div>
+      <div class="rate r3">记住<span>24 天</span></div>
+      <div class="rate r4">轻松<span>2 个月</span></div>
+    </div>
+  </div>`;
+}
+
+/* ============================ 02 征途 · 记录 ============================ */
+function screenRecords(){
+  const groups = D.records;
+  const total = groups.reduce((n, g) => n + g[1].length, 0);
+  return `<div class="screen">
+    <div class="scroll">
+      ${header("征途","征途","今天完成 3 次 · 共 " + total + " 次")}
+      ${segTabs('tasks')}
+      <div class="row between" style="margin:12px 2px 0">
+        <div class="h3">完成记录</div>
+        <div class="tiny">共 ${total} 次</div>
+      </div>
+      ${groups.map(([day, items]) => `<div class="card">
+        <div class="row between" style="padding-bottom:2px">
+          <div class="h3">${day}</div>
+          <div class="tiny">${items.length} 次</div>
+        </div>
+        ${items.map(r => `<div class="item">
+          <div class="check done">${I.check}</div>
+          <div class="grow">
+            <div class="h3" style="color:var(--ink2);text-decoration:line-through">${r.t}</div>
+            <div class="tiny" style="margin-top:2px">${r.time} · +${r.xp} 经验 · +${r.gold} 金币</div>
+          </div>
+        </div>`).join('')}
+      </div>`).join('')}
+    </div>
+    ${nav('journey')}
+  </div>`;
+}
+
+/* ============================ 03 征途 · 副本 ============================ */
+function screenParty(){
+  const total = D.party.reduce((s,x)=>s+x.d,0);
+  return `<div class="screen">
+    <div class="scroll">
+      ${header("征途","征途","副本 · 队伍 4 人 · 剩余 2 天 4 小时")}
+      ${segTabs('party')}
+      <div class="card" style="text-align:center;padding:14px 14px 12px">
+        <div style="display:flex;justify-content:center">${bossSVG(118)}</div>
+        <div class="h2" style="margin-top:2px">${D.boss.name}</div>
+        <div class="tiny" style="margin-top:2px">Lv.${D.boss.lv} · 已损失 ${100-D.boss.hp}% 生命</div>
+        <div class="bar hp" style="margin-top:10px;height:10px"><i style="width:${D.boss.hp}%"></i></div>
+        <div class="row between" style="margin-top:6px">
+          <span class="tiny mono">${D.boss.hp} / ${D.boss.hpMax}</span>
+          <span class="tiny">全队还需 ${Math.ceil((100-D.boss.hp)/4)} 次</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><span class="h3">队伍</span><span class="tiny">伤害贡献</span></div>
+        ${D.party.map(p=>`<div class="member">
+          <div class="mavatar" style="background:${p.c}">${p.n[0]}</div>
+          <div class="grow">
+            <div class="row between">
+              <span class="h3" style="font-size:12.5px">${p.n}${p.me?' <span class="pill brand" style="height:16px;font-size:9px">我</span>':''}</span>
+              <span class="tiny mono">${p.d}%</span>
+            </div>
+            <div class="bar thin"><i style="width:${p.d}%"></i></div>
+          </div>
+        </div>`).join('')}
+        <div class="tiny" style="margin-top:4px">合计 ${total}% · 击败后按贡献分配奖励</div>
+      </div>
+
+      <div class="card tight">
+        <div class="row between">
+          <span class="h3">通关奖励</span>
+          <span class="tiny">按贡献排名</span>
+        </div>
+        <div class="row gap8" style="margin-top:8px">
+          <span class="pill gold">${I.coin} 40 金币</span>
+          <span class="pill gem">${I.gem} 1 宝石</span>
+          <span class="pill accent">${I.trophy} 限定徽章</span>
+        </div>
+      </div>
+      <button class="btn accent" style="margin-top:12px">投入专注 · 造成 1 次伤害</button>
+      <div class="card tight">
+        <div class="tiny">伤害 = 专注次数 × 难度；击败后自动开下一只。</div>
+      </div>
+    </div>
+    ${nav('journey')}
+  </div>`;
+}
+
+/* ============================ 04 征途 · 奖励 ============================ */
+function screenRewards(){
+  return `<div class="screen">
+    <div class="scroll">
+      ${header("征途","征途","奖励商店 · 金币只花在你自己的奖励上")}
+      ${segTabs('rewards')}
+      <div class="hero" style="padding:14px 16px">
+        <div class="row between">
+          <div>
+            <div class="lv">可用金币</div>
+            <div style="font-size:30px;font-weight:900;line-height:1.1">${D.me.gold} <span style="font-size:14px;font-weight:700;color:var(--hero-sub)">GP</span></div>
+          </div>
+          <div style="text-align:right">
+            <div class="lv">本周赚取</div>
+            <div style="font-size:15px;font-weight:800">+86 GP</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row between"><span class="h3">我的奖励</span><span class="tiny">点兑换即扣除金币</span></div>
+        <div style="margin-top:2px">
+          ${D.rewards.map(r=>`<div class="reward">
+            <span class="pill">${r.tag}</span>
+            <div class="grow h3 ellip">${r.t}</div>
+            <span class="price">${I.coin}${r.p}</span>
+            <span class="pill brand" style="cursor:pointer">兑换</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="addr">＋ 添加自定义奖励（花多少金币，你定）</div>
+
+      <div class="card">
+        <div class="row between"><span class="h3">徽章</span><span class="tiny">已解锁 3 / 6</span></div>
+        <div class="badges">
+          ${D.badges.map(b=>`<div class="badge"><i class="${b.on?'on':''}">${b.e}</i><span>${b.n}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="row between"><span class="h3">金币怎么来</span><span class="tiny">做正事才有</span></div>
+        <div class="list" style="margin-top:4px">
+          <div class="item"><span class="pill xp">专注</span><div class="grow h3">专注 25 分钟</div><span class="price">${I.coin}+10</span></div>
+          <div class="item"><span class="pill brand">每日</span><div class="grow h3">完成一项每日</div><span class="price">${I.coin}+4</span></div>
+          <div class="item"><span class="pill accent">待办</span><div class="grow h3">清掉一件待办</div><span class="price">${I.coin}+5</span></div>
+        </div>
+      </div>
+    </div>
+    ${nav('journey')}
+  </div>`;
+}
+
+/* ============================ 03 结算弹层（每日 24:00） ============================ */
+function screenSettle(){
+  return `<div class="screen">
+    ${journeyBody()}
+    ${nav('journey')}
+    <div class="scrim"></div>
+    <div class="modal">
+      <div class="burst">${I.clock}</div>
+      <h2>今日结算</h2>
+      <div class="tiny">11 月 22 日 · 24:00 自动结算</div>
+      <div class="gain">
+        <div><span>完成每日</span><b>5 项 · +45 经验</b></div>
+        <div><span>漏做每日</span><b>2 项 · −6 生命</b></div>
+        <div><span>连击</span><b>12 → 13 天</b></div>
+        <div><span>金币</span><b>+17 GP</b></div>
+      </div>
+      <div class="tiny" style="margin-top:10px;color:var(--hp)">生命 42 / 50 · 明早 8:00 自动回 1 点</div>
+      <button class="btn" style="margin-top:12px">明天继续</button>
+    </div>
+  </div>`;
+}
+
+/* ============================ 04 升级弹层 ============================ */
+function screenLevelup(){
+  return `<div class="screen">
+    ${journeyBody()}
+    ${nav('journey')}
+    <div class="scrim"></div>
+    <div class="modal">
+      <div class="burst">${I.trophy}</div>
+      <h2>升级！</h2>
+      <div class="tiny">连续 12 天的征途没有白走</div>
+      <div class="lvl-row">
+        <span class="lvl-num">Lv.12</span><span class="lvl-arrow">→</span><span class="lvl-num">Lv.13</span>
+      </div>
+      <div class="gain">
+        <div><span>生命上限</span><b>50 → 55</b></div>
+        <div><span>生命值</span><b>回满</b></div>
+        <div><span>属性点</span><b>+1 可分配</b></div>
+        <div><span>解锁</span><b>副本「深林回响」</b></div>
+      </div>
+      <button class="btn" style="margin-top:14px">分配属性点</button>
+      <button class="btn ghost" style="margin-top:8px">稍后再说</button>
+    </div>
+  </div>`;
+}
+
+/* ============================ 路由 ============================ */
+const SCREENS = {
+  journey:  { cap:"01 征途 · 总览",        fn: screenJourney },
+  quests:   { cap:"02 征途 · 记录",        fn: screenRecords },
+  party:    { cap:"03 征途 · 副本",        fn: screenParty },
+  rewards:  { cap:"04 征途 · 奖励",        fn: screenRewards },
+  settle:   { cap:"05 每日结算",           fn: screenSettle },
+  levelup:  { cap:"06 升级弹层",           fn: screenLevelup },
+  study:    { cap:"07 学习页 · 顶栏计时",  fn: screenStudy },
+};
+
+const params = new URLSearchParams(location.search);
+const only = params.get('only');
+const themeParam = params.get('theme');
+if (themeParam) document.documentElement.dataset.theme = themeParam;
+
+const stage = document.getElementById('stage');
+
+if (only && SCREENS[only]) {
+  document.body.classList.add('capture');
+  stage.innerHTML = `<div class="frame-wrap"><div class="device">${SCREENS[only].fn()}</div></div>`;
+  const sc = Number(params.get('scale') || 1);
+  if (sc !== 1) document.body.style.zoom = String(sc);
+} else {
+  stage.innerHTML = Object.entries(SCREENS).map(([k,s]) =>
+    `<div class="frame-wrap"><div class="device">${s.fn()}</div><div class="frame-cap">${s.cap}</div></div>`).join('');
+}
+</script>
+</body>
+</html>

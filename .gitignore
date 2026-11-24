@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 逆向工程产物（不要上传）
+decompiled/
+apktool/
+project/
+pc/
+*.apk
+*.zip
+apk001.zip
+app001.zip
+strings-*.txt
+validation.txt
+
+# 构建产物
+build/
+dist/
+dist_android/
+bin/
+.pyside6-android-deploy/
+*.aab
+*.spec
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

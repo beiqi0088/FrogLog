@@ -1,0 +1,98 @@
+name: Android APK
+
+# 在 GitHub 网页上手动触发（Actions → Android APK → Run workflow）。
+# 免费额度：公开仓库不限分钟；私有仓库每月 2000 分钟（首次全套约 60–120 分钟）。
+on:
+  workflow_dispatch:
+  push:
+    tags: ["android-*"]
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # 交叉编译 PySide6 Android 轮子需要 Linux 主机，GitHub 免费 runner 正好是 Ubuntu
+    runs-on: ubuntu-22.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 系统依赖（编译工具 + JDK 17）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build git curl unzip zip \
+            libssl-dev libffi-dev libncurses5-dev libtinfo5 \
+            openjdk-17-jdk
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          java -version
+
+      - name: 缓存 Qt for Android
+        uses: actions/cache@v4
+        with:
+          path: ~/Qt
+          key: qt-android-${{ runner.os }}-6.11.1
+
+      - name: 安装 Qt for Android 6.11.1（与桌面 PySide6 版本一致）
+        run: |
+          python3 -m pip install --upgrade pip aqtinstall
+          if [ ! -d "$HOME/Qt/6.11.1/android_arm64_v8a" ]; then
+            python3 -m aqt install-qt linux android android_arm64_v8a 6.11.1 -O "$HOME/Qt"
+          fi
+          ls "$HOME/Qt/6.11.1"
+
+      - name: 缓存 NDK / SDK / 已经编好的轮子
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pyside6-android-deploy
+            pyside-setup/dist_android
+          key: pyside-android-${{ runner.os }}-6.11.1
+
+      - name: 交叉编译 PySide6 / shiboken6 的 Android 轮子
+        shell: bash
+        run: |
+          if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
+            echo "缓存里已有轮子，跳过编译"
+            ls -lh pyside-setup/dist_android/*.whl
+            exit 0
+          fi
+          git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
+          cd pyside-setup
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install -r tools/cross_compile_android/requirements.txt
+          # 先下载 NDK r28c / SDK / python.org 的 Android CPython，再编译轮子
+          python3 tools/cross_compile_android/main.py \
+            --plat-name=aarch64 \
+            --qt-install-path="$HOME/Qt/6.11.1" \
+            --auto-accept-license --skip-update
+          ls -lh dist_android/*.whl
+
+      - name: 安装部署工具
+        run: python3 -m pip install "pyside6==6.11.1" buildozer cython
+
+      - name: 打 APK（debug 模式）
+        shell: bash
+        run: |
+          PS=$(ls pyside-setup/dist_android/PySide6-*.whl | head -1)
+          SH=$(ls pyside-setup/dist_android/shiboken6-*.whl | head -1)
+          echo "PySide6 wheel: $PS"
+          echo "shiboken6 wheel: $SH"
+          pyside6-android-deploy --name FrogLog \
+            --wheel-pyside "$PS" \
+            --wheel-shiboken "$SH" \
+            -v
+          echo "=== 产物 ==="
+          find . -maxdepth 3 -name "*.apk" -o -maxdepth 3 -name "*.aab" | head
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrogLog-android-apk
+          path: |
+            **/*.apk
+            **/*.aab
+          if-no-files-found: error
+          retention-days: 30

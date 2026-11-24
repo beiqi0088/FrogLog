@@ -1,0 +1,1422 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>艾宾浩斯记忆曲线 · UI 设计稿</title>
+<style>
+/* ============================================================
+   可修改区域 ①：设计变量
+   所有颜色、圆角、字号、间距都集中在这里，改这里就能整体换肤。
+   配色取自 APK 反编译结果（f3.a / d3.r / y.m）
+   ============================================================ */
+:root {
+  --bg:        #FBF8F1;   /* 纸白 */
+  --surface:   #FFFFFF;
+  --surface-2: #F2F1E7;   /* 浅一层的区块 */
+  --ink:       #242721;   /* 主文字 */
+  --sub:       #73766F;   /* 次要文字 */
+  --line:      #E4E1D6;   /* 分隔线 */
+  --primary:   #2F6A43;   /* 墨绿 */
+  --primary-deep: #245637;
+  --on-primary:#E9EFE6;
+  --accent:    #BF5B38;   /* 赭石 */
+  --accent-soft:#F4E7DF;
+  --error:     #B3261E;
+  --ok:        #3C7550;
+
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(36,39,33,.05), 0 1px 1px rgba(36,39,33,.03);
+  --shadow-md: 0 8px 24px -8px rgba(36,39,33,.14), 0 2px 6px rgba(36,39,33,.05);
+  --shadow-lg: 0 24px 60px -20px rgba(36,39,33,.28), 0 8px 20px -8px rgba(36,39,33,.12);
+
+  --font: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-num: "SF Pro Display", "DIN Alternate", "Bahnschrift", var(--font);
+}
+
+html[data-theme="dark"] {
+  --bg:        #161A17;
+  --surface:   #1E241F;
+  --surface-2: #20251F;
+  --ink:       #F0F1EA;
+  --sub:       #B7BDB5;
+  --line:      #333B34;
+  --primary:   #91C89C;
+  --primary-deep: #274B31;
+  --on-primary:#0E391E;
+  --accent:    #F2A17F;
+  --accent-soft:#3A241A;
+  --error:     #FFB4AB;
+  --ok:        #91C89C;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-md: 0 8px 24px -8px rgba(0,0,0,.5);
+  --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.7);
+}
+
+/* ============================================================
+   基础
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 60%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  transition: background .3s ease, color .3s ease;
+}
+button { font-family: inherit; border: 0; background: none; color: inherit; cursor: pointer; }
+svg { display: block; }
+
+/* ============================================================
+   顶部工具栏
+   ============================================================ */
+.toolbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 28px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 11px;
+  background: linear-gradient(150deg, var(--primary), var(--primary-deep));
+  display: grid; place-items: center; color: var(--on-primary);
+  box-shadow: var(--shadow-sm);
+}
+.brand-title { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
+.brand-sub { font-size: 11.5px; color: var(--sub); margin-top: 1px; }
+
+.seg {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--surface-2); border-radius: var(--r-full);
+  border: 1px solid var(--line);
+}
+.seg button {
+  padding: 7px 15px; border-radius: var(--r-full);
+  font-size: 12.5px; font-weight: 550; color: var(--sub);
+  display: flex; align-items: center; gap: 6px;
+  transition: all .18s ease;
+}
+.seg button[data-on="true"] {
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.ghost-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: var(--r-full);
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 12.5px; font-weight: 550; color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.ghost-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* ============================================================
+   画廊
+   ============================================================ */
+.stage { padding: 44px 28px 90px; }
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(392px, max-content));
+  gap: 56px 44px;
+  justify-content: center;
+}
+.frame-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.frame-label { display: flex; align-items: baseline; gap: 9px; }
+.frame-label b { font-size: 13px; font-weight: 650; letter-spacing: .2px; }
+.frame-label span { font-size: 11px; color: var(--sub); }
+
+/* ============================================================
+   设备
+   ============================================================ */
+.device {
+  width: 390px; height: 844px;
+  border-radius: 46px;
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden; position: relative;
+  display: flex; flex-direction: column;
+  isolation: isolate;
+}
+.device::after { /* 屏幕内缘高光 */
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 6%, transparent);
+  pointer-events: none;
+}
+.statusbar {
+  height: 46px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 26px 0 30px;
+  font-size: 12.5px; font-weight: 650; letter-spacing: .3px;
+  color: var(--ink);
+}
+.statusbar .icons { display: flex; align-items: center; gap: 6px; opacity: .85; }
+
+.screen {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 0 20px 18px;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent 100%);
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   排版组件
+   ============================================================ */
+.appbar { display: flex; align-items: flex-start; gap: 12px; padding: 8px 20px 14px; }
+.appbar .titles { flex: 1; min-width: 0; }
+.eyebrow { font-size: 11.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--sub); font-weight: 600; }
+.h1 { font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -.4px; margin: 3px 0 0; }
+.h2 { font-size: 16px; font-weight: 650; letter-spacing: -.1px; margin: 0; }
+.h3 { font-size: 13.5px; font-weight: 620; margin: 0; }
+.muted { color: var(--sub); }
+.small { font-size: 11.5px; line-height: 1.55; }
+.tiny { font-size: 10.5px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--line);
+  transition: transform .16s ease, background .16s ease;
+}
+.icon-btn:hover { transform: scale(1.06); }
+.icon-btn.plain { background: transparent; border-color: transparent; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+}
+.card.flat { box-shadow: none; }
+.pad { padding: 16px; }
+.pad-lg { padding: 20px; }
+.stack { display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.gap-4 { gap: 4px; } .gap-6 { gap: 6px; } .gap-8 { gap: 8px; }
+.gap-10 { gap: 10px; } .gap-12 { gap: 12px; } .gap-14 { gap: 14px; }
+.gap-16 { gap: 16px; } .gap-20 { gap: 20px; }
+.mt-6 { margin-top: 6px; } .mt-10 { margin-top: 10px; } .mt-14 { margin-top: 14px; }
+.mt-18 { margin-top: 18px; } .mt-24 { margin-top: 24px; } .mt-28 { margin-top: 28px; }
+
+.divider { height: 1px; background: var(--line); margin: 14px 0; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: var(--r-full);
+  font-size: 11px; font-weight: 600;
+  background: var(--surface-2); color: var(--sub);
+  border: 1px solid var(--line);
+}
+.pill.primary { background: color-mix(in srgb, var(--primary) 13%, transparent); color: var(--primary); border-color: transparent; }
+.pill.accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+
+.chip {
+  padding: 7px 11px; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 550; color: var(--sub);
+  border: 1px solid var(--line); background: transparent;
+  white-space: nowrap; flex: 0 0 auto;
+}
+.chip[data-on="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chips { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 20px; border-radius: var(--r-full);
+  font-size: 14px; font-weight: 620; letter-spacing: .2px;
+  transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+.btn:active { transform: scale(.975); }
+.btn-primary {
+  background: linear-gradient(160deg, var(--primary), var(--primary-deep));
+  color: var(--on-primary);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--primary) 80%, transparent);
+}
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-ghost { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+.btn-block { width: 100%; }
+.btn-lg { padding: 17px 22px; font-size: 15px; }
+
+/* ============================================================
+   底部导航
+   ============================================================ */
+.tabbar {
+  flex: 0 0 auto; height: 74px;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  padding: 0 10px 12px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+}
+.tabbar button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; color: var(--sub); font-size: 10.5px; font-weight: 550;
+  position: relative; transition: color .16s ease;
+}
+.tabbar button[data-on="true"] { color: var(--primary); }
+.tabbar button[data-on="true"]::before {
+  content: ""; position: absolute; top: 2px; width: 22px; height: 2.5px;
+  border-radius: 2px; background: var(--primary);
+}
+
+/* ============================================================
+   今日
+   ============================================================ */
+.hero {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-lg);
+  padding: 22px;
+  background:
+    radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--primary) 55%, transparent) 0%, transparent 55%),
+    linear-gradient(155deg, var(--primary-deep), var(--primary));
+  color: var(--on-primary);
+  box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--primary) 70%, transparent);
+}
+.hero::after {
+  content: ""; position: absolute; right: -46px; bottom: -70px;
+  width: 190px; height: 190px; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, #fff 22%, transparent);
+  box-shadow: 0 0 0 26px color-mix(in srgb, #fff 5%, transparent),
+              0 0 0 54px color-mix(in srgb, #fff 3%, transparent);
+}
+.hero .big { font-family: var(--font-num); font-size: 52px; font-weight: 600; line-height: 1; letter-spacing: -2px; }
+.hero .cap { font-size: 12px; opacity: .82; letter-spacing: .3px; }
+.hero .ghost-line { border-top: 1px solid color-mix(in srgb, #fff 20%, transparent); margin-top: 18px; padding-top: 14px; }
+
+.metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.metric {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 12px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.metric .v { font-family: var(--font-num); font-size: 21px; font-weight: 620; letter-spacing: -.4px; }
+.metric .k { font-size: 10.5px; color: var(--sub); }
+
+.list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; border-radius: var(--r-sm);
+  background: var(--surface); border: 1px solid var(--line);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.list-item:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.deck-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+
+/* ============================================================
+   复习
+   ============================================================ */
+.review-top { display: flex; align-items: center; gap: 12px; padding: 4px 20px 10px; }
+.progress-track { flex: 1; height: 4px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.progress-track i { display: block; height: 100%; border-radius: 4px; background: var(--primary); }
+
+.review-body {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 0 20px 22px;
+  justify-content: center; overflow-y: auto;
+}
+.review-body .flashcard { flex: 0 0 auto; min-height: 300px; }
+
+.flashcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 24px 22px;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-md);
+  position: relative; overflow: hidden;
+}
+.flashcard::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  opacity: .75;
+}
+.qmark { font-size: 11px; letter-spacing: 2px; color: var(--sub); text-transform: uppercase; font-weight: 650; }
+.question { font-size: 22px; line-height: 1.48; font-weight: 650; letter-spacing: -.3px; margin-top: 12px; }
+.answer {
+  margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line);
+  font-size: 14.5px; line-height: 1.7; color: var(--ink);
+}
+.answer .alabel { font-size: 10.5px; color: var(--sub); letter-spacing: 1.4px; margin-bottom: 7px; }
+
+.ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.rate-btn {
+  border-radius: var(--r-sm); padding: 12px 4px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 11.5px; font-weight: 600; color: var(--ink);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.rate-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.rate-btn small { font-size: 9.5px; font-weight: 500; color: var(--sub); }
+.rate-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ============================================================
+   图表
+   ============================================================ */
+.bars { display: flex; align-items: flex-end; gap: 5px; height: 92px; }
+.bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.bars .bar { width: 100%; border-radius: 4px 4px 2px 2px; background: var(--surface-2); position: relative; }
+.bars .bar[data-today="true"] { background: linear-gradient(180deg, var(--primary), var(--primary-deep)); }
+.bars .lbl { font-size: 9px; color: var(--sub); white-space: nowrap; }
+
+.heat { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.heat i {
+  aspect-ratio: 1; border-radius: 4px; display: block;
+  background: color-mix(in srgb, var(--primary) calc(var(--v) * 1%), var(--surface-2));
+}
+
+.dist { display: flex; flex-direction: column; gap: 9px; }
+.dist .line { display: grid; grid-template-columns: 74px 1fr 34px; align-items: center; gap: 10px; font-size: 11.5px; }
+.dist .track { height: 7px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.dist .track i { display: block; height: 100%; border-radius: 5px; background: var(--primary); }
+.dist .n { text-align: right; font-family: var(--font-num); font-weight: 600; }
+
+.ring-wrap { position: relative; display: grid; place-items: center; }
+.ring-center { position: absolute; text-align: center; }
+.ring-center .p { font-family: var(--font-num); font-size: 26px; font-weight: 650; letter-spacing: -1px; }
+.ring-center .c { font-size: 10px; color: var(--sub); }
+
+/* ============================================================
+   设置
+   ============================================================ */
+.setting-group { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.setting-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; min-height: 54px;
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child { border-bottom: 0; }
+.setting-row .grow { flex: 1; min-width: 0; }
+.setting-row .label { font-size: 13.5px; font-weight: 550; }
+.setting-row .desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.setting-row .value { font-size: 12.5px; color: var(--sub); }
+
+.switch { width: 44px; height: 26px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); position: relative; flex: 0 0 auto; transition: background .2s ease; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-sm); transition: transform .2s ease; }
+.switch[data-on="true"] { background: var(--primary); border-color: var(--primary); }
+.switch[data-on="true"] i { transform: translateX(18px); background: #fff; }
+
+.slider { height: 4px; border-radius: 4px; background: var(--surface-2); position: relative; margin: 16px 2px 8px; }
+.slider i { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; background: var(--primary); }
+.slider b { position: absolute; top: 50%; width: 18px; height: 18px; margin-left: -9px; margin-top: -9px; border-radius: 50%; background: var(--surface); border: 2px solid var(--primary); box-shadow: var(--shadow-sm); }
+
+/* ============================================================
+   合规门禁
+   ============================================================ */
+.consent { flex: 1; display: flex; flex-direction: column; padding: 20px 24px 24px; }
+.consent-art {
+  flex: 1; display: grid; place-items: center; position: relative;
+}
+.consent-art .orb {
+  width: 208px; height: 208px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--primary) 34%, transparent), transparent 62%);
+  border: 1px solid var(--line);
+  display: grid; place-items: center;
+  position: relative;
+}
+.consent-art .orb::before, .consent-art .orb::after {
+  content: ""; position: absolute; border-radius: 50%; border: 1px solid var(--line);
+}
+.consent-art .orb::before { inset: -22px; opacity: .6; }
+.consent-art .orb::after { inset: -46px; opacity: .32; }
+.consent-art .core {
+  width: 78px; height: 78px; border-radius: 24px;
+  background: linear-gradient(150deg, var(--primary), var(--primary-deep));
+  display: grid; place-items: center; color: var(--on-primary);
+  box-shadow: 0 20px 44px -18px color-mix(in srgb, var(--primary) 80%, transparent);
+}
+
+/* ============================================================
+   工具类
+   ============================================================ */
+.dim { opacity: .55; }
+.center { text-align: center; }
+.hair { height: 1px; background: var(--line); }
+.tag { font-size: 10.5px; color: var(--sub); background: var(--surface-2); padding: 3px 8px; border-radius: 6px; }
+
+/* 截图模式：?only=xxx 时去掉外框修饰，锁定 390×844 */
+body.capture { background: var(--bg); margin: 0; overflow: hidden; }
+body.capture .toolbar { display: none; }
+body.capture .stage { padding: 0; width: 390px; margin: 0; }
+body.capture .gallery { display: block; width: 390px; }
+body.capture .frame-wrap { display: block; gap: 0; width: 390px; }
+body.capture .frame-label { display: none; }
+body.capture .device {
+  width: 390px; height: 844px; border-radius: 0; border: 0; box-shadow: none; margin: 0;
+}
+
+/* 说明弹窗 */
+dialog {
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); color: var(--ink);
+  padding: 0; max-width: 620px; width: calc(100% - 40px);
+  box-shadow: var(--shadow-lg);
+}
+dialog::backdrop { background: rgba(20,24,20,.42); backdrop-filter: blur(3px); }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.dialog-body { padding: 20px 22px 24px; font-size: 13px; line-height: 1.75; }
+.dialog-body h4 { margin: 0 0 6px; font-size: 13px; }
+.dialog-body code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 11.5px; background: var(--surface-2); padding: 1.5px 6px; border-radius: 5px;
+}
+.dialog-body ul { margin: 6px 0 16px; padding-left: 18px; }
+.dialog-body li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19V5m0 14h16"/><path d="M7.5 15.5c2.2-.4 3.4-1.8 4.2-4.2.6-1.8 1.3-3 2.8-3.5 1.4-.5 2.6-.1 3.5 1"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-title">艾宾浩斯记忆曲线 · UI 设计稿</div>
+      <div class="brand-sub">基于 APK 1.0.2 逆向还原的配色、文案与结构</div>
+    </div>
+  </div>
+
+  <div class="seg" id="viewSeg">
+    <button data-view="gallery" data-on="true">全部页面</button>
+    <button data-view="single">交互演示</button>
+  </div>
+
+  <div class="seg" id="themeSeg">
+    <button data-theme-set="light" data-on="true">浅色</button>
+    <button data-theme-set="dark">深色</button>
+  </div>
+
+  <button class="ghost-btn" id="helpBtn">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/><path d="M12 17h.01"/></svg>
+    怎么改
+  </button>
+</header>
+
+<main class="stage">
+  <div class="gallery" id="stage"></div>
+</main>
+
+<dialog id="helpDlg">
+  <div class="dialog-head">
+    <b>怎么修改这份设计稿</b>
+    <button class="icon-btn plain" onclick="document.getElementById('helpDlg').close()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="dialog-body">
+    <h4>① 换配色 / 圆角 / 字号</h4>
+    只改文件顶部 <code>:root</code> 里的变量。深色模式在 <code>html[data-theme="dark"]</code> 里，
+    两套变量一一对应。
+    <ul>
+      <li><code>--bg</code> 纸白背景 · <code>--surface</code> 卡片 · <code>--line</code> 分隔线</li>
+      <li><code>--primary</code> 墨绿主色 · <code>--accent</code> 赭石强调色</li>
+      <li><code>--r-sm / --r-md / --r-lg</code> 三档圆角</li>
+    </ul>
+
+    <h4>② 改页面内容</h4>
+    <code>DATA</code> 对象是唯一数据源：记忆库、卡片、预测值、洞察指标都在里面。
+    改数字或中文，页面会自动重排。
+
+    <h4>③ 改结构</h4>
+    每个页面是一个函数：<code>screenToday()</code>、<code>screenLibrary()</code>、
+    <code>screenReview()</code>、<code>screenPlan()</code>、<code>screenInsights()</code>、
+    <code>screenSettings()</code>、<code>screenDeck()</code>、<code>screenConsent()</code>。
+    函数返回 HTML 字符串，直接增删标签即可。
+
+    <h4>④ 看单页大图</h4>
+    地址后面加 <code>?only=today</code>（today / library / deck / review / plan /
+    insights / settings / consent），会只渲染这一屏，方便截图或单独调。
+
+    <p class="muted small mt-14">配色与文案来自 APK 反编译：<code>f3.a</code> 调色板、
+    <code>d3.r</code> 记忆库色板、<code>strings-zh.txt</code> 的 375 条中文。</p>
+  </div>
+</dialog>
+
+<script>
+/* ============================================================
+   可修改区域 ②：数据
+   ============================================================ */
+const DATA = {
+  user: { greeting: '上午', streak: 6 },
+  today: { due: 12, done: 0, minutes: 9, reviewed: 0 },
+  decks: [
+    { name: '生物 · 细胞结构',   cards: 5, due: 3, mastered: 0, color: 0, tag: '生物,基础' },
+    { name: '英语 · 雅思核心词', cards: 5, due: 3, mastered: 1, color: 1, tag: '英语,词汇' },
+    { name: '历史 · 世界近代史', cards: 5, due: 2, mastered: 1, color: 2, tag: '历史' },
+    { name: '计算机 · 数据结构', cards: 5, due: 2, mastered: 1, color: 3, tag: '计算机' },
+  ],
+  review: {
+    deck: '生物 · 细胞结构',
+    question: '线粒体的主要功能是什么？',
+    answer: '线粒体是细胞的能量工厂，主要通过有氧呼吸产生 ATP。',
+    tags: ['生物', '基础'],
+    index: 1, total: 12,
+  },
+  plan: {
+    limit: 20,
+    goal: '每天保持 15 分钟',
+    goals: ['每天保持 10 分钟', '每天保持 15 分钟', '每天完成到期内容'],
+    forecast: [12, 9, 14, 7, 5, 11, 8, 6, 4, 9, 3, 7, 5, 2],
+    avgLoad: 8.6, peak: 14,
+  },
+  insights: {
+    radar: [
+      { k: '保持', v: 82 },
+      { k: '准确', v: 91 },
+      { k: '掌握', v: 34 },
+      { k: '坚持', v: 78 },
+      { k: '均衡', v: 66 },
+      { k: '稳定', v: 74 },
+    ],
+    activity: [18,0,42,26,0,12,63, 34,0,28,55,0,21,47, 9,0,38,61,0,17,52, 30,0,44,25,0,36,58],
+    accuracy: 91,
+    reviews30: 248,
+    rating: [ {k:'重来',v:18,c:'#B3261E'}, {k:'困难',v:34,c:'#BF5B38'}, {k:'记住',v:152,c:'#2F6A43'}, {k:'轻松',v:44,c:'#91C89C'} ],
+    stage:  [ {k:'新卡',v:20}, {k:'学习中',v:18}, {k:'巩固中',v:26}, {k:'已掌握',v:16} ],
+    risk:   [ {k:'临界 <50%',v:9}, {k:'渐淡 50–69%',v:14}, {k:'稳定 70–84%',v:27}, {k:'牢固 ≥85%',v:30} ],
+    span:   [ {k:'即时 <1天',v:20}, {k:'短期 1–7天',v:26}, {k:'中期 8–29天',v:21}, {k:'长期 ≥30天',v:13} ],
+    hourly: [
+      { k:'清晨', range:'0–7',  n:22, acc:86 },
+      { k:'上午', range:'7–12', n:96, acc:94 },
+      { k:'午后', range:'12–17',n:71, acc:88 },
+      { k:'傍晚', range:'17–21',n:44, acc:91 },
+      { k:'夜间', range:'21–24',n:15, acc:79 },
+    ],
+    decks: [
+      { name:'英语 · 雅思核心词', review:104, acc:94, keep:86, mastery:20 },
+      { name:'生物 · 细胞结构',   review: 62, acc:90, keep:81, mastery:20 },
+      { name:'历史 · 世界近代史', review: 51, acc:87, keep:74, mastery:20 },
+      { name:'计算机 · 数据结构', review: 31, acc:92, keep:79, mastery:20 },
+    ],
+  },
+};
+
+const DECK_COLORS = ['#3C7550', '#426A80', '#B85D3C', '#696E6B', '#6D5F8E', '#9A7A37'];
+
+/* ============================================================
+   图标
+   ============================================================ */
+const I = {
+  today: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6.5A1.5 1.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v13"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H19"/><path d="M8 9h7M8 13h5"/></svg>`,
+  library: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="7" height="15" rx="1.4"/><rect x="13.5" y="4.5" width="7" height="15" rx="1.4"/><path d="M3.5 9h7M13.5 9h7"/></svg>`,
+  plan: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10.5h17"/></svg>`,
+  insights: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7.4 4.3v8.4L12 20.5l-7.4-4.3V7.8z"/><path d="M12 12l7.4-4.2M12 12v8.5M12 12L4.6 7.8"/></svg>`,
+  settings: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>`,
+  back: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg>`,
+  plus: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>`,
+  search: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M16 16l4 4"/></svg>`,
+  chev: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg>`,
+  more: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg>`,
+  close: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`,
+  bell: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16s-2-1.5-2-6.5"/><path d="M10.3 19.5a2 2 0 0 0 3.4 0"/></svg>`,
+  check: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.6 4.6L19 7"/></svg>`,
+  clock: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6V12l3 1.8"/></svg>`,
+  flame: `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5s5.2 4.4 5.2 9.3c0 3.2-2.3 5.8-5.2 5.8s-5.2-2.6-5.2-5.8C6.8 7.6 12 2.5 12 2.5z" opacity=".9"/></svg>`,
+  folder: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h3.2l1.8 2.2h8A2 2 0 0 1 20.5 9.7v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>`,
+};
+
+/* ============================================================
+   小组件
+   ============================================================ */
+const statusbar = () => `
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="icons">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 3.8a10 10 0 0 1 14 0"/><path d="M3.6 6.4a6.4 6.4 0 0 1 8.8 0"/><path d="M6.2 9a2.8 2.8 0 0 1 3.6 0"/></svg>
+      <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x=".6" y=".6" width="19" height="9.8" rx="2.6" stroke="currentColor" opacity=".45"/><rect x="2.2" y="2.2" width="13" height="6.6" rx="1.4" fill="currentColor"/><path d="M21.4 4v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".5"/></svg>
+    </span>
+  </div>`;
+
+const tabbar = (active) => {
+  const items = [
+    ['today', '今日', I.today], ['library', '记忆库', I.library],
+    ['plan', '计划', I.plan], ['insights', '洞察', I.insights],
+  ];
+  return `<nav class="tabbar">${items.map(([id, label, icon]) => `
+    <button data-tab="${id}" data-on="${active === id}">${icon}<span>${label}</span></button>`).join('')}
+  </nav>`;
+};
+
+const ring = (pct, size = 132, stroke = 11, color = 'var(--primary)') => {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="${stroke}"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct / 100)}"
+      transform="rotate(-90 ${size / 2} ${size / 2})"/>
+  </svg>`;
+};
+
+const radar = (metrics, size = 232) => {
+  const cx = size / 2, cy = size / 2, R = size * 0.335, n = metrics.length;
+  const pt = (i, ratio) => {
+    const a = (-90 + i * (360 / n)) * Math.PI / 180;
+    return [cx + Math.cos(a) * R * ratio, cy + Math.sin(a) * R * ratio];
+  };
+  const poly = (ratio) => metrics.map((_, i) => pt(i, ratio).map(v => v.toFixed(1)).join(',')).join(' ');
+  const data = metrics.map((m, i) => pt(i, Math.max(0.04, m.v / 100)).map(v => v.toFixed(1)).join(',')).join(' ');
+  const rings = [0.33, 0.66, 1].map(rr =>
+    `<polygon points="${poly(rr)}" fill="none" stroke="var(--line)" stroke-width="1"/>`).join('');
+  const spokes = metrics.map((_, i) => {
+    const [x, y] = pt(i, 1);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+  }).join('');
+  const labels = metrics.map((m, i) => {
+    const [x, y] = pt(i, 1.2);
+    return `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle"
+      font-size="10.5" font-weight="600" fill="var(--sub)" font-family="var(--font)">${m.k}</text>`;
+  }).join('');
+  const dots = metrics.map((m, i) => {
+    const [x, y] = pt(i, Math.max(0.04, m.v / 100));
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="var(--primary)"/>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${rings}${spokes}
+    <polygon points="${data}" fill="color-mix(in srgb, var(--primary) 20%, transparent)" stroke="var(--primary)" stroke-width="1.8" stroke-linejoin="round"/>
+    ${dots}${labels}
+  </svg>`;
+};
+
+const barChart = (values, opts = {}) => {
+  const max = Math.max(...values);
+  return `<div class="bars">${values.map((v, i) => `
+    <div class="col">
+      <div class="bar" data-today="${i === 0}" style="height:${Math.max(6, (v / max) * 100)}%"></div>
+      <span class="lbl">${i === 0 ? '今天' : (opts.labels ? opts.labels[i] : '')}</span>
+    </div>`).join('')}</div>`;
+};
+
+const heatmap = (values) => `<div class="heat">${values.map(v =>
+  `<i style="--v:${Math.min(100, (v / 60) * 100).toFixed(0)}" title="${v} 次"></i>`).join('')}</div>`;
+
+const dist = (items, unit = '') => `<div class="dist">${items.map(it => `
+  <div class="line">
+    <span class="muted">${it.k}</span>
+    <span class="track"><i style="width:${Math.min(100, it.v / Math.max(...items.map(x => x.v)) * 100)}%;${it.c ? `background:${it.c}` : ''}"></i></span>
+    <span class="n">${it.v}${unit}</span>
+  </div>`).join('')}</div>`;
+
+/* ============================================================
+   页面 ①：合规门禁
+   ============================================================ */
+function screenConsent() {
+  return `
+  ${statusbar()}
+  <div class="consent">
+    <div class="consent-art">
+      <div class="orb"><div class="core">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19V5m0 14h16"/><path d="M7.5 15.5c2.2-.4 3.4-1.8 4.2-4.2.6-1.8 1.3-3 2.8-3.5 1.4-.5 2.6-.1 3.5 1"/>
+        </svg>
+      </div></div>
+    </div>
+    <div class="stack gap-8">
+      <span class="pill primary" style="align-self:flex-start">本地优先 · 离线可用</span>
+      <h1 class="h1" style="font-size:30px;margin-top:6px">欢迎使用<br>艾宾浩斯记忆曲线</h1>
+      <p class="small muted" style="margin:10px 0 0;line-height:1.75">
+        在开始建立长期记忆前，请阅读并理解用户协议与隐私政策。<br>
+        只有你明确同意后，应用才会进入正常功能。
+      </p>
+      <div class="card flat pad mt-14" style="background:var(--surface-2);border-color:transparent">
+        <div class="row gap-10">
+          <span style="color:var(--primary)">${I.check}</span>
+          <div class="small" style="line-height:1.6">卡片、复习记录与偏好仅保存在本机。<br>应用不含账号、广告或数据追踪。</div>
+        </div>
+      </div>
+      <div class="row gap-12 mt-18">
+        <button class="btn btn-ghost" style="flex:1">不同意并退出</button>
+        <button class="btn btn-primary" style="flex:1.35">同意并继续</button>
+      </div>
+      <p class="tiny muted center" style="margin-top:12px">
+        点击「同意并继续」即表示你已阅读、理解并同意上述文件。
+      </p>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   页面 ②：今日
+   ============================================================ */
+function screenToday() {
+  const d = DATA.today;
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar">
+      <div class="titles">
+        <div class="eyebrow">${DATA.user.greeting} · 11月9日 星期日</div>
+        <h1 class="h1">今日复习</h1>
+      </div>
+      <button class="icon-btn plain" data-act="settings" title="设置">${I.settings}</button>
+    </div>
+
+    <div class="scroll">
+      <div class="hero">
+        <div class="row between" style="align-items:flex-start">
+          <div>
+            <div class="cap">今天待复习</div>
+            <div class="big">${d.due}<span style="font-size:19px;font-weight:500;opacity:.7;margin-left:5px">张</span></div>
+            <div class="cap" style="margin-top:6px">预计 ${d.minutes} 分钟 · 保持率 82%</div>
+          </div>
+          <span class="pill" style="background:rgba(255,255,255,.16);color:#fff;border-color:transparent">
+            ${I.flame} 连续 ${DATA.user.streak} 天
+          </span>
+        </div>
+        <div class="ghost-line row between">
+          <div class="cap">本轮完成 ${d.done} / ${d.due}</div>
+          <button class="btn" style="padding:9px 18px;background:#fff;color:var(--primary-deep);font-size:12.5px">开始今日复习</button>
+        </div>
+      </div>
+
+      <div class="metric-row mt-14">
+        <div class="metric"><span class="v">12</span><span class="k">今日到期</span></div>
+        <div class="metric"><span class="v">82<span style="font-size:12px">%</span></span><span class="k">记忆保持</span></div>
+        <div class="metric"><span class="v">${DATA.user.streak}<span style="font-size:12px">天</span></span><span class="k">连续复习</span></div>
+      </div>
+
+      <div class="row between mt-24" style="margin-bottom:10px">
+        <h2 class="h2">今日卡片</h2>
+        <button class="row gap-4 tiny muted" style="font-weight:600">按记忆库查看 ${I.chev}</button>
+      </div>
+
+      <div class="stack gap-8">
+        ${[
+          ['生物 · 细胞结构', '线粒体的主要功能是什么？', 0, '3 张到期'],
+          ['英语 · 雅思核心词', 'ubiquitous 的准确含义？', 1, '3 张到期'],
+          ['历史 · 世界近代史', '《权利法案》颁布于哪一年？', 2, '2 张到期'],
+        ].map(([deck, q, c, due]) => `
+          <div class="list-item">
+            <span class="deck-dot" style="background:${DECK_COLORS[c]}"></span>
+            <div class="grow" style="flex:1;min-width:0">
+              <div class="h3" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q}</div>
+              <div class="tiny muted" style="margin-top:3px">${deck} · ${due}</div>
+            </div>
+            <span class="muted">${I.chev}</span>
+          </div>`).join('')}
+      </div>
+
+      <div class="card flat mt-14 pad" style="background:var(--surface-2);border-color:transparent">
+        <div class="row gap-10">
+          <span style="color:var(--accent)">${I.clock}</span>
+          <div class="small" style="line-height:1.6">明天还有 <b>9 张</b>到期，节奏很稳。</div>
+        </div>
+      </div>
+    </div>
+    ${tabbar('today')}
+  </div>`;
+}
+
+/* ============================================================
+   页面 ③：复习会话
+   ============================================================ */
+function screenReview(revealed = false) {
+  const r = DATA.review;
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="review-top">
+      <button class="icon-btn plain">${I.close}</button>
+      <div class="progress-track"><i style="width:${(r.index / r.total) * 100}%"></i></div>
+      <span class="tiny num muted" style="font-weight:600">${r.index}/${r.total}</span>
+    </div>
+
+    <div class="review-body">
+      <div class="chips" style="gap:6px">
+        <span class="tag">${r.deck}</span>
+        ${r.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+      </div>
+
+      <div class="flashcard">
+        <div class="qmark">问题</div>
+        <div class="question">${r.question}</div>
+
+        ${revealed ? `
+          <div class="answer">
+            <div class="alabel">答案</div>
+            ${r.answer}
+          </div>` : `
+          <div style="flex:1"></div>
+          <div class="center" style="padding-bottom:6px">
+            <div class="tiny muted" style="line-height:1.7">先在心里完整回答，再查看答案</div>
+          </div>`}
+      </div>
+
+      ${revealed ? `
+        <div>
+          <div class="tiny muted center" style="margin-bottom:9px">这次回忆得怎么样？</div>
+          <div class="ratings">
+            ${[
+              ['重来', '1 分钟', '#B3261E'],
+              ['困难', '1 天', '#BF5B38'],
+              ['记住', '3 天', '#2F6A43'],
+              ['轻松', '7 天', '#91C89C'],
+            ].map(([k, v, c]) => `
+              <button class="rate-btn" style="border-top:2px solid ${c}">
+                <span style="font-size:13px">${k}</span>
+                <small>${v}</small>
+              </button>`).join('')}
+          </div>
+          <p class="tiny muted center" style="margin:11px 0 0">间隔由算法自动计算，明天会再次出现</p>
+        </div>
+      ` : `
+        <div>
+          <button class="btn btn-primary btn-block btn-lg">显示答案</button>
+          <p class="tiny muted center" style="margin:10px 0 0">点击卡片也可以翻面</p>
+        </div>
+      `}
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   页面 ④：记忆库列表
+   ============================================================ */
+function screenLibrary() {
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar">
+      <div class="titles">
+        <div class="eyebrow">共 ${DATA.decks.length} 个 · 20 张卡片</div>
+        <h1 class="h1">记忆库</h1>
+      </div>
+      <button class="icon-btn">${I.plus}</button>
+    </div>
+
+    <div class="scroll">
+      <div class="row gap-8" style="padding:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-full)">
+        <span class="muted">${I.search}</span>
+        <span class="small muted">搜索问题、答案或标签</span>
+      </div>
+
+      <div class="chips mt-14">
+        ${['全部卡片', '今日到期', '新卡', '已掌握'].map((t, i) =>
+          `<span class="chip" data-on="${i === 0}">${t}</span>`).join('')}
+      </div>
+
+      <div class="stack gap-10 mt-18">
+        ${DATA.decks.map(d => `
+          <div class="card pad" style="border-left:3px solid ${DECK_COLORS[d.color]}">
+            <div class="row between">
+              <div class="h2" style="font-size:14.5px">${d.name}</div>
+              <span class="muted">${I.chev}</span>
+            </div>
+            <div class="row gap-14 tiny muted" style="margin-top:10px">
+              <span><b style="color:var(--ink);font-weight:620" class="num">${d.cards}</b> 张卡片</span>
+              <span><b style="color:var(--accent);font-weight:620" class="num">${d.due}</b> 张到期</span>
+              <span><b style="color:var(--ink);font-weight:620" class="num">${d.mastered}</b> 已掌握</span>
+              <span style="margin-left:auto">${d.tag}</span>
+            </div>
+            <div class="progress-track" style="margin-top:11px;height:3px">
+              <i style="width:${(d.mastered / d.cards) * 100}%;background:${DECK_COLORS[d.color]}"></i>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <div class="card flat mt-14 pad center" style="background:var(--surface-2);border-color:transparent">
+        <div class="small muted" style="line-height:1.65">示例可在设置中一键清除，不影响自己创建的内容</div>
+      </div>
+    </div>
+    ${tabbar('library')}
+  </div>`;
+}
+
+/* ============================================================
+   页面 ⑤：记忆库详情
+   ============================================================ */
+function screenDeck() {
+  const cards = [
+    ['线粒体的主要功能是什么？', '生物 · 基础', '3 天', 2],
+    ['细胞膜的基本结构模型是什么？', '生物 · 基础', '7 天', 3],
+    ['植物细胞与动物细胞共有的细胞器？', '生物 · 基础', '1 天', 1],
+    ['有丝分裂中染色体排列在赤道板的时期？', '生物 · 基础', '今天', 0],
+    ['核糖体承担什么功能？', '生物 · 基础', '新卡', 0],
+  ];
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar" style="padding-bottom:8px">
+      <button class="icon-btn plain" data-act="back">${I.back}</button>
+      <div class="titles">
+        <div class="eyebrow">记忆库</div>
+        <h1 class="h1" style="font-size:21px">生物 · 细胞结构</h1>
+      </div>
+      <button class="icon-btn plain">${I.more}</button>
+    </div>
+
+    <div class="scroll">
+      <div class="card pad" style="border-left:3px solid ${DECK_COLORS[0]}">
+        <div class="row between">
+          <div>
+            <div class="row gap-8"><span class="deck-dot" style="background:${DECK_COLORS[0]}"></span>
+              <span class="tiny muted">5 张卡片</span></div>
+            <div class="h1" style="font-size:20px;margin-top:8px">今天 3 张 · 已掌握 0 张</div>
+          </div>
+          <button class="btn btn-primary" style="padding:11px 18px;font-size:12.5px">开始复习</button>
+        </div>
+      </div>
+
+      <div class="chips mt-14">
+        ${['全部', '今日', '新卡', '已掌握'].map((t, i) =>
+          `<span class="chip" data-on="${i === 1}">${t}</span>`).join('')}
+      </div>
+
+      <div class="stack gap-8 mt-14">
+        ${cards.map(([q, tag, due, tone]) => `
+          <div class="list-item">
+            <div class="grow" style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:560;line-height:1.45">${q}</div>
+              <div class="row gap-6" style="margin-top:6px">
+                <span class="tag">${tag}</span>
+                <span class="tiny ${tone === 0 ? 'muted' : ''}" style="${tone === 0 ? 'color:var(--accent);font-weight:600' : 'color:var(--sub)'}">${due}</span>
+              </div>
+            </div>
+            <span class="muted">${I.chev}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   页面 ⑥：计划
+   ============================================================ */
+function screenPlan() {
+  const p = DATA.plan;
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar">
+      <div class="titles">
+        <div class="eyebrow">未来 14 天</div>
+        <h1 class="h1">计划</h1>
+      </div>
+      <button class="icon-btn plain" data-act="settings">${I.settings}</button>
+    </div>
+
+    <div class="scroll">
+      <div class="card pad-lg">
+        <div class="row between">
+          <h2 class="h2">复习负荷</h2>
+          <span class="pill primary">平稳</span>
+        </div>
+        <div class="mt-14">${barChart(p.forecast)}</div>
+        <div class="divider"></div>
+        <div class="metric-row" style="gap:8px">
+          <div class="metric" style="border:0;background:transparent;padding:0">
+            <span class="v" style="font-size:18px">${p.avgLoad}</span><span class="k">日均负荷</span></div>
+          <div class="metric" style="border:0;background:transparent;padding:0">
+            <span class="v" style="font-size:18px">${p.peak}</span><span class="k">峰值</span></div>
+          <div class="metric" style="border:0;background:transparent;padding:0">
+            <span class="v" style="font-size:18px">12</span><span class="k">今日待复习</span></div>
+        </div>
+      </div>
+
+      <div class="card pad mt-14">
+        <div class="row between">
+          <h2 class="h2">本周节奏</h2>
+          <span class="tiny muted">连续 ${DATA.user.streak} 天</span>
+        </div>
+        <div class="row between mt-14" style="align-items:flex-end">
+          ${['一','二','三','四','五','六','日'].map((d, i) => `
+            <div class="stack center gap-6" style="align-items:center">
+              <div style="width:26px;height:${[34,52,44,60,38,22,14][i]}px;border-radius:7px;
+                background:${i < 5 ? 'var(--primary)' : 'var(--surface-2)'};opacity:${i < 5 ? 1 - i * 0.06 : 1}"></div>
+              <span class="tiny muted">${d}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="card pad mt-14">
+        <h2 class="h2">每日新卡上限</h2>
+        <div class="row between" style="margin-top:4px">
+          <span class="tiny muted">避免短期加入太多内容造成复习堆积</span>
+          <span class="num" style="font-weight:650">${p.limit} 张 / 天</span>
+        </div>
+        <div class="slider"><i style="width:${(p.limit - 5) / 95 * 100}%"></i><b style="left:${(p.limit - 5) / 95 * 100}%"></b></div>
+        <div class="row between tiny muted"><span>5</span><span>100</span></div>
+      </div>
+
+      <div class="card pad mt-14">
+        <h2 class="h2">学习目标</h2>
+        <div class="stack gap-8 mt-10">
+          ${p.goals.map(g => `
+            <div class="list-item" style="${g === p.goal ? 'border-color:var(--primary);background:color-mix(in srgb,var(--primary) 6%,var(--surface))' : ''}">
+              <span style="color:${g === p.goal ? 'var(--primary)' : 'var(--line)'}">
+                ${g === p.goal ? I.check : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/></svg>`}
+              </span>
+              <span style="flex:1;font-size:13px;font-weight:550">${g}</span>
+              ${g === p.goal ? '<span class="tiny" style="color:var(--primary);font-weight:600">当前</span>' : ''}
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    ${tabbar('plan')}
+  </div>`;
+}
+
+/* ============================================================
+   页面 ⑦：洞察
+   ============================================================ */
+function screenInsights() {
+  const s = DATA.insights;
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar">
+      <div class="titles">
+        <div class="eyebrow">近 30 天 · 248 次复习</div>
+        <h1 class="h1">洞察</h1>
+      </div>
+      <button class="icon-btn plain" data-act="settings">${I.settings}</button>
+    </div>
+
+    <div class="scroll">
+      <!-- 六维雷达 -->
+      <div class="card pad-lg">
+        <div class="row between">
+          <h2 class="h2">六维健康指数</h2>
+          <span class="pill primary">状态很好</span>
+        </div>
+        <div class="center" style="margin-top:4px">${radar(s.radar)}</div>
+        <p class="tiny muted center" style="margin:0">综合保持、准确、掌握、坚持、均衡与稳定性</p>
+      </div>
+
+      <!-- 活跃 + 准确率 -->
+      <div class="row gap-10 mt-14">
+        <div class="card pad" style="flex:1.5">
+          <div class="row between">
+            <h3 class="h3">28 天活跃趋势</h3>
+            <span class="tiny muted">连续 6 天</span>
+          </div>
+          <div class="mt-10">${heatmap(s.activity)}</div>
+          <div class="row between tiny muted" style="margin-top:7px"><span>4 周前</span><span>本周</span></div>
+        </div>
+        <div class="card pad center" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <h3 class="h3" style="align-self:flex-start">30 天准确率</h3>
+          <div class="ring-wrap" style="margin-top:6px">
+            ${ring(s.accuracy, 96, 9)}
+            <div class="ring-center"><div class="p">${s.accuracy}<span style="font-size:13px">%</span></div>
+              <div class="c">记得</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 回答质量 -->
+      <div class="card pad mt-14">
+        <div class="row between">
+          <h2 class="h2">回答质量分布</h2>
+          <span class="tiny muted">248 次</span>
+        </div>
+        <div class="mt-14">${s.rating.map(r => `
+          <div class="row gap-10" style="margin-bottom:9px">
+            <span style="width:56px;font-size:11.5px;color:var(--sub)">${r.k}</span>
+            <span class="track" style="flex:1;height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden">
+              <i style="display:block;height:100%;border-radius:5px;width:${r.v / 152 * 100}%;background:${r.c}"></i>
+            </span>
+            <span class="num tiny" style="width:28px;text-align:right;font-weight:600">${r.v}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- 阶段 + 风险 -->
+      <div class="row gap-10 mt-14">
+        <div class="card pad" style="flex:1">
+          <h3 class="h3">学习阶段结构</h3>
+          <div class="mt-10">${dist(s.stage)}</div>
+        </div>
+        <div class="card pad" style="flex:1">
+          <h3 class="h3">记忆风险分层</h3>
+          <div class="mt-10">${dist(s.risk)}</div>
+        </div>
+      </div>
+
+      <!-- 间隔 -->
+      <div class="card pad mt-14">
+        <div class="row between">
+          <h2 class="h2">复习间隔结构</h2>
+          <span class="tiny muted">平均 12.4 天</span>
+        </div>
+        <div class="mt-14">${dist(s.span)}</div>
+      </div>
+
+      <!-- 时段 -->
+      <div class="card pad mt-14">
+        <div class="row between">
+          <h2 class="h2">时段表现分析</h2>
+          <span class="tiny muted">26 天样本</span>
+        </div>
+        <div class="mt-14">
+          ${s.hourly.map(h => `
+            <div class="row gap-8" style="margin-bottom:9px">
+              <span style="width:30px;font-size:11px;color:var(--sub)">${h.k}</span>
+              <span class="tiny muted" style="width:34px">${h.range}</span>
+              <span style="flex:1;height:7px;border-radius:5px;background:var(--surface-2);overflow:hidden">
+                <i style="display:block;height:100%;width:${h.n / 96 * 100}%;border-radius:5px;background:var(--primary);opacity:.85"></i>
+              </span>
+              <span class="num tiny" style="width:44px;text-align:right">${h.acc}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- 记忆库对比 -->
+      <div class="card pad mt-14">
+        <div class="row between">
+          <h2 class="h2">记忆库对比</h2>
+          <span class="tiny muted">按保持率</span>
+        </div>
+        <div class="mt-10">
+          ${s.decks.map(d => `
+            <div class="row gap-10" style="padding:9px 0;border-bottom:1px solid var(--line)">
+              <span style="flex:1;font-size:12px;font-weight:550">${d.name}</span>
+              <span class="num tiny" style="width:34px;text-align:right">${d.acc}%</span>
+              <span class="num tiny muted" style="width:34px;text-align:right">${d.review}</span>
+            </div>`).join('')}
+          <div class="row tiny muted" style="padding-top:8px">
+            <span style="flex:1"></span><span style="width:34px;text-align:right">准确</span><span style="width:34px;text-align:right">次数</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card flat mt-14 pad" style="background:var(--surface-2);border-color:transparent">
+        <div class="row gap-10">
+          <span style="color:var(--accent)">${I.clock}</span>
+          <div class="tiny" style="line-height:1.65;color:var(--sub)">
+            全部分析由本机复习记录计算。保持率用于学习节奏参考，不代表医学测量结果。
+          </div>
+        </div>
+      </div>
+    </div>
+    ${tabbar('insights')}
+  </div>`;
+}
+
+/* ============================================================
+   页面 ⑧：设置
+   ============================================================ */
+function screenSettings() {
+  const row = (label, desc, right, border = true) => `
+    <div class="setting-row" ${border ? '' : 'style="border-bottom:0"'}>
+      <div class="grow">
+        <div class="label">${label}</div>
+        ${desc ? `<div class="desc">${desc}</div>` : ''}
+      </div>
+      ${right}
+    </div>`;
+  return `
+  ${statusbar()}
+  <div class="screen">
+    <div class="appbar">
+      <button class="icon-btn plain" data-act="back">${I.back}</button>
+      <div class="titles"><h1 class="h1" style="font-size:22px;margin-top:6px">设置</h1></div>
+    </div>
+
+    <div class="scroll">
+      <div class="tiny muted" style="margin:2px 4px 8px;letter-spacing:1.2px;font-weight:650">每日节奏</div>
+      <div class="setting-group">
+        ${row('每日新卡上限', '随时可以调整', '<span class="value num">20 张 / 天</span>')}
+        ${row('学习目标', '决定每日提醒的强度', '<span class="value">15 分钟</span>', false)}
+      </div>
+
+      <div class="tiny muted" style="margin:20px 4px 8px;letter-spacing:1.2px;font-weight:650">显示与反馈</div>
+      <div class="setting-group">
+        ${row('外观', '跟随系统 / 浅色 / 深色', '<span class="value">跟随系统</span>')}
+        ${row('触感反馈', '翻面和评分时轻微振动', '<span class="switch" data-on="true"><i></i></span>')}
+        ${row('显示「先在心里回答」的提示', '', '<span class="switch" data-on="true"><i></i></span>', false)}
+      </div>
+
+      <div class="tiny muted" style="margin:20px 4px 8px;letter-spacing:1.2px;font-weight:650">示例与模板</div>
+      <div class="setting-group">
+        ${row('加载模板内容', '重新生成 4 个示例记忆库，不覆盖自己的内容', I.chev)}
+        ${row('清除示例内容', '只删除带「示例」标记的内容，用户内容会保留', I.chev, false)}
+      </div>
+
+      <div class="tiny muted" style="margin:20px 4px 8px;letter-spacing:1.2px;font-weight:650">数据与备份</div>
+      <div class="setting-group">
+        ${row('批量导入', '支持 CSV、TXT 与制表符文件', I.chev)}
+        ${row('导出备份', '生成可再次导入的标准 CSV', I.chev)}
+        ${row('清除复习记录', '保留卡片与当前学习进度', I.chev)}
+        ${row('重置全部学习进度', '所有卡片会立即重新到期', I.chev, false)}
+      </div>
+
+      <div class="tiny muted" style="margin:20px 4px 8px;letter-spacing:1.2px;font-weight:650">关于与支持</div>
+      <div class="setting-group">
+        ${row('用户协议', '', I.chev)}
+        ${row('隐私政策', '', I.chev)}
+        ${row('意见反馈', '提交问题或建议', I.chev)}
+        ${row('版本', '', '<span class="value">1.0.2</span>', false)}
+      </div>
+
+      <p class="tiny muted center" style="margin:22px 0 8px;line-height:1.7">
+        艾宾浩斯记忆曲线 · 离线优先<br>卡片与复习记录仅保存在本机
+      </p>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+const SCREENS = {
+  consent:  { label: '合规门禁', sub: 'privacy_consent_screen · 首次启动', fn: () => screenConsent() },
+  today:    { label: '今日',     sub: 'today_screen · 主入口',            fn: () => screenToday() },
+  review:   { label: '复习会话', sub: 'review_screen · 翻面 + 四档评分',   fn: () => screenReview(true) },
+  library:  { label: '记忆库',   sub: 'library_screen · 列表',            fn: () => screenLibrary() },
+  deck:     { label: '记忆库详情', sub: 'deck_detail_screen',             fn: () => screenDeck() },
+  plan:     { label: '计划',     sub: 'plan_screen · 14 天负荷',          fn: () => screenPlan() },
+  insights: { label: '洞察',     sub: 'insights · 六维雷达',              fn: () => screenInsights() },
+  settings: { label: '设置',     sub: 'settings_screen · 五组',           fn: () => screenSettings() },
+};
+
+const frame = (key) => `
+  <div class="frame-wrap" data-screen="${key}">
+    <div class="frame-label"><b>${SCREENS[key].label}</b><span>${SCREENS[key].sub}</span></div>
+    <div class="device">${SCREENS[key].fn()}</div>
+  </div>`;
+
+const params = new URLSearchParams(location.search);
+const only = params.get('only');
+const themeParam = params.get('theme');
+if (themeParam) document.documentElement.dataset.theme = themeParam;
+
+/* 调试：?probe=1 时把布局尺寸写进 title，便于无头浏览器读取 */
+if (params.get('probe')) {
+  requestAnimationFrame(() => setTimeout(() => {
+    const d = document.querySelector('.device');
+    const cs = d ? getComputedStyle(d) : null;
+    document.title = JSON.stringify({
+      vw: document.documentElement.clientWidth,
+      vh: document.documentElement.clientHeight,
+      scrollW: document.documentElement.scrollWidth,
+      bodyW: document.body.scrollWidth,
+      deviceW: d ? d.getBoundingClientRect().width : null,
+      deviceLeft: d ? d.getBoundingClientRect().left : null,
+      deviceCssW: cs ? cs.width : null,
+    });
+  }, 60));
+}
+
+const stage = document.getElementById('stage');
+
+function renderGallery() {
+  document.body.classList.remove('capture');
+  stage.style.display = '';
+  stage.className = 'gallery';
+  stage.innerHTML = Object.keys(SCREENS).map(frame).join('');
+}
+
+function renderSingle() {
+  document.body.classList.remove('capture');
+  stage.className = 'gallery';
+  stage.style.display = 'flex';
+  stage.style.justifyContent = 'center';
+  stage.innerHTML = `<div class="frame-wrap"><div class="device" id="liveDevice">${screenToday()}</div></div>`;
+  bindLive(document.getElementById('liveDevice'));
+}
+
+if (only && SCREENS[only]) {
+  // 截图模式：单屏、无外框、无工具栏
+  document.body.classList.add('capture');
+  stage.className = 'gallery';
+  stage.innerHTML = `<div class="frame-wrap"><div class="device">${SCREENS[only].fn()}</div></div>`;
+  // ?scale=2 时整体放大，配合 780×1688 的窗口截出 2x 清晰图
+  const sc = Number(params.get('scale') || 1);
+  if (sc !== 1) document.body.style.zoom = String(sc);
+} else if (params.get('view') === 'single') {
+  renderSingle();
+} else {
+  renderGallery();
+}
+
+/* ---------- 交互演示 ---------- */
+const NAV = { today: 'today', library: 'library', plan: 'plan', insights: 'insights' };
+
+function bindLive(root) {
+  root.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-tab]');
+    if (tab) {
+      const id = tab.dataset.tab;
+      root.innerHTML = ({
+        today: screenToday(), library: screenLibrary(),
+        plan: screenPlan(), insights: screenInsights(),
+      })[id];
+      bindLive(root);
+      return;
+    }
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const label = btn.textContent.trim();
+
+    if (btn.dataset.act === 'settings') {
+      root.innerHTML = screenSettings();
+      bindLive(root);
+      return;
+    }
+    if (btn.dataset.act === 'back') {
+      root.innerHTML = screenToday();
+      bindLive(root);
+      return;
+    }
+    if (label.includes('开始今日复习')) {
+      root.innerHTML = screenReview(false);
+      bindLive(root);
+      return;
+    }
+    if (label === '显示答案' || btn.closest('.flashcard')) {
+      root.innerHTML = screenReview(true);
+      bindLive(root);
+      return;
+    }
+    if (btn.classList.contains('rate-btn')) {
+      root.innerHTML = screenToday();
+      bindLive(root);
+    }
+  });
+}
+
+/* ---------- 工具栏 ---------- */
+document.getElementById('viewSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-view]');
+  if (!b) return;
+  [...e.currentTarget.children].forEach(x => x.dataset.on = String(x === b));
+  if (b.dataset.view === 'gallery') renderGallery(); else renderSingle();
+});
+
+document.getElementById('themeSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-theme-set]');
+  if (!b) return;
+  [...e.currentTarget.children].forEach(x => x.dataset.on = String(x === b));
+  document.documentElement.dataset.theme = b.dataset.themeSet;
+});
+
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpDlg').showModal();
+});
+</script>
+<script src="export-svg.js"></script>
+</body>
+</html>
