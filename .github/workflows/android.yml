@@ -149,7 +149,14 @@ jobs:
           ls "$HOME/Qt/6.11.1" || true
 
       - name: 安装部署工具
-        run: python3 -m pip install "pyside6==6.11.1" buildozer cython
+        shell: bash
+        run: |
+          python3 -m pip install "pyside6==6.11.1" buildozer cython
+          # pyside6-android-deploy 自己会检查这份依赖（pkginfo 等）
+          REQ=$(python3 -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'scripts', 'requirements-android.txt'))")
+          echo "requirements: $REQ"
+          cat "$REQ"
+          python3 -m pip install -r "$REQ"
 
       - name: 打 APK（debug 模式）
         shell: bash
