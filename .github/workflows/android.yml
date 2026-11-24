@@ -155,13 +155,16 @@ jobs:
         shell: bash
         run: |
           # wheel 文件名是全小写（pyside6-...whl / shiboken6-...whl），用 -iname 找
-          PS=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'pyside6-*.whl' 2>/dev/null | head -1)
-          SH=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'shiboken6-*.whl' 2>/dev/null | head -1)
+          # 注意：find 遇到不存在的目录会返回 1，配合 pipefail 会直接把这一步干掉，
+          # 所以先把两个目录都建出来（幂等）。
+          mkdir -p pyside-setup/dist pyside-setup/dist_android
+          PS=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
+          SH=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
           echo "PySide6 wheel: $PS"
           echo "shiboken6 wheel: $SH"
           if [ -z "$PS" ] || [ -z "$SH" ]; then
             echo "找不到 Android 轮子，dist 内容："
-            ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40
+            ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40 || true
             exit 1
           fi
           pyside6-android-deploy --name FrogLog \
