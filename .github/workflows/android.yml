@@ -33,6 +33,7 @@ jobs:
             autoconf automake libtool bzip2 xz-utils zlib1g-dev \
             liblzma-dev libbz2-dev libsqlite3-dev libreadline-dev \
             libgdbm-dev libnss3-dev libffi-dev \
+            clang-14 llvm-14-dev libclang-14-dev libclang1-14 libclang-cpp14 \
             openjdk-17-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version
