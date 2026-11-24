@@ -16,6 +16,9 @@ jobs:
     # 交叉编译 PySide6 Android 轮子需要 Linux 主机，GitHub 免费 runner 正好是 Ubuntu
     runs-on: ubuntu-22.04
     timeout-minutes: 350
+    env:
+      # runner 默认 JAVA_HOME 指向 JDK 11，而新版 sdkmanager 需要 17
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     steps:
       - uses: actions/checkout@v4
 
@@ -60,6 +63,7 @@ jobs:
           # 交叉编译脚本默认下 2021 年的 sdkmanager，它在 JDK 17 上会抛
           # NoClassDefFoundError: javax/xml/bind/annotation/XmlSchema
           # 这里先放一份新版进去，脚本检测到就会直接用
+          export PATH="$JAVA_HOME/bin:$PATH"
           SDK="$HOME/.pyside6_android_deploy/android-sdk"
           mkdir -p "$SDK"
           if [ ! -x "$SDK/tools/bin/sdkmanager" ]; then
@@ -89,6 +93,8 @@ jobs:
           set -o pipefail
           exec > >(tee cross.log) 2>&1
           set -x
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
           if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
             ls -lh pyside-setup/dist_android/*.whl
