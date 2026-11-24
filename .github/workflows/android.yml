@@ -154,10 +154,16 @@ jobs:
       - name: 打 APK（debug 模式）
         shell: bash
         run: |
-          PS=$(ls pyside-setup/dist/PySide6-*.whl pyside-setup/dist_android/PySide6-*.whl 2>/dev/null | head -1)
-          SH=$(ls pyside-setup/dist/shiboken6-*.whl pyside-setup/dist_android/shiboken6-*.whl 2>/dev/null | head -1)
+          # wheel 文件名是全小写（pyside6-...whl / shiboken6-...whl），用 -iname 找
+          PS=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'pyside6-*.whl' 2>/dev/null | head -1)
+          SH=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'shiboken6-*.whl' 2>/dev/null | head -1)
           echo "PySide6 wheel: $PS"
           echo "shiboken6 wheel: $SH"
+          if [ -z "$PS" ] || [ -z "$SH" ]; then
+            echo "找不到 Android 轮子，dist 内容："
+            ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40
+            exit 1
+          fi
           pyside6-android-deploy --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
