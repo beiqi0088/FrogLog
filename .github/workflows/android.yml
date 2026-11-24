@@ -79,6 +79,11 @@ jobs:
           "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" --version || true
           java -version
 
+      - name: 准备 Python 3.11（CPython 交叉编译要求 build-python 版本一致）
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: 缓存 NDK / SDK / 已经编好的轮子
         uses: actions/cache@v4
         with:
@@ -95,6 +100,7 @@ jobs:
           set -x
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
+          python3 --version
           if ls pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
             ls -lh pyside-setup/dist_android/*.whl
