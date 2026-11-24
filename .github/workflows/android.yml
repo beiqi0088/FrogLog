@@ -114,6 +114,10 @@ jobs:
           sed -i 's|^set(CMAKE_SYSTEM_NAME Android)$|set(CMAKE_SYSTEM_NAME Android)\nset(QT_HOST_PATH "{{ qt_install_path }}/gcc_64" CACHE PATH "")|' \
             tools/cross_compile_android/templates/toolchain_default.tmpl.cmake
           grep -n "QT_HOST_PATH" tools/cross_compile_android/templates/toolchain_default.tmpl.cmake
+          # 只编我们真正用到的模块（QtQuick 的 shiboken 解析在 NDK 头文件上会崩）
+          sed -i 's|"--no-qt-tools"\]|"--no-qt-tools", "--module-subset=QtCore,QtGui,QtWidgets,QtTest"]|' \
+            tools/cross_compile_android/main.py
+          grep -n "module-subset" tools/cross_compile_android/main.py
           # 缓存里可能留着旧版生成的 toolchain，删掉让它按新模板重写
           rm -f "$HOME/.pyside6_android_deploy/toolchain_aarch64.cmake"
           python3 -m pip install -r requirements.txt
