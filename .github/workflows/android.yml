@@ -183,14 +183,25 @@ jobs:
             --force \
             -v
           echo "=== 产物 ==="
-          find . -maxdepth 3 -name "*.apk" -o -maxdepth 3 -name "*.aab" | head
+          find . -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20 || true
+          find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
+
+      - name: 收集 APK
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p out
+          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -print 2>/dev/null | head -20 || true
+          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          find /tmp -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          ls -lh out || true
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: FrogLog-android-apk
-          path: |
-            **/*.apk
-            **/*.aab
+          path: out/*
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
