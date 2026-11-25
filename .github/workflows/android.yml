@@ -184,6 +184,12 @@ jobs:
             --keep-deployment-files \
             --force \
             -v 2>&1 | tee deploy.log
+          # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以这里手动检查
+          if ! grep -q "apk created in" deploy.log; then
+            echo "=== deploy.log 里的异常 ==="
+            sed -n '/Exception occurred/,$p' deploy.log | head -100 || true
+            exit 1
+          fi
           echo "=== 产物 ==="
           find . -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20 || true
           find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
