@@ -191,11 +191,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p out
+          echo "=== 工作区 ==="
           find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -print 2>/dev/null | head -20 || true
           find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
-          find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
-          find /tmp -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          echo "=== HOME（buildozer 的产物可能在 ~/.buildozer 深处）==="
+          find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
+            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" 2>/dev/null | head -30 || true
+          find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
+            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" -exec cp -v {} out/ \; 2>/dev/null || true
+          echo "=== /tmp ==="
+          find /tmp \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
+          find /tmp \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          echo "=== out ==="
           ls -lh out || true
+          echo "=== buildozer 目录 ==="
+          ls -la "$HOME/.buildozer" 2>/dev/null | head -10 || true
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
