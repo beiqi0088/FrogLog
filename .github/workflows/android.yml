@@ -186,8 +186,8 @@ jobs:
             -v 2>&1 | tee deploy.log
           # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以这里手动检查
           if ! grep -q "apk created in" deploy.log; then
-            echo "=== deploy.log 里的异常 ==="
-            sed -n '/Exception occurred/,$p' deploy.log | head -100 || true
+            echo "=== deploy.log 最后 150 行（buildozer 的报错就在 traceback 前面）==="
+            tail -n 150 deploy.log || true
             exit 1
           fi
           echo "=== 产物 ==="
