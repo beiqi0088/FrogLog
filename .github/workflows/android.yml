@@ -96,9 +96,8 @@ jobs:
         with:
           path: |
             ~/.pyside6_android_deploy
-            pyside-setup/dist
-            pyside-setup/dist_android
-          key: pyside-android-${{ runner.os }}-6.11.1
+            .android-wheels
+          key: pyside-android-v2-${{ runner.os }}-6.11.1
 
       - name: 交叉编译 PySide6 / shiboken6 的 Android 轮子
         shell: bash
@@ -113,11 +112,21 @@ jobs:
           java -version
           python3 --version
           ls /usr/lib/llvm-18/lib/libclang.so*
-          if ls pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
+          # 轮子统一放在工作区的 .android-wheels，和 pyside-setup 源码分开缓存：
+          # 之前把 pyside-setup/dist 整个缓存回来会在工作区造出一个 pyside-setup 目录，
+          # 下一步 git clone 直接 128 失败，而且它还会被打进 APK 当源码扫描。
+          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
+          mkdir -p "$WHEELS"
+          if ls "$WHEELS"/pyside6-*.whl "$WHEELS"/shiboken6-*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
-            ls -lh pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl 2>/dev/null || true
+            ls -lh "$WHEELS"
             exit 0
           fi
+          # pyside-setup 必须克隆在工作区之外，否则 buildozer 会把整个源码树复制进 APK
+          BUILD="$RUNNER_TEMP/pyside-build"
+          rm -rf "$BUILD"
+          mkdir -p "$BUILD"
+          cd "$BUILD"
           git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
           cd pyside-setup
           # 6.11.1 的 toolchain 模板漏了 QT_HOST_PATH，交叉编译 Qt6 会报
@@ -137,7 +146,12 @@ jobs:
             --plat-name=aarch64 \
             --qt-install-path="$HOME/Qt/6.11.1" \
             --auto-accept-license --skip-update --verbose
-          ls -lh dist/*.whl 2>/dev/null || ls -lh dist_android/*.whl
+          # 只把 .whl 拷出来，源码树留在 $RUNNER_TEMP，不污染仓库
+          for f in dist/*.whl dist_android/*.whl; do
+            [ -e "$f" ] && cp -v "$f" "$WHEELS"/
+          done
+          ls -lh "$WHEELS"
+          ls "$WHEELS"/*.whl >/dev/null 2>&1
 
       - name: 失败时打印交叉编译日志尾部
         if: failure()
@@ -161,38 +175,48 @@ jobs:
       - name: 打 APK（debug 模式）
         shell: bash
         run: |
+          set -o pipefail
           # wheel 文件名是全小写（pyside6-...whl / shiboken6-...whl），用 -iname 找
-          # 注意：find 遇到不存在的目录会返回 1，配合 pipefail 会直接把这一步干掉，
-          # 所以先把两个目录都建出来（幂等）。
-          mkdir -p pyside-setup/dist pyside-setup/dist_android
-          PS=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
-          SH=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
+          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
+          PS=$(find "$WHEELS" -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
+          SH=$(find "$WHEELS" -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
           echo "PySide6 wheel: $PS"
           echo "shiboken6 wheel: $SH"
           if [ -z "$PS" ] || [ -z "$SH" ]; then
-            echo "找不到 Android 轮子，dist 内容："
-            ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40 || true
+            echo "找不到 Android 轮子："
+            ls -lh "$WHEELS" || true
             exit 1
           fi
-          # pyside-setup 就在仓库根目录里，部署工具会把它当项目源码扫描并解析失败；
-          # docs/design/.github 也跟运行无关，一起跳过（顺便减小 APK）。
-          set -o pipefail
+          # 只把运行必需的文件放进干净的暂存目录再部署。
+          # buildozer 会把当前目录整棵树复制进 APK 并 compileall：
+          # pyside-setup（Jinja 模板 .py）、docs/design、app/shots 都会直接炸掉打包。
+          STAGE="$RUNNER_TEMP/appsrc"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE/app/pages"
+          cp -v main.py "$STAGE/"
+          cp -v app/*.py "$STAGE/app/"
+          cp -v app/pages/*.py "$STAGE/app/pages/"
+          cd "$STAGE"
           pyside6-android-deploy --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
-            --extra-ignore-dirs pyside-setup,docs,design,.github,dist,dist_android \
             --keep-deployment-files \
             --force \
-            -v 2>&1 | tee deploy.log
-          # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以这里手动检查
-          if ! grep -q "apk created in" deploy.log; then
-            echo "=== deploy.log 最后 150 行（buildozer 的报错就在 traceback 前面）==="
-            tail -n 150 deploy.log || true
+            -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy.log"
+          # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以按产物判断成败
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          FOUND=0
+          while IFS= read -r f; do
+            cp -v "$f" "$GITHUB_WORKSPACE/out/"
+            FOUND=1
+          done < <(find "$STAGE" -type f \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null)
+          echo "=== 产物 ==="
+          ls -lh "$GITHUB_WORKSPACE/out" || true
+          if [ "$FOUND" -eq 0 ]; then
+            echo "没有生成 APK，deploy.log 最后 200 行："
+            tail -n 200 "$GITHUB_WORKSPACE/deploy.log" || true
             exit 1
           fi
-          echo "=== 产物 ==="
-          find . -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20 || true
-          find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
 
       - name: 收集 APK
         if: always()
@@ -200,20 +224,14 @@ jobs:
         run: |
           mkdir -p out
           echo "=== 工作区 ==="
-          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -print 2>/dev/null | head -20 || true
-          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+          find . \( -name "*.apk" -o -name "*.aab" \) -print 2>/dev/null | head -20 || true
           echo "=== HOME（buildozer 的产物可能在 ~/.buildozer 深处）==="
           find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
             -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" 2>/dev/null | head -30 || true
           find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
-            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" -exec cp -v {} out/ \; 2>/dev/null || true
-          echo "=== /tmp ==="
-          find /tmp \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
-          find /tmp \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
+            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" -exec cp -n -v {} out/ \; 2>/dev/null || true
           echo "=== out ==="
           ls -lh out || true
-          echo "=== buildozer 目录 ==="
-          ls -la "$HOME/.buildozer" 2>/dev/null | head -10 || true
 
       - name: 上传部署日志
         if: always()
