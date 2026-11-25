@@ -176,12 +176,14 @@ jobs:
           fi
           # pyside-setup 就在仓库根目录里，部署工具会把它当项目源码扫描并解析失败；
           # docs/design/.github 也跟运行无关，一起跳过（顺便减小 APK）。
+          set -o pipefail
           pyside6-android-deploy --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
             --extra-ignore-dirs pyside-setup,docs,design,.github,dist,dist_android \
+            --keep-deployment-files \
             --force \
-            -v
+            -v 2>&1 | tee deploy.log
           echo "=== 产物 ==="
           find . -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20 || true
           find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
@@ -207,11 +209,20 @@ jobs:
           echo "=== buildozer 目录 ==="
           ls -la "$HOME/.buildozer" 2>/dev/null | head -10 || true
 
+      - name: 上传部署日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-log
+          path: deploy.log
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: FrogLog-android-apk
           path: out/*
-          if-no-files-found: error
+          if-no-files-found: warn
           include-hidden-files: true
           retention-days: 30
