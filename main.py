@@ -19,45 +19,44 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.join(HERE, "app")
 sys.path.insert(0, APP)
 
-LOG_FILE = None
+# 同时写两个位置：外部目录（MTP / 文件管理器可见）和应用私有目录（adb run-as 可取），
+# 这样无论用户用哪种方式都能拿到日志。
+LOG_FILES = []
 
 
 def _open_log():
-    """打开启动日志：优先外部可读目录，退回到应用私有目录。"""
-    global LOG_FILE
+    """打开启动日志：外部可读目录 + 应用私有目录（两个都写）。"""
     priv = os.environ.get("ANDROID_PRIVATE") or ""
     # /data/user/0/org.froglog.froglog/files -> org.froglog.froglog
     pkg = ""
     if "/data/" in priv:
         pkg = priv.split("/files")[0].rstrip("/").split("/")[-1]
     ext = f"/storage/emulated/0/Android/data/{pkg}/files" if pkg else ""
-    candidates = [ext, priv]
-    for base in candidates:
+    for base in (ext, priv):
         if not base:
             continue
         try:
             os.makedirs(base, exist_ok=True)
             f = open(os.path.join(base, "froglog.log"), "a", encoding="utf-8", buffering=1)
+            LOG_FILES.append(f)
         except Exception:
             continue
-        LOG_FILE = f
-        # 把 fd 1/2 也指过去，Qt 的 qWarning/qFatal 和 native abort 信息才会进文件
+    if LOG_FILES:
+        # 把 fd 1/2 指到第一个（外部），Qt 的 qWarning/qFatal 和 native abort 信息才会进文件
         try:
-            os.dup2(f.fileno(), 1)
-            os.dup2(f.fileno(), 2)
+            os.dup2(LOG_FILES[0].fileno(), 1)
+            os.dup2(LOG_FILES[0].fileno(), 2)
         except Exception:
             pass
-        return f
-    return None
+    return LOG_FILES
 
 
 def log(msg: str) -> None:
     line = f"[{time.strftime('%H:%M:%S')}] {msg}"
-    if LOG_FILE is not None:
+    for f in LOG_FILES:
         try:
-            LOG_FILE.write(line + "\n")
-            LOG_FILE.flush()
-            return
+            f.write(line + "\n")
+            f.flush()
         except Exception:
             pass
     try:
@@ -109,8 +108,8 @@ def _boot():
 
     try:
         import faulthandler
-        if LOG_FILE is not None:
-            faulthandler.enable(LOG_FILE.fileno())
+        if LOG_FILES:
+            faulthandler.enable(LOG_FILES[0])
         else:
             faulthandler.enable()
         log("faulthandler 已开启")
@@ -134,8 +133,11 @@ if __name__ == "__main__":
         _boot()
     except BaseException as exc:      # noqa: BLE001 - 兜底，把启动异常留下来
         _report_crash(exc)
-        if LOG_FILE is not None:
-            LOG_FILE.flush()
+        for f in LOG_FILES:
+            try:
+                f.flush()
+            except Exception:
+                pass
         raise
     finally:
         log("进程结束")

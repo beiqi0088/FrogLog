@@ -389,14 +389,23 @@ jobs:
 
             - 这是 debug 签名的 APK，可直接侧载安装；首次安装需允许「安装未知来源应用」。
 
-            ## 闪退排查（本版内置启动日志）
+            ## 闪退排查（本版内置启动诊断标记 + 日志）
 
             1. 安装 `FrogLog-*.apk`，点开一次（即使闪退），等 10 秒；
-            2. 用文件管理器或数据线打开
-               `内部存储/Android/data/org.froglog.froglog/files/froglog.log`，
-               把里面的内容发出来（里面有 Python 版本、环境变量、启动打点、
-               Qt 警告和崩溃堆栈）；
-            3. 再装 `HelloQt-*.apk` 做对照：
+            2. **取日志的正确方式**（Android 11+ 起，普通文件管理器看不到 `Android/data`，
+               所以请用以下任一方式）：
+               - **数据线 MTP**：手机连电脑，选「文件传输」，在电脑上打开
+                 `内部存储/Android/data/org.froglog.froglog/files/`；
+               - **adb**：`adb shell run-as org.froglog.froglog ls files/`、
+                 `adb shell run-as org.froglog.froglog cat files/froglog.log`；
+               - **取 bug 报告**：开发者选项 → 生成错误报告（含完整 logcat，最可靠）。
+            3. 把 `files/` 目录里**有哪些文件**以及 `froglog.log` / `froglog_crash.log`
+               的内容发出来。本版按崩溃位置会留下不同标记，据此定位：
+               - 连 `app_started.txt` 都没有 → 崩在 Application/native 库加载（需 logcat）；
+               - 有 `app_started.txt`、没 `activity_started.txt` → 崩在 QtApplication 初始化；
+               - 有 `activity_started.txt`、没 `froglog.log` → 崩在 super.onCreate / Qt 平台插件 / Python 启动；
+               - 有 `froglog.log` → 读最后几行打点 / 堆栈即可。
+            4. 再装 `HelloQt-*.apk` 做对照：
                - 能正常显示「Hello FrogLog」→ 打包链路没问题，是 FrogLog 应用代码的事；
                - 同样闪退 → 是 Qt/PySide6/NDK 打包链路的问题。
           files: dist/*.apk

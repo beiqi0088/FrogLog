@@ -33,11 +33,17 @@ TARGET_API = "36"
 MIN_API = "28"
 NDK_VERSION = "28c"
 
+# 固定 p4a 到已验证的 commit，避免 master 漂移导致 Java 锚点/manifest 模板变化、
+# 诊断补丁失效。该 commit 已确认 apply_p4a_diag_patch 能正确注入。
+P4A_COMMIT = "58d21141f17c889bf8585f5665921d72028f8831"
+
 PATCHED_KEYS = {
     "android.api": TARGET_API,
     "android.minapi": MIN_API,
     "android.ndk": NDK_VERSION,
     "android.accept_sdk_license": "True",
+    "p4a.branch": "master",
+    "p4a.commit": P4A_COMMIT,
 }
 
 
@@ -115,41 +121,150 @@ def patch_icon(spec: Path) -> None:
     _log(f"应用图标已换成 {icon}")
 
 
-def patch_p4a_java() -> None:
-    """给 p4a 的 PythonActivity.onCreate 加一行「Java 层已启动」的标记文件。
+# 自定义 Application：在 Qt/Python 启动之前写标记文件，并捕获未捕获的 Java 异常。
+# 继承 QtApplication 并调用 super.onCreate()，正常运行时行为完全不变。
+DIAG_APP_JAVA = r'''package org.kivy.android;
 
-    闪退如果发生在 Python 之前，froglog.log 根本不会生成；有了这个标记就能区分：
-    - 连 java_started.txt 都没有 → Java/so 加载阶段就挂了；
-    - 有标记但没有 froglog.log → Qt 加载器 / Python 解释器启动阶段挂了。
-    """
-    try:
-        import pythonforandroid
-    except Exception as exc:
-        _log(f"pythonforandroid 还不可用，跳过 Java 标记补丁（{exc}）")
-        return
-    java = (Path(pythonforandroid.__file__).resolve().parent
-            / "bootstraps/qt/build/src/main/java/org/kivy/android/PythonActivity.java")
-    if not java.exists():
-        _log(f"没找到 {java}，跳过 Java 标记补丁")
-        return
-    text = java.read_text(encoding="utf-8")
-    if "FrogLogDiag" in text:
-        return
-    anchor = "this.mActivity = this;"
-    if anchor not in text:
-        _log(f"{java} 里找不到锚点，跳过 Java 标记补丁")
-        return
-    snippet = anchor + """
-        try { // FrogLogDiag
-            java.io.File _d = getExternalFilesDir(null);
-            if (_d != null) {
-                java.io.FileWriter _w = new java.io.FileWriter(new java.io.File(_d, "java_started.txt"));
-                _w.write("PythonActivity.onCreate");
-                _w.close();
+import android.util.Log;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+// FrogLog diagnostic Application. Runs before Qt/Python. Writes marker files
+// and records uncaught Java exceptions so a startup crash can be diagnosed
+// without logcat. Behavior is unchanged when everything works.
+public class FrogLogDiagApp extends org.qtproject.qt.android.bindings.QtApplication {
+    private static final String TAG = "FrogLogDiag";
+
+    private static void write(File dir, String name, String body) {
+        if (dir == null) return;
+        try {
+            dir.mkdirs();
+            FileWriter w = new FileWriter(new File(dir, name));
+            w.write(body);
+            w.close();
+        } catch (Throwable t) {
+            Log.e(TAG, "write " + name + " failed", t);
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        // BEFORE super.onCreate(). If app_started.txt is missing, the crash
+        // happened while loading the application class / native libraries
+        // (native crash -> need logcat/tombstone).
+        File ext = null, intd = null;
+        try { ext = getExternalFilesDir(null); } catch (Throwable t) {}
+        try { intd = getFilesDir(); } catch (Throwable t) {}
+        String info = "model=" + android.os.Build.MODEL + " sdk=" + android.os.Build.VERSION.SDK_INT;
+        write(ext, "app_started.txt", "FrogLogDiagApp.onCreate before super | " + info);
+        write(intd, "app_started.txt", "FrogLogDiagApp.onCreate before super | " + info);
+
+        final File logExt = ext, logInt = intd;
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            public void uncaughtException(Thread t, Throwable e) {
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                String body = "=== UNCAUGHT EXCEPTION ===\nthread: " + t + "\n" + sw.toString();
+                write(logExt, "froglog_crash.log", body);
+                write(logInt, "froglog_crash.log", body);
+                Log.e(TAG, body, e);
+                if (prev != null) {
+                    try { prev.uncaughtException(t, e); } catch (Throwable ignore) {}
+                }
             }
-        } catch (Throwable _t) { Log.e("FrogLogDiag", "marker failed", _t); }"""
-    java.write_text(text.replace(anchor, snippet, 1), encoding="utf-8")
-    _log(f"已在 {java.name} 里插入启动标记")
+        });
+
+        super.onCreate();
+        write(ext, "app_after_super.txt", "QtApplication.super.onCreate() returned OK");
+        write(intd, "app_after_super.txt", "QtApplication.super.onCreate() returned OK");
+    }
+}
+'''
+
+# 插在 PythonActivity.onCreate 的最开头（this.mActivity = this 之前），
+# 用于区分崩溃发生在 Activity 创建之前还是 super.onCreate（Qt/Python 启动）之中。
+ACTIVITY_MARKER = '''        try { // FrogLogDiag
+            java.io.File _e = getExternalFilesDir(null);
+            if (_e != null) { _e.mkdirs(); new java.io.FileWriter(new java.io.File(_e, "activity_started.txt")).append("onCreate").close(); }
+        } catch (Throwable _t) { Log.e("FrogLogDiag", "ext marker failed", _t); }
+        try {
+            java.io.File _i = getFilesDir();
+            if (_i != null) { _i.mkdirs(); new java.io.FileWriter(new java.io.File(_i, "activity_started.txt")).append("onCreate").close(); }
+        } catch (Throwable _t2) {}
+'''
+
+
+def _qt_bootstrap_java_dir(p4a_dir: Path) -> Path | None:
+    if not p4a_dir:
+        return None
+    d = (Path(p4a_dir) / "pythonforandroid" / "bootstraps" / "qt" / "build"
+         / "src" / "main" / "java" / "org" / "kivy" / "android")
+    return d if d.exists() else None
+
+
+def apply_p4a_diag_patch(p4a_dir) -> None:
+    """在 p4a 的 qt bootstrap 里注入启动诊断标记（幂等）。
+
+    必须在 p4a 编译 Java 之前调用——通过 monkeypatch TargetAndroid._p4a 保证。
+    """
+    java_dir = _qt_bootstrap_java_dir(p4a_dir)
+    if java_dir is None:
+        return  # p4a 还没 clone，等下次 _p4a 调用
+
+    # 1) FrogLogDiagApp.java（Application 级早期标记 + 未捕获异常日志）
+    diag = java_dir / "FrogLogDiagApp.java"
+    diag.write_text(DIAG_APP_JAVA, encoding="utf-8")
+
+    # 2) PythonActivity.onCreate 最开头打标记
+    py_act = java_dir / "PythonActivity.java"
+    if py_act.exists():
+        text = py_act.read_text(encoding="utf-8")
+        if "activity_started.txt" not in text:
+            anchor = "    public void onCreate(Bundle savedInstanceState) {\n        this.mActivity = this;"
+            if anchor in text:
+                text = text.replace(anchor, "    public void onCreate(Bundle savedInstanceState) {\n" + ACTIVITY_MARKER + "        this.mActivity = this;", 1)
+                py_act.write_text(text, encoding="utf-8")
+                _log(f"已在 PythonActivity.onCreate 注入 activity 启动标记")
+            else:
+                _log(f"PythonActivity.java 里找不到 onCreate 锚点，跳过 activity 标记")
+
+    # 3) manifest 模板：把 Application 换成 FrogLogDiagApp
+    manifest = (Path(p4a_dir) / "pythonforandroid" / "bootstraps" / "qt" / "build"
+                / "templates" / "AndroidManifest.tmpl.xml")
+    if manifest.exists():
+        text = manifest.read_text(encoding="utf-8")
+        if "FrogLogDiagApp" not in text:
+            old = 'android:name="org.qtproject.qt.android.bindings.QtApplication"'
+            if old in text:
+                text = text.replace(old, 'android:name="org.kivy.android.FrogLogDiagApp"', 1)
+                manifest.write_text(text, encoding="utf-8")
+                _log("已把 manifest 的 Application 换成 FrogLogDiagApp")
+
+
+def install_target_patch() -> None:
+    """挂钩 buildozer 的 p4a 调用入口，保证补丁在编译前生效。"""
+    try:
+        from buildozer.targets.android import TargetAndroid
+    except Exception as exc:
+        _log(f"无法导入 buildozer.targets.android.TargetAndroid，跳过诊断补丁（{exc}）")
+        return
+    if getattr(TargetAndroid, "_froglog_patched", False):
+        return
+    orig_p4a = TargetAndroid._p4a
+
+    def _p4a_patched(self, cmd, env, **kwargs):
+        try:
+            apply_p4a_diag_patch(self.p4a_dir)
+        except Exception as exc:  # noqa: BLE001 - 诊断补丁失败不能阻断打包
+            _log(f"应用 p4a 诊断补丁失败: {exc}")
+        return orig_p4a(self, cmd, env, **kwargs)
+
+    TargetAndroid._p4a = _p4a_patched
+    TargetAndroid._froglog_patched = True
+    _log("已挂钩 TargetAndroid._p4a，将在 p4a 编译前注入启动诊断标记")
 
 
 def main() -> None:
@@ -159,6 +274,9 @@ def main() -> None:
     sys.path.insert(0, str(scripts_dir))
 
     from deploy_lib.android.buildozer import Buildozer
+
+    # 挂钩 buildozer 的 p4a 调用，在编译 Java 前注入启动诊断标记
+    install_target_patch()
 
     spec_holder: dict[str, Path | None] = {"path": None}
 
@@ -181,7 +299,7 @@ def main() -> None:
         spec = spec_holder["path"] or (Path.cwd() / "buildozer.spec")
         patch_buildozer_spec(spec)
         patch_buildozer_constants()
-        patch_p4a_java()
+        # Java 诊断标记由 install_target_patch() 挂钩的 _p4a 在编译前注入
         return original_create_executable(mode)
 
     Buildozer.create_executable = staticmethod(create_executable)
