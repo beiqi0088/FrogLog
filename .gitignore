@@ -18,6 +18,7 @@ strings-*.txt
 validation.txt
 
 # 构建产物
+.p4a-src/
 build/
 dist/
 dist_android/

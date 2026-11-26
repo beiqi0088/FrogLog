@@ -331,11 +331,39 @@ jobs:
                 ;;
             esac
           done
+          # PySide6 轮子里的 .so 必须能找到它 NEEDED 的 libpython。
+          # 之前就是轮子链接 libpython3.11.so、APK 里只有 libpython3.14.so，
+          # import PySide6 时 dlopen 失败，打开即闪退。
+          python3 - "$TMP" <<'PYCHECK' || exit 1
+          import os, re, subprocess, sys
+          libdir = os.path.join(sys.argv[1], 'lib', 'arm64-v8a')
+          files = sorted(f for f in os.listdir(libdir) if f.endswith('.so'))
+          have = set(files)
+          bad = []
+          for f in files:
+              p = os.path.join(libdir, f)
+              if subprocess.run(['readelf', '-h', p], capture_output=True).returncode != 0:
+                  continue  # libpybundle.so 是打成 .so 的压缩包
+              out = subprocess.run(['readelf', '-d', p], capture_output=True, text=True).stdout
+              for dep in re.findall(r'Shared library: \[(libpython3\.\d+\.so)\]', out):
+                  if dep not in have:
+                      bad.append('{} 需要 {}，但 APK 里没有'.format(f, dep))
+          print('libpython 依赖闭环检查：' + ('通过' if not bad else '失败'))
+          if bad:
+              print('\n'.join(bad))
+              sys.exit(1)
+          PYCHECK
           rm -rf "$TMP"
           if [ "$BAD" -ne 0 ]; then
             exit 1
           fi
           echo "16 KB 页对齐检查通过"
+          # 启动诊断标记必须真的打进 dex（FrogLogDiagApp 被编译）
+          if ! unzip -p "$APK" 'classes*.dex' | strings | grep -q 'froglog-android.txt'; then
+            echo "::error::启动诊断标记没有打进 APK（FrogLogDiagApp 未被编译）"
+            exit 1
+          fi
+          echo "启动诊断标记检查通过"
           mkdir -p dist
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
           HELLO=$(find out -maxdepth 1 -name 'HelloQt*.apk' | head -1 || true)
@@ -389,24 +417,30 @@ jobs:
 
             - 这是 debug 签名的 APK，可直接侧载安装；首次安装需允许「安装未知来源应用」。
 
-            ## 闪退排查（本版内置启动诊断标记 + 日志）
+            ## 本次修复了什么
 
-            1. 安装 `FrogLog-*.apk`，点开一次（即使闪退），等 10 秒；
-            2. **取日志的正确方式**（Android 11+ 起，普通文件管理器看不到 `Android/data`，
-               所以请用以下任一方式）：
-               - **数据线 MTP**：手机连电脑，选「文件传输」，在电脑上打开
-                 `内部存储/Android/data/org.froglog.froglog/files/`；
-               - **adb**：`adb shell run-as org.froglog.froglog ls files/`、
-                 `adb shell run-as org.froglog.froglog cat files/froglog.log`；
-               - **取 bug 报告**：开发者选项 → 生成错误报告（含完整 logcat，最可靠）。
-            3. 把 `files/` 目录里**有哪些文件**以及 `froglog.log` / `froglog_crash.log`
-               的内容发出来。本版按崩溃位置会留下不同标记，据此定位：
-               - 连 `app_started.txt` 都没有 → 崩在 Application/native 库加载（需 logcat）；
-               - 有 `app_started.txt`、没 `activity_started.txt` → 崩在 QtApplication 初始化；
-               - 有 `activity_started.txt`、没 `froglog.log` → 崩在 super.onCreate / Qt 平台插件 / Python 启动；
-               - 有 `froglog.log` → 读最后几行打点 / 堆栈即可。
+            上一版**打开即闪退**的根因：PySide6 的 Android 轮子是按 CPython 3.11 编译的，
+            扩展模块依赖 `libpython3.11.so`；而 python-for-android 的新版默认编出的是
+            `libpython3.14.so`。所以一执行 `import PySide6` 就 dlopen 失败，进程直接退出，
+            界面上什么都看不到。本版把 p4a 的 `python3` / `hostpython3` 钉回 3.11.11，
+            与轮子对齐；CI 里也加了「libpython 依赖闭环」检查，以后再错会直接构建失败。
+
+            ## 如果还是闪退：日志在「下载/FrogLog」里（不用进 Android/data）
+
+            1. 安装 `FrogLog-*.apk`，点开一次（即使闪退）；
+            2. **再点开一次**，保持 5 秒（第一次的日志会在第二次启动时同步出来）；
+            3. 打开手机「文件管理 → 下载 → FrogLog」，
+               把里面的 `froglog-android.txt`（以及 `froglog.log` / `froglog_crash.log`，如果有）发出来。
+
+            这个文件记录启动阶梯，按最后一行就能定位崩溃位置：
+            - 没有 `Application.attachBaseContext` → 崩在 Application 类加载 / native 库；
+            - 有 `Application.onCreate`、没有 `QtApplication.super.onCreate 已返回` → 崩在 Qt 初始化；
+            - 有 `PythonActivity.onCreate`、没有 `Python 资源解包完成` → 崩在解包；
+            - 有 `即将调用 QtActivity.super.onCreate`、没有 `已返回` → 崩在 Qt 平台插件 / libmain；
+            - `PythonActivity.super.onCreate 已返回` 但应用没界面 → 崩在 Python 启动，看随附的 Python 日志。
+
             4. 再装 `HelloQt-*.apk` 做对照：
-               - 能正常显示「Hello FrogLog」→ 打包链路没问题，是 FrogLog 应用代码的事；
+               - 能正常显示「Hello FrogLog」→ 是 FrogLog 应用代码的问题；
                - 同样闪退 → 是 Qt/PySide6/NDK 打包链路的问题。
           files: dist/*.apk
           fail_on_unmatched_files: true
