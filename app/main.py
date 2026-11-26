@@ -28,19 +28,34 @@ def apply_identity(app) -> None:
 ANDROID = bool(os.environ.get("ANDROID_PRIVATE") or os.environ.get("ANDROID_ARGUMENT"))
 
 
+def _mark(msg) -> None:
+    """安卓上启动闪退时，靠这些打点定位死在哪一步（桌面无副作用）。"""
+    logger = getattr(sys, "froglog_log", None)
+    if logger:
+        logger("main: " + msg)
+
+
 def main():
+    _mark("设置 DPI 策略")
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    _mark("创建 QApplication")
     app = QApplication(sys.argv)
+    _mark("QApplication 创建完成")
     apply_identity(app)
     # 安卓没有雅黑，交给系统默认的 Noto Sans CJK
     app.setFont(QFont("Noto Sans CJK SC" if ANDROID else "Microsoft YaHei UI", 9))
+    _mark("创建主窗口")
     win = MainWindow()
+    _mark("主窗口创建完成，准备显示")
     if ANDROID:
         win.showMaximized()          # 手机上铺满屏幕
     else:
         win.show()
-    sys.exit(app.exec())
+    _mark("已显示，进入事件循环")
+    rc = app.exec()
+    _mark(f"事件循环退出 {rc}")
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

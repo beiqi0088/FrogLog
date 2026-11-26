@@ -115,6 +115,43 @@ def patch_icon(spec: Path) -> None:
     _log(f"应用图标已换成 {icon}")
 
 
+def patch_p4a_java() -> None:
+    """给 p4a 的 PythonActivity.onCreate 加一行「Java 层已启动」的标记文件。
+
+    闪退如果发生在 Python 之前，froglog.log 根本不会生成；有了这个标记就能区分：
+    - 连 java_started.txt 都没有 → Java/so 加载阶段就挂了；
+    - 有标记但没有 froglog.log → Qt 加载器 / Python 解释器启动阶段挂了。
+    """
+    try:
+        import pythonforandroid
+    except Exception as exc:
+        _log(f"pythonforandroid 还不可用，跳过 Java 标记补丁（{exc}）")
+        return
+    java = (Path(pythonforandroid.__file__).resolve().parent
+            / "bootstraps/qt/build/src/main/java/org/kivy/android/PythonActivity.java")
+    if not java.exists():
+        _log(f"没找到 {java}，跳过 Java 标记补丁")
+        return
+    text = java.read_text(encoding="utf-8")
+    if "FrogLogDiag" in text:
+        return
+    anchor = "this.mActivity = this;"
+    if anchor not in text:
+        _log(f"{java} 里找不到锚点，跳过 Java 标记补丁")
+        return
+    snippet = anchor + """
+        try { // FrogLogDiag
+            java.io.File _d = getExternalFilesDir(null);
+            if (_d != null) {
+                java.io.FileWriter _w = new java.io.FileWriter(new java.io.File(_d, "java_started.txt"));
+                _w.write("PythonActivity.onCreate");
+                _w.close();
+            }
+        } catch (Throwable _t) { Log.e("FrogLogDiag", "marker failed", _t); }"""
+    java.write_text(text.replace(anchor, snippet, 1), encoding="utf-8")
+    _log(f"已在 {java.name} 里插入启动标记")
+
+
 def main() -> None:
     import PySide6
 
@@ -144,6 +181,7 @@ def main() -> None:
         spec = spec_holder["path"] or (Path.cwd() / "buildozer.spec")
         patch_buildozer_spec(spec)
         patch_buildozer_constants()
+        patch_p4a_java()
         return original_create_executable(mode)
 
     Buildozer.create_executable = staticmethod(create_executable)

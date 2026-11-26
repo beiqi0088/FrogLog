@@ -273,10 +273,31 @@ jobs:
             exit 1
           fi
 
+      - name: 打最小 Qt 示例 APK（区分打包问题还是应用问题）
+        shell: bash
+        run: |
+          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
+          PS=$(find "$WHEELS" -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
+          SH=$(find "$WHEELS" -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
+          STAGE2="$RUNNER_TEMP/hellosrc"
+          rm -rf "$STAGE2"
+          mkdir -p "$STAGE2"
+          cp -v scripts/hello_android.py "$STAGE2/main.py"
+          cd "$STAGE2"
+          python3 "$GITHUB_WORKSPACE/scripts/android16_deploy.py" \
+            --name HelloQt \
+            --wheel-pyside "$PS" \
+            --wheel-shiboken "$SH" \
+            --ndk-path "$HOME/.pyside6_android_deploy/android-ndk/android-ndk-r$NDK_VERSION" \
+            --force \
+            -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy-hello.log"
+          find "$STAGE2" -type f -name '*.apk' -exec cp -v {} "$GITHUB_WORKSPACE/out/" \;
+          ls -lh "$GITHUB_WORKSPACE/out"
+
       - name: 校验 APK 的 Android 版本并重命名
         shell: bash
         run: |
-          APK=$(find out -maxdepth 1 -name '*.apk' | head -1)
+          APK=$(find out -maxdepth 1 -name 'FrogLog*.apk' | head -1)
           echo "APK: $APK"
           AAPT2=$(find "$HOME/.pyside6_android_deploy/android-sdk/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -1)
           echo "aapt2: $AAPT2"
@@ -317,6 +338,10 @@ jobs:
           echo "16 KB 页对齐检查通过"
           mkdir -p dist
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
+          HELLO=$(find out -maxdepth 1 -name 'HelloQt*.apk' | head -1 || true)
+          if [ -n "$HELLO" ]; then
+            cp "$HELLO" "dist/HelloQt-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
+          fi
           ls -lh dist
 
       - name: 上传 APK artifact
@@ -362,7 +387,18 @@ jobs:
             - 提交：${{ github.sha }}
             - 运行：${{ github.run_number }}
 
-            > 这是 debug 签名的 APK，可直接侧载安装；首次安装需允许「安装未知来源应用」。
+            - 这是 debug 签名的 APK，可直接侧载安装；首次安装需允许「安装未知来源应用」。
+
+            ## 闪退排查（本版内置启动日志）
+
+            1. 安装 `FrogLog-*.apk`，点开一次（即使闪退），等 10 秒；
+            2. 用文件管理器或数据线打开
+               `内部存储/Android/data/org.froglog.froglog/files/froglog.log`，
+               把里面的内容发出来（里面有 Python 版本、环境变量、启动打点、
+               Qt 警告和崩溃堆栈）；
+            3. 再装 `HelloQt-*.apk` 做对照：
+               - 能正常显示「Hello FrogLog」→ 打包链路没问题，是 FrogLog 应用代码的事；
+               - 同样闪退 → 是 Qt/PySide6/NDK 打包链路的问题。
           files: dist/*.apk
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
