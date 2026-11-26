@@ -284,27 +284,6 @@ jobs:
             exit 1
           fi
 
-      - name: 打最小 Qt 示例 APK（区分打包问题还是应用问题）
-        shell: bash
-        run: |
-          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
-          PS=$(find "$WHEELS" -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
-          SH=$(find "$WHEELS" -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
-          STAGE2="$RUNNER_TEMP/hellosrc"
-          rm -rf "$STAGE2"
-          mkdir -p "$STAGE2"
-          cp -v scripts/hello_android.py "$STAGE2/main.py"
-          cd "$STAGE2"
-          python3 "$GITHUB_WORKSPACE/scripts/android16_deploy.py" \
-            --name HelloQt \
-            --wheel-pyside "$PS" \
-            --wheel-shiboken "$SH" \
-            --ndk-path "$HOME/.pyside6_android_deploy/android-ndk/android-ndk-r$NDK_VERSION" \
-            --force \
-            -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy-hello.log"
-          find "$STAGE2" -type f -name '*.apk' -exec cp -v {} "$GITHUB_WORKSPACE/out/" \;
-          ls -lh "$GITHUB_WORKSPACE/out"
-
       - name: 校验 APK 的 Android 版本并重命名
         shell: bash
         run: |
@@ -377,10 +356,6 @@ jobs:
           echo "启动诊断标记检查通过"
           mkdir -p dist
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
-          HELLO=$(find out -maxdepth 1 -name 'HelloQt*.apk' | head -1 || true)
-          if [ -n "$HELLO" ]; then
-            cp "$HELLO" "dist/HelloQt-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
-          fi
           ls -lh dist
 
       - name: 上传 APK artifact
@@ -456,10 +431,6 @@ jobs:
             - 有 `PythonActivity.onCreate`、没有 `Python 资源解包完成` → 崩在解包；
             - 有 `即将调用 QtActivity.super.onCreate`、没有 `已返回` → 崩在 Qt 平台插件 / libmain；
             - `PythonActivity.super.onCreate 已返回` 但应用没界面 → 崩在 Python 启动，看随附的 Python 日志。
-
-            4. 再装 `HelloQt-*.apk` 做对照：
-               - 能正常显示「Hello FrogLog」→ 是 FrogLog 应用代码的问题；
-               - 同样闪退 → 是 Qt/PySide6/NDK 打包链路的问题。
           files: dist/*.apk
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
