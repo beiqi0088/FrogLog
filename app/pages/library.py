@@ -83,9 +83,10 @@ class EntityRow(W.ClickFrame):
 
         col = QVBoxLayout()
         col.setSpacing(4)
-        t = QLabel(title)
+        # 单行截断：文案再长也不会把右侧 ⋯ 挤出屏幕
+        t = OneLineLabel(title)
         t.setStyleSheet("font-size:14.5px;font-weight:700;")
-        s = QLabel(sub)
+        s = OneLineLabel(sub)
         s.setObjectName("sub")
         col.addWidget(t)
         col.addWidget(s)
@@ -908,10 +909,9 @@ class LibraryPage(Page):
         self._rows = []
 
         for r in rounds:
-            dcount, ccount, rcount = s.subtree_counts(r["id"])
-            sub = f"{_date_text(r.get('created'))} · {dcount} 个卡包 · {ccount} 张卡"
-            if rcount:
-                sub += f" · {rcount} 个圆桌"
+            # 圆桌只显示「时间 · 多少个卡包」，其余统计省略，避免手机上被截断
+            dcount, _ccount, _rcount = s.subtree_counts(r["id"])
+            sub = f"{_date_text(r.get('created'))} · {dcount} 个卡包"
             row = EntityRow("round", r["name"], sub,
                             on_more=lambda btn, rr=r: self._round_menu(btn, rr))
             row.clicked.connect(lambda rr=r: self.app.show_page(
@@ -920,14 +920,10 @@ class LibraryPage(Page):
             self._rows.append(("round", r["id"], row))
             self.list_lay.addWidget(row)
 
-        due_by_deck: dict[str, int] = {}
-        for c in s.due_cards():
-            due_by_deck[c["deck_id"]] = due_by_deck.get(c["deck_id"], 0) + 1
-
         for d in decks:
             cards = s.cards_of(d["id"])
-            due = due_by_deck.get(d["id"], 0)
-            sub = f"{_date_text(d.get('created'))} · {len(cards)} 张卡 · {due} 到期"
+            # 卡包只显示「时间 · 多少张卡片」，不在行内展示到期数
+            sub = f"{_date_text(d.get('created'))} · {len(cards)} 张卡片"
             row = EntityRow("deck", d["name"], sub,
                             on_more=lambda btn, dd=d: self._deck_menu(btn, dd))
             row.clicked.connect(lambda dd=d: self.app.show_page("deck", deck_id=dd["id"]))
