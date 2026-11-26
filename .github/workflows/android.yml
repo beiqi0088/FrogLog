@@ -258,6 +258,11 @@ jobs:
             --keep-deployment-files \
             --force \
             -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy.log"
+          # 打印关键配置，方便确认 p4a 用的是我们预置的源码（而不是官方 3.14 分支）
+          echo "=== buildozer.spec 关键配置 ==="
+          grep -nE '^(android\.(api|minapi|ndk)|p4a\.(source_dir|branch|commit))' "$STAGE/buildozer.spec" || true
+          echo "=== buildozer 是否又去 clone 官方 p4a（应为 0）==="
+          grep -c "Cloning into 'python-for-android'" "$GITHUB_WORKSPACE/deploy.log" || true
           # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以按产物判断成败
           mkdir -p "$GITHUB_WORKSPACE/out"
           FOUND=0

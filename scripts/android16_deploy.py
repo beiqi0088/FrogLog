@@ -81,6 +81,38 @@ def patch_buildozer_constants() -> None:
     _log(f"已写入 {module}")
 
 
+def _set_app_key(text: str, key: str, value: str) -> str:
+    """在 buildozer.spec 的 [app] 段里设置键。
+
+    注意：spec 末尾还有 [buildozer] 段，直接 append 到文件尾会被当成
+    [buildozer] 的键，buildozer 读 app.p4a.source_dir 时读不到——上一版就是
+    因此仍然 clone 了官方 p4a（Python 3.14），补丁全部失效。
+    """
+    line = f"{key} = {value}"
+    pattern = re.compile(rf"(?m)^[ \t]*#?[ \t]*{re.escape(key)}[ \t]*=.*$")
+    if pattern.search(text):
+        return pattern.sub(line, text, count=1)
+    header = re.search(r"(?m)^\[app\][^\n]*\n", text)
+    if not header:
+        raise SystemExit("[android16] buildozer.spec 里没有 [app] 段")
+    return text[:header.end()] + line + "\n" + text[header.end():]
+
+
+def verify_buildozer_spec(spec: Path, expected: dict) -> None:
+    """真正用 configparser 读一遍，确认键落在 [app] 段。"""
+    import configparser
+
+    parser = configparser.RawConfigParser(strict=False)
+    parser.read(spec, encoding="utf-8")
+    problems = []
+    for key, value in expected.items():
+        actual = parser.get("app", key, fallback="<缺失>")
+        if actual != value:
+            problems.append(f"{key}={actual!r}（期望 {value!r}）")
+    if problems:
+        raise SystemExit("[android16] buildozer.spec 校验失败：" + "；".join(problems))
+
+
 def patch_buildozer_spec(spec: Path) -> None:
     if not spec or not spec.exists():
         _log(f"没找到 buildozer.spec（{spec}），跳过 spec 修改")
@@ -92,39 +124,34 @@ def patch_buildozer_spec(spec: Path) -> None:
 
     text = spec.read_text(encoding="utf-8")
     for key, value in PATCHED_KEYS.items():
-        # buildozer init 生成的是注释行，如 "#android.api = 31"
-        pattern = re.compile(rf"(?m)^\s*#?\s*{re.escape(key)}\s*=.*$")
-        if pattern.search(text):
-            text = pattern.sub(f"{key} = {value}", text)
-        else:
-            text = text.rstrip() + f"\n{key} = {value}\n"
-
-    source_dir_line = f"p4a.source_dir = {p4a_dir}"
-    pattern = re.compile(r"(?m)^\s*#?\s*p4a\.source_dir\s*=.*$")
-    if pattern.search(text):
-        text = pattern.sub(source_dir_line, text)
-    else:
-        text = text.rstrip() + f"\n{source_dir_line}\n"
+        text = _set_app_key(text, key, value)
+    text = _set_app_key(text, "p4a.source_dir", str(p4a_dir))
 
     # buildozer 1.5.0 不会把 android.api 传给 p4a 的 apk 命令，
     # 这里额外通过 p4a.extra_args 显式传一次（p4a 的通用参数，create/apk 都接受）
-    p4a_args = re.search(r"(?m)^\s*#?\s*p4a\.extra_args\s*=(.*)$", text)
     api_arg = f"--android-api={TARGET_API}"
+    p4a_args = re.search(r"(?m)^[ \t]*#?[ \t]*p4a\.extra_args[ \t]*=(.*)$", text)
     if p4a_args:
         current = p4a_args.group(1).strip()
         if api_arg not in current:
-            # 整行重写，去掉注释符，保留 pyside 写入的 --qt-libs 等参数
-            text = (text[:p4a_args.start()]
-                    + f"p4a.extra_args = {current} {api_arg}".rstrip()
-                    + text[p4a_args.end():])
+            text = _set_app_key(text, "p4a.extra_args", f"{current} {api_arg}".strip())
     else:
-        text = text.rstrip() + f"\np4a.extra_args = {api_arg}\n"
+        text = _set_app_key(text, "p4a.extra_args", api_arg)
 
     spec.write_text(text, encoding="utf-8")
-    _log(f"buildozer.spec 已改为 Android 16 配置（{spec}）")
-    for key, value in PATCHED_KEYS.items():
+
+    expected = dict(PATCHED_KEYS)
+    expected["p4a.source_dir"] = str(p4a_dir)
+    verify_buildozer_spec(spec, expected)
+
+    # 双保险：在 buildozer 的默认 p4a 目录预置一份打好补丁的源码。
+    # 上一版 p4a.source_dir 没被 buildozer 读到（它仍然 clone 了官方 develop 分支，
+    # Python 又是 3.14），这里保证即使 spec 失效也会用到我们的补丁。
+    stage_p4a_for_buildozer(spec, p4a_dir)
+
+    _log(f"buildozer.spec 已改为 Android 16 配置并校验通过（{spec}）")
+    for key, value in expected.items():
         _log(f"  {key} = {value}")
-    _log(f"  {source_dir_line}")
     _log(f"  p4a.extra_args += {api_arg}")
 
 
@@ -135,12 +162,7 @@ def patch_icon(spec: Path) -> None:
         _log(f"没找到图标 {icon}，沿用默认图标")
         return
     text = spec.read_text(encoding="utf-8")
-    line = f"icon.filename = {icon}"
-    pattern = re.compile(r"(?m)^\s*#?\s*icon\.filename\s*=.*$")
-    if pattern.search(text):
-        text = pattern.sub(line, text)
-    else:
-        text = text.rstrip() + f"\n{line}\n"
+    text = _set_app_key(text, "icon.filename", str(icon))
     spec.write_text(text, encoding="utf-8")
     _log(f"应用图标已换成 {icon}")
 
@@ -432,6 +454,33 @@ def verify_p4a_patch(p4a_dir: Path) -> None:
     if problems:
         raise SystemExit("[android16] p4a 补丁校验失败：" + "；".join(problems))
     _log("p4a 补丁校验通过（启动阶梯标记 + Python 3.11 recipe）")
+
+
+def stage_p4a_for_buildozer(spec: Path, p4a_dir: Path) -> Path:
+    """把打好补丁的 p4a 放到 buildozer 默认位置（source_dir 不生效时兜底）。
+
+    buildozer 会检查该目录的 remote url 与分支名是否和 spec 一致：
+    kivy / develop。所以这里 checkout 出 develop 分支，并把补丁提交进去，
+    这样它既不会删目录，也不会 git reset 掉补丁。
+    """
+    dest = spec.parent / ".buildozer" / "android" / "platform" / "python-for-android"
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(p4a_dir, dest, symlinks=True)
+
+    git = ["git", "-C", str(dest)]
+    if not (dest / ".git").exists():
+        subprocess.run(git + ["init", "-q"], check=True)
+        subprocess.run(git + ["remote", "add", "origin", P4A_URL], check=True)
+    # 先提交补丁，再建 develop 分支；顺序反了 git 会把未提交的补丁直接丢掉
+    subprocess.run(git + ["add", "-A"], check=True)
+    subprocess.run(git + ["-c", "user.name=froglog", "-c", "user.email=froglog@local",
+                          "commit", "-q", "-m", "froglog android16 p4a patches"], check=True)
+    subprocess.run(git + ["checkout", "-B", "develop"], check=True)
+    verify_p4a_patch(dest)
+    _log(f"已预置补丁版 p4a 到 {dest}（buildozer 默认路径兜底）")
+    return dest
 
 
 def prepare_p4a_source(repo_root: Path) -> Path:
