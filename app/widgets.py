@@ -329,11 +329,6 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
             f"font-size:12.5px;font-weight:600;color:"
             f"{(tokens.get('brand') if selected else tokens.get('ink'))};")
         lay.addWidget(lb, 1)
-        if selected:
-            ck = QLabel("✓")
-            ck.setStyleSheet(
-                f"font-size:12px;font-weight:700;color:{tokens.get('brand')};")
-            lay.addWidget(ck, 0, Qt.AlignVCenter)
         border = tokens.get("brand") if selected else tokens.get("line")
         bg = tokens.get("brand_soft") if selected else tokens.get("panel")
         self.setStyleSheet(

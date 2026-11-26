@@ -58,7 +58,7 @@ class SettingsPage(Page):
             grid.setColumnStretch(c, 1)
         themes.body.addWidget(grid_host)
         foot = QLabel("7 套 Anki 模板配色；卡片模板与复习卡区保持不变。")
-        foot.setWordWrap(False)
+        foot.setWordWrap(True)
         foot.setStyleSheet(
             f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")
         themes.body.addWidget(foot)
