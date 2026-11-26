@@ -9,7 +9,7 @@ targetSdkVersion 只有 31。本包装器在调用 buildozer 之前做两件事�
 1. 改 buildozer.spec（buildozer 正常会读它）：
        android.api                = 36
        android.minapi             = 28
-       android.ndk                = 27c
+       android.ndk                = 28c
        android.accept_sdk_license = True
        p4a.extra_args            += --android-api=36
 2. 直接改 buildozer 源码里的默认常量 ANDROID_API / ANDROID_MINAPI。
@@ -98,6 +98,23 @@ def patch_buildozer_spec(spec: Path) -> None:
     _log(f"  p4a.extra_args += {api_arg}")
 
 
+def patch_icon(spec: Path) -> None:
+    """把应用图标换成仓库里的 assets/icon.png（默认是 pyside 的 logo）。"""
+    icon = Path(__file__).resolve().parent.parent / "assets" / "icon.png"
+    if not icon.exists():
+        _log(f"没找到图标 {icon}，沿用默认图标")
+        return
+    text = spec.read_text(encoding="utf-8")
+    line = f"icon.filename = {icon}"
+    pattern = re.compile(r"(?m)^\s*#?\s*icon\.filename\s*=.*$")
+    if pattern.search(text):
+        text = pattern.sub(line, text)
+    else:
+        text = text.rstrip() + f"\n{line}\n"
+    spec.write_text(text, encoding="utf-8")
+    _log(f"应用图标已换成 {icon}")
+
+
 def main() -> None:
     import PySide6
 
@@ -116,6 +133,8 @@ def main() -> None:
         project_dir = Path(pysidedeploy_config.project_dir)
         spec_holder["path"] = project_dir / "buildozer.spec"
         _log(f"project_dir = {project_dir}")
+        if spec_holder["path"].exists():
+            patch_icon(spec_holder["path"])
 
     Buildozer.initialize = staticmethod(initialize)
 
