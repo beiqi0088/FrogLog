@@ -485,21 +485,21 @@ class NavButton(QPushButton):
         if active:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(T["brand_soft"]))
-            p.drawRoundedRect(QRectF(cx - 31, 7, 62, h - 12), 14, 14)
+            p.drawRoundedRect(QRectF(cx - 35, 6, 70, h - 10), 16, 16)
 
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
-        r = QRectF(cx - 9, 10, 18, 18)
+        r = QRectF(cx - 10, 8, 20, 20)
         self._icon(p, self.key, r)
 
         p.setPen(col)
-        f = QFont(theme.FONT, 8)
+        f = QFont(theme.FONT, 12)
         f.setBold(active)
         p.setFont(f)
-        p.drawText(QRectF(0, h - 19, w, 16), Qt.AlignHCenter | Qt.AlignVCenter, self.label)
+        p.drawText(QRectF(0, h - 23, w, 21), Qt.AlignHCenter | Qt.AlignVCenter, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):

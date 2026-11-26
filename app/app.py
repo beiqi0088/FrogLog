@@ -109,9 +109,7 @@ class MainWindow(QMainWindow):
         nav_outer.setSpacing(0)
         self.nav_bar = QFrame()
         self.nav_bar.setObjectName("navBar")
-        self.nav_bar.setStyleSheet(
-            f"QFrame#navBar{{background:{theme.LIGHT['panel']};"
-            f"border:1px solid {theme.LIGHT['line']};border-radius:24px;}}")
+        self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         nav_lay = QHBoxLayout(self.nav_bar)
         nav_lay.setContentsMargins(6, 4, 6, 4)
         nav_lay.setSpacing(0)
@@ -190,11 +188,9 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper2']};}}")
-        # 底部导航条的底色也要跟着主题走（原来写死成 LIGHT，暗色下会是白条）
+        # 底部导航条：透明无底框，选中态由按钮自身的品牌色胶囊表达
         if hasattr(self, "nav_bar"):
-            self.nav_bar.setStyleSheet(
-                f"QFrame#navBar{{background:{t['panel']};"
-                f"border:1px solid {t['line']};border-radius:24px;}}")
+            self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
             b.update()
 
