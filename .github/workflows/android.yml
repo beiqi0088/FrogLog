@@ -1,15 +1,24 @@
-name: Android APK
+name: Android 16 APK
 
-# 在 GitHub 网页上手动触发（Actions → Android APK → Run workflow）。
-# 免费额度：公开仓库不限分钟；私有仓库每月 2000 分钟（首次全套约 60–120 分钟）。
+# 在 GitHub 网页上手动触发（Actions → Android 16 APK → Run workflow），
+# 或推送 android-* 标签自动构建并发布 Release。
+# 公开仓库 Actions 分钟数不限；私有仓库每月 2000 分钟（首次全套约 60–120 分钟）。
 on:
   workflow_dispatch:
   push:
     tags: ["android-*"]
 
+# 发布 Release 需要写 contents 权限（新仓库默认是只读）
+permissions:
+  contents: write
+
 concurrency:
   group: android-apk-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  TARGET_API: "36"   # Android 16
+  MIN_API: "28"      # Qt 6.11 for Android 要求的最低 API
 
 jobs:
   build:
@@ -37,7 +46,7 @@ jobs:
             openjdk-17-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version
-          # shiboken 用 libclang 解析头文件；NDK r27 的 libc++ 头需要 clang 18 才能读懂
+          # shiboken 用 libclang 解析头文件；NDK 的 libc++ 头需要新 clang 才能读懂
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/llvm.asc >/dev/null
           echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm18.list
           sudo apt-get update
@@ -64,7 +73,7 @@ jobs:
           ls "$HOME/Qt/6.11.1"
           ls "$HOME/Qt/6.11.1/gcc_64/bin" | head -5
 
-      - name: 预装新版 Android 命令行工具
+      - name: 预装新版 Android 命令行工具 + API 36 平台
         shell: bash
         run: |
           # 交叉编译脚本默认下 2021 年的 sdkmanager，它在 JDK 17 上会抛
@@ -83,6 +92,9 @@ jobs:
             fi
           fi
           yes | "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" --licenses >/dev/null 2>&1 || true
+          # Android 16 的编译平台与 build-tools
+          "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" \
+            "platforms;android-$TARGET_API" "build-tools;36.0.0" "platform-tools"
           "$SDK/tools/bin/sdkmanager" --sdk_root="$SDK" --version || true
           java -version
 
@@ -96,9 +108,14 @@ jobs:
         with:
           path: |
             ~/.pyside6_android_deploy
-            pyside-setup/dist
-            pyside-setup/dist_android
-          key: pyside-android-${{ runner.os }}-6.11.1
+            .android-wheels
+          key: pyside-android-api36-${{ runner.os }}-6.11.1
+
+      - name: 缓存 Gradle（buildozer 打包时使用）
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: gradle-android-${{ runner.os }}-${{ hashFiles('.github/workflows/android.yml') }}
 
       - name: 交叉编译 PySide6 / shiboken6 的 Android 轮子
         shell: bash
@@ -113,11 +130,21 @@ jobs:
           java -version
           python3 --version
           ls /usr/lib/llvm-18/lib/libclang.so*
-          if ls pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl >/dev/null 2>&1; then
+          # 轮子统一放在工作区的 .android-wheels，和 pyside-setup 源码分开缓存：
+          # 之前把 pyside-setup/dist 整个缓存回来会在工作区造出一个 pyside-setup 目录，
+          # 下一步 git clone 直接 128 失败，而且它还会被打进 APK 当源码扫描。
+          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
+          mkdir -p "$WHEELS"
+          if ls "$WHEELS"/pyside6-*.whl "$WHEELS"/shiboken6-*.whl >/dev/null 2>&1; then
             echo "缓存里已有轮子，跳过编译"
-            ls -lh pyside-setup/dist/*.whl pyside-setup/dist_android/*.whl 2>/dev/null || true
+            ls -lh "$WHEELS"
             exit 0
           fi
+          # pyside-setup 必须克隆在工作区之外，否则 buildozer 会把整个源码树复制进 APK
+          BUILD="$RUNNER_TEMP/pyside-build"
+          rm -rf "$BUILD"
+          mkdir -p "$BUILD"
+          cd "$BUILD"
           git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
           cd pyside-setup
           # 6.11.1 的 toolchain 模板漏了 QT_HOST_PATH，交叉编译 Qt6 会报
@@ -137,7 +164,12 @@ jobs:
             --plat-name=aarch64 \
             --qt-install-path="$HOME/Qt/6.11.1" \
             --auto-accept-license --skip-update --verbose
-          ls -lh dist/*.whl 2>/dev/null || ls -lh dist_android/*.whl
+          # 只把 .whl 拷出来，源码树留在 $RUNNER_TEMP，不污染仓库
+          for f in dist/*.whl dist_android/*.whl; do
+            [ -e "$f" ] && cp -v "$f" "$WHEELS"/
+          done
+          ls -lh "$WHEELS"
+          ls "$WHEELS"/*.whl >/dev/null 2>&1
 
       - name: 失败时打印交叉编译日志尾部
         if: failure()
@@ -158,62 +190,82 @@ jobs:
           cat "$REQ"
           python3 -m pip install -r "$REQ"
 
-      - name: 打 APK（debug 模式）
+      - name: 打 Android 16 APK（targetSdk 36 / minSdk 28）
         shell: bash
         run: |
+          set -o pipefail
+          export PATH="$JAVA_HOME/bin:$PATH"
           # wheel 文件名是全小写（pyside6-...whl / shiboken6-...whl），用 -iname 找
-          # 注意：find 遇到不存在的目录会返回 1，配合 pipefail 会直接把这一步干掉，
-          # 所以先把两个目录都建出来（幂等）。
-          mkdir -p pyside-setup/dist pyside-setup/dist_android
-          PS=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
-          SH=$(find pyside-setup/dist pyside-setup/dist_android -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
+          WHEELS="$GITHUB_WORKSPACE/.android-wheels"
+          PS=$(find "$WHEELS" -maxdepth 1 -iname 'pyside6-*.whl' | head -1)
+          SH=$(find "$WHEELS" -maxdepth 1 -iname 'shiboken6-*.whl' | head -1)
           echo "PySide6 wheel: $PS"
           echo "shiboken6 wheel: $SH"
           if [ -z "$PS" ] || [ -z "$SH" ]; then
-            echo "找不到 Android 轮子，dist 内容："
-            ls -R pyside-setup/dist pyside-setup/dist_android 2>/dev/null | head -40 || true
+            echo "找不到 Android 轮子："
+            ls -lh "$WHEELS" || true
             exit 1
           fi
-          # pyside-setup 就在仓库根目录里，部署工具会把它当项目源码扫描并解析失败；
-          # docs/design/.github 也跟运行无关，一起跳过（顺便减小 APK）。
-          set -o pipefail
-          pyside6-android-deploy --name FrogLog \
+          # 只把运行必需的文件放进干净的暂存目录再部署。
+          # buildozer 会把当前目录整棵树复制进 APK 并 compileall：
+          # pyside-setup（Jinja 模板 .py）、docs/design、app/shots 都会直接炸掉打包。
+          STAGE="$RUNNER_TEMP/appsrc"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE/app/pages"
+          cp -v main.py "$STAGE/"
+          cp -v app/*.py "$STAGE/app/"
+          cp -v app/pages/*.py "$STAGE/app/pages/"
+          cd "$STAGE"
+          # 用包装器把 buildozer.spec 的 android.api/minapi 改成 Android 16 的要求
+          python3 "$GITHUB_WORKSPACE/scripts/android16_deploy.py" \
+            --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
-            --extra-ignore-dirs pyside-setup,docs,design,.github,dist,dist_android \
             --keep-deployment-files \
             --force \
-            -v 2>&1 | tee deploy.log
-          # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以这里手动检查
-          if ! grep -q "apk created in" deploy.log; then
-            echo "=== deploy.log 最后 150 行（buildozer 的报错就在 traceback 前面）==="
-            tail -n 150 deploy.log || true
+            -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy.log"
+          # pyside6-android-deploy 会把异常吞掉、照样退出 0，所以按产物判断成败
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          FOUND=0
+          while IFS= read -r f; do
+            cp -v "$f" "$GITHUB_WORKSPACE/out/"
+            FOUND=1
+          done < <(find "$STAGE" -type f -name '*.apk' 2>/dev/null)
+          echo "=== 产物 ==="
+          ls -lh "$GITHUB_WORKSPACE/out" || true
+          if [ "$FOUND" -eq 0 ]; then
+            echo "没有生成 APK，deploy.log 最后 200 行："
+            tail -n 200 "$GITHUB_WORKSPACE/deploy.log" || true
             exit 1
           fi
-          echo "=== 产物 ==="
-          find . -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20 || true
-          find "$HOME" -maxdepth 4 \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
 
-      - name: 收集 APK
-        if: always()
+      - name: 校验 APK 的 Android 版本并重命名
         shell: bash
         run: |
-          mkdir -p out
-          echo "=== 工作区 ==="
-          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -print 2>/dev/null | head -20 || true
-          find . -path ./pyside-setup -prune -o \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
-          echo "=== HOME（buildozer 的产物可能在 ~/.buildozer 深处）==="
-          find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
-            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" 2>/dev/null | head -30 || true
-          find "$HOME" \( -name "*.apk" -o -name "*.aab" \) \
-            -not -path "*/android-sdk/*" -not -path "*/android-ndk/*" -exec cp -v {} out/ \; 2>/dev/null || true
-          echo "=== /tmp ==="
-          find /tmp \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null | head -20 || true
-          find /tmp \( -name "*.apk" -o -name "*.aab" \) -exec cp -v {} out/ \; 2>/dev/null || true
-          echo "=== out ==="
-          ls -lh out || true
-          echo "=== buildozer 目录 ==="
-          ls -la "$HOME/.buildozer" 2>/dev/null | head -10 || true
+          APK=$(find out -maxdepth 1 -name '*.apk' | head -1)
+          echo "APK: $APK"
+          AAPT2=$(find "$HOME/.pyside6_android_deploy/android-sdk/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -1)
+          echo "aapt2: $AAPT2"
+          BADGING=$("$AAPT2" dump badging "$APK")
+          echo "$BADGING" | grep -E "^package:|^sdkVersion:|^targetSdkVersion:|^application-label"
+          TARGET=$(echo "$BADGING" | sed -n "s/^targetSdkVersion:'\([0-9]*\)'/\1/p")
+          MINSDK=$(echo "$BADGING" | sed -n "s/^sdkVersion:'\([0-9]*\)'/\1/p")
+          echo "targetSdk=$TARGET minSdk=$MINSDK"
+          if [ "$TARGET" != "36" ]; then
+            echo "::error::targetSdk 不是 36（Android 16），实际为 $TARGET"
+            exit 1
+          fi
+          mkdir -p dist
+          cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
+          ls -lh dist
+
+      - name: 上传 APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrogLog-android16-apk
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 30
 
       - name: 上传部署日志
         if: always()
@@ -224,11 +276,32 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
+      - name: 计算 Release 标签
+        id: rel
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=android16-api36-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 发布到 GitHub Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: FrogLog-android-apk
-          path: out/*
-          if-no-files-found: warn
-          include-hidden-files: true
-          retention-days: 30
+          tag_name: ${{ steps.rel.outputs.tag }}
+          name: FrogLog · 蛙记 — Android 16 版 (API 36)
+          body: |
+            自动构建的 Android 16 APK。
+
+            - `targetSdkVersion` / `compileSdkVersion`：36（Android 16）
+            - `minSdkVersion`：28（Android 9）
+            - 架构：arm64-v8a
+            - 构建方式：Qt 6.11.1 Open Source + PySide6 源码交叉编译（LGPL）
+            - 提交：${{ github.sha }}
+            - 运行：${{ github.run_number }}
+
+            > 这是 debug 签名的 APK，可直接侧载安装；首次安装需允许「安装未知来源应用」。
+          files: dist/*.apk
+          fail_on_unmatched_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,10 @@
-# 用 GitHub Actions 打安卓 APK
+# 用 GitHub Actions 打 Android 16 APK
 
 Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是 LGPL：**自己交叉编译一份 Android 轮子完全合法**。
 交叉编译只能在 Linux 上做 —— GitHub Actions 免费提供 Ubuntu 机器，所以这条路不需要本地 Linux、不需要 Qt 商业许可。
+
+目标版本：**Android 16（API 36）**，`minSdkVersion = 28`（Qt 6.11 for Android 的最低要求），架构 `arm64-v8a`。
+构建成功后会自动创建 GitHub Release 并附上 APK。
 
 ## 一、准备（5 分钟）
 
@@ -23,15 +26,20 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
 ## 二、触发构建
 
 1. 打开仓库页面 → **Actions** 标签；
-2. 左侧选 **Android APK**；
+2. 左侧选 **Android 16 APK**；
 3. 右上角 **Run workflow** → 再点绿色 **Run workflow**；
 4. 等它跑完（首次约 **60–120 分钟**，之后有缓存会快一些）。
 
 ## 三、下载与安装
 
-1. 构建成功后点进这次运行，页面底部 **Artifacts** → 下载 `FrogLog-android-apk.zip`；
-2. 解压得到 `.apk`（debug 模式出的是 `apk`）；
-3. 传到手机点开安装；第一次需要在系统里允许"安装未知来源的应用"。
+构建成功后有两种拿 APK 的方式：
+
+1. **Releases 页面**：自动发布，直接下载 `FrogLog-Android16-API36-<run>.apk`；
+2. 或点进这次运行，页面底部 **Artifacts** → 下载 `FrogLog-android16-apk.zip`。
+
+传到手机点开安装；第一次需要在系统里允许「安装未知来源的应用」。
+这是 debug 签名 APK，可直接侧载；如需上架应用商店请改 `pysidedeploy.spec`
+的 `[buildozer] mode = release` 并配置签名。
 
 ## 四、这次工作流做了什么
 
@@ -40,11 +48,15 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
 1. 装编译工具 + JDK 17；
 2. `aqtinstall` 装 Qt for Android 6.11.1（与桌面 PySide6 同版本）；
 3. 克隆 `pyside-setup` 6.11.1，跑 `tools/cross_compile_android/main.py`：
-   自动下载 Android NDK r28c、SDK、python.org 的 Android CPython，然后编出
+   自动下载 Android NDK r27c、SDK、python.org 的 Android CPython，然后编出
    `PySide6-*-android_arm64_v8a.whl` 和 `shiboken6-*.whl`；
 4. `pip install pyside6==6.11.1` 拿到 `pyside6-android-deploy` 工具；
-5. `pyside6-android-deploy --name FrogLog`：内部用 buildozer 打包成 APK；
-6. 上传 APK 作为 artifact。
+5. `scripts/android16_deploy.py`（包装 `pyside6-android-deploy`）在 buildozer
+   真正开始前把 `buildozer.spec` 改成 `android.api = 36`、`android.minapi = 28`，
+   内部用 buildozer 打包成 APK；
+6. 用 `aapt2` 校验 APK 的 `targetSdkVersion` 必须为 36；
+7. 上传 APK artifact，并发布到 GitHub Releases（标签 `android16-api36-<run>`，
+   推 `android-*` 标签时用该标签名）。
 
 ## 五、缓存
 
@@ -53,7 +65,8 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
 | 缓存 | 路径 | key |
 |---|---|---|
 | Qt for Android | `~/Qt` | `qt-android-<os>-6.11.1` |
-| NDK / SDK / Android 轮子 | `~/.pyside6-android-deploy`、`pyside-setup/dist_android` | `pyside-android-<os>-6.11.1` |
+| NDK / SDK / Android 轮子 | `~/.pyside6_android_deploy`、`.android-wheels` | `pyside-android-api36-<os>-6.11.1` |
+| Gradle | `~/.gradle` | `gradle-android-<os>-<workflow hash>` |
 
 换 Qt 版本时把 key 里的版本号一起改掉即可。
 
