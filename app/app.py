@@ -8,7 +8,7 @@ from __future__ import annotations
 import threading
 
 from PySide6.QtCore import QEvent, QTimer, Qt
-from PySide6.QtGui import QFont, QFontDatabase
+from PySide6.QtGui import QFont, QFontDatabase, QPainter
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
                                QButtonGroup, QDialog)
@@ -60,6 +60,20 @@ MAIN_TABS = [("today", "今日"), ("library", "记忆"), ("plan", "征途"),
 NO_NAV = {"review", "settings", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash"}
 
 
+class BgLayer(QWidget):
+    """整页渐变底：7 套 Anki 主题的径向/线性底色都画在这里。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        tid = getattr(self.window(), "theme_id", None)
+        theme.paint_page_bg(p, self.rect(), tid)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -87,6 +101,7 @@ class MainWindow(QMainWindow):
 
         root = QWidget()
         root.setObjectName("root")
+        self.root = root
         self.setCentralWidget(root)
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -136,6 +151,11 @@ class MainWindow(QMainWindow):
         self._toast_timer.setSingleShot(True)
         self._toast_timer.timeout.connect(self.toast_label.hide)
 
+        # 渐变底：放在 root 最底层，column / 页面 / 底栏都透明，渐变能透出来
+        self.bg = BgLayer(root)
+        self.bg.setGeometry(root.rect())
+        self.bg.lower()
+
         self.apply_theme()
         self.show_page("today")
         self.quest_timer.start()
@@ -179,8 +199,8 @@ class MainWindow(QMainWindow):
     def apply_theme(self):
         tid = self.store.settings.get("theme")
         if not tid:
-            tid = "night" if self.store.settings.get("dark") else "paper"
-        self.theme_id = tid if tid in theme.THEMES else "paper"
+            tid = theme.DEFAULT_THEME
+        self.theme_id = tid if tid in theme.THEMES else theme.DEFAULT_THEME
         t = theme.theme_tokens(self.theme_id)
         theme.set_font(resolve_family())
         W.set_tokens(t)
@@ -193,12 +213,29 @@ class MainWindow(QMainWindow):
             self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
             b.update()
+        if hasattr(self, "bg"):
+            self.bg.update()
+
+    def _sync_bg(self):
+        if hasattr(self, "bg") and hasattr(self, "root"):
+            self.bg.setGeometry(self.root.rect())
+            self.bg.lower()
+
+    def _drop_review_cache(self):
+        """换主题后让常驻的复习页重建，顶栏/底栏用新主题色。"""
+        if getattr(self, "_review_page", None) is not None:
+            try:
+                self._review_page.deleteLater()
+            except Exception:
+                pass
+            self._review_page = None
 
     def set_theme(self, tid: str):
         self.store.settings["theme"] = tid
         self.store.settings["dark"] = theme.theme_is_dark(tid)
         self.store.save()
         self.apply_theme()
+        self._drop_review_cache()
         cur = self.stack.currentWidget()
         if cur and hasattr(cur, "build"):
             cur.build()
@@ -207,6 +244,7 @@ class MainWindow(QMainWindow):
         self.store.settings["dark"] = bool(dark)
         self.store.save()
         self.apply_theme()
+        self._drop_review_cache()
         cur = self.stack.currentWidget()
         if cur and hasattr(cur, "build"):
             cur.build()
@@ -214,6 +252,8 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ 导航
     def showEvent(self, e):
         super().showEvent(e)
+        self._sync_bg()
+        QTimer.singleShot(0, self._sync_bg)
         if not getattr(self, "_centered", False):
             self._centered = True
             W.center_on_screen(self)
@@ -691,6 +731,7 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
+        self._sync_bg()
         if self.toast_label.isVisible():
             w = self.toast_label.width()
             self.toast_label.move((self.width() - w) // 2, self.height() - 120)

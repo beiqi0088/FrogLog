@@ -275,19 +275,28 @@ class ElideLabel(QLabel):
 
 
 class ThemeDot(QWidget):
-    """主题色点：选中=实心，未选中=空心圆环。"""
+    """主题色点：Anki 主题用渐变圆点，其余用空心/实心圆环。"""
 
     def __init__(self, tokens: dict, size: int = 20, selected: bool = False,
-                 parent=None):
+                 dot=None, parent=None):
         super().__init__(parent)
         self.tokens = tokens
         self.selected = selected
+        self.dot = dot
         self.setFixedSize(size, size)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = self.rect().adjusted(1, 1, -1, -1)
+        if self.dot:
+            g = QLinearGradient(r.topLeft(), r.bottomRight())
+            g.setColorAt(0, QColor(self.dot[0]))
+            g.setColorAt(1, QColor(self.dot[1]))
+            p.setPen(QPen(QColor(255, 255, 255, 235), 1.5))
+            p.setBrush(g)
+            p.drawEllipse(r)
+            return
         ring = self.tokens.get("brand" if self.selected else "line", "#BBB")
         p.setPen(QPen(QColor(ring), 1.5))
         p.setBrush(QColor(self.tokens.get("panel", self.tokens.get("paper", "#FFF"))))
@@ -304,7 +313,7 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
     clicked = Signal(str)
 
     def __init__(self, tid: str, name: str, tokens: dict, selected: bool = False,
-                 parent=None):
+                 dot=None, parent=None):
         super().__init__(parent)
         self.tid = tid
         self.setObjectName("themeChip")
@@ -313,12 +322,18 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(12, 6, 12, 6)
         lay.setSpacing(9)
-        lay.addWidget(ThemeDot(tokens, 20, selected=selected), 0, Qt.AlignVCenter)
+        lay.addWidget(ThemeDot(tokens, 20, selected=selected, dot=dot),
+                      0, Qt.AlignVCenter)
         lb = ElideLabel(name)
         lb.setStyleSheet(
             f"font-size:12.5px;font-weight:600;color:"
             f"{(tokens.get('brand') if selected else tokens.get('ink'))};")
         lay.addWidget(lb, 1)
+        if selected:
+            ck = QLabel("✓")
+            ck.setStyleSheet(
+                f"font-size:12px;font-weight:700;color:{tokens.get('brand')};")
+            lay.addWidget(ck, 0, Qt.AlignVCenter)
         border = tokens.get("brand") if selected else tokens.get("line")
         bg = tokens.get("brand_soft") if selected else tokens.get("panel")
         self.setStyleSheet(

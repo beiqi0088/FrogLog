@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 theme.py - 设计令牌 + 全局 QSS
-沿用浮卡的做法：LIGHT / DARK 两套 dict，build_qss() 统一出样式表。
-配色来自「艾宾浩斯记忆曲线」APK 反编译（纸白 + 墨绿 + 赭石）。
+7 套 Anki card-anki 模板配色（极光/冰川/薄荷/香槟/丁香/珊瑚/潟湖）+ 渐变页面底色。
 """
+
+from PySide6.QtCore import QPointF, QRectF
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QRadialGradient
+
 
 LIGHT = {
     "paper":   "#FBF8F1",
@@ -87,7 +90,7 @@ def build_qss(t: dict) -> str:
         color: {t['ink']};
     }}
     QMainWindow, #root {{ background: {t['paper']}; }}
-    #phoneColumn {{ background: {t['paper']}; }}
+    #phoneColumn {{ background: transparent; }}
 
     QScrollArea {{ border: none; background: transparent; }}
     QScrollArea > QWidget > QWidget {{ background: transparent; }}
@@ -175,74 +178,97 @@ def build_qss(t: dict) -> str:
     """
 
 # ---------------------------------------------------------------- 主题
-THEMES = {
-    "paper": {"name": "宣纸墨绿", "dark": False, "tokens": LIGHT},
-    "mist": {"name": "晨雾靛蓝", "dark": False, "tokens": {
-        "paper": "#F2F5F8", "paper2": "#E7EDF3", "panel": "#FFFFFF",
-        "ink": "#1F2A33", "ink2": "#5C6B77", "ink3": "#93A1AC",
-        "line": "#DCE4EA", "brand": "#2F5D8A", "brand2": "#22456A",
-        "brand_soft": "#E1ECF7", "accent": "#C2703D", "accent_soft": "#FAE9DE",
-        "green": "#2E7D5B", "green_soft": "#E1F2EA", "red": "#C0443A",
-        "red_soft": "#FBE7E4", "blue": "#2F5D8A", "blue_soft": "#E1ECF7",
-        "shadow": "rgba(36,58,80,0.10)",
-    }},
-    "cream": {"name": "奶油陶土", "dark": False, "tokens": {
-        "paper": "#FDF6EC", "paper2": "#F6EADB", "panel": "#FFFDF9",
-        "ink": "#3A2E27", "ink2": "#7A6A5D", "ink3": "#B3A292",
-        "line": "#EADCCB", "brand": "#B45F3F", "brand2": "#8E4527",
-        "brand_soft": "#F8E4D8", "accent": "#D98E4B", "accent_soft": "#FBEDDD",
-        "green": "#4E7A50", "green_soft": "#E7F0E3", "red": "#C24B3F",
-        "red_soft": "#FBE6E2", "blue": "#4A6C8C", "blue_soft": "#E6EDF5",
-        "shadow": "rgba(90,60,40,0.10)",
-    }},
-    "ink": {"name": "石墨黑白", "dark": False, "tokens": {
-        "paper": "#F5F5F4", "paper2": "#EAEAE8", "panel": "#FFFFFF",
-        "ink": "#18191A", "ink2": "#5F6163", "ink3": "#9A9C9E",
-        "line": "#DADAD8", "brand": "#2B2D2F", "brand2": "#101112",
-        "brand_soft": "#E8E8E6", "accent": "#A85B33", "accent_soft": "#F3E7DF",
-        "green": "#2E7D5B", "green_soft": "#E4F1EA", "red": "#C0392B",
-        "red_soft": "#FBE6E3", "blue": "#3F5F7A", "blue_soft": "#E6EDF3",
-        "shadow": "rgba(20,20,20,0.12)",
-    }},
-    "celadon": {"name": "青瓷", "dark": False, "tokens": {
-        "paper": "#EFF6F4", "paper2": "#E2EEEA", "panel": "#FAFFFD",
-        "ink": "#1E3330", "ink2": "#5A736E", "ink3": "#93A8A3",
-        "line": "#D3E4DF", "brand": "#2E6F63", "brand2": "#1F5049",
-        "brand_soft": "#DDEDE8", "accent": "#B07A45", "accent_soft": "#F4E9DC",
-        "green": "#2E7D5B", "green_soft": "#E1F3EC", "red": "#BF4A3F",
-        "red_soft": "#FAE6E3", "blue": "#3D6B86", "blue_soft": "#E2EEF5",
-        "shadow": "rgba(30,70,60,0.10)",
-    }},
-    "sunset": {"name": "落日粉橙", "dark": False, "tokens": {
-        "paper": "#FFF4F0", "paper2": "#FCE7DF", "panel": "#FFFDFC",
-        "ink": "#3B2A26", "ink2": "#7C625B", "ink3": "#B79F97",
-        "line": "#F0D8CF", "brand": "#C0563F", "brand2": "#9A3E2A",
-        "brand_soft": "#FBE3DB", "accent": "#E08A3C", "accent_soft": "#FCEBDA",
-        "green": "#4F7A52", "green_soft": "#E8F1E4", "red": "#C5453C",
-        "red_soft": "#FCE4E0", "blue": "#4A6683", "blue_soft": "#E8EDF4",
-        "shadow": "rgba(120,60,40,0.10)",
-    }},
-    "night": {"name": "暗夜青", "dark": True, "tokens": {
-        "paper": "#12161A", "paper2": "#1B2127", "panel": "#161C22",
-        "ink": "#E8EDF1", "ink2": "#A9B6C0", "ink3": "#74828D",
-        "line": "#2A343D", "brand": "#4FB3A5", "brand2": "#2E7C72",
-        "brand_soft": "#17312F", "accent": "#E0A15C", "accent_soft": "#3A2A18",
-        "green": "#62C29A", "green_soft": "#1B3329", "red": "#F0857A",
-        "red_soft": "#3A211E", "blue": "#6FA8D0", "blue_soft": "#1E2E3A",
-        "shadow": "rgba(0,0,0,0.45)",
-        "hero_a": "#1B2A24", "hero_b": "#2A4A3F", "hero_ink": "#EAF3F0",
-    }},
-    "dusk": {"name": "暮紫", "dark": True, "tokens": {
-        "paper": "#17141C", "paper2": "#211C29", "panel": "#1C1823",
-        "ink": "#ECE8F2", "ink2": "#B2ABC0", "ink3": "#7E7790",
-        "line": "#332C3F", "brand": "#A48BE0", "brand2": "#7A63B8",
-        "brand_soft": "#2A2340", "accent": "#E0A15C", "accent_soft": "#3A2A18",
-        "green": "#7FC9A6", "green_soft": "#1E3329", "red": "#F0877C",
-        "red_soft": "#3A211E", "blue": "#8FB0D8", "blue_soft": "#212C3A",
-        "shadow": "rgba(0,0,0,0.45)",
-        "hero_a": "#201A2B", "hero_b": "#3A3055", "hero_ink": "#EFEAF6",
-    }},
+# 只保留 apkg 里 card-anki 模板的 7 个 ColorClass 配色；原来的 8 套已删除。
+_ANKI_BASE = {
+    "panel": "#FFFFFF",
+    "ink": "#1E293B", "ink2": "#64748B", "ink3": "#94A3B8",
+    "green": "#2E9E67", "green_soft": "#EAF7F0",
+    "red": "#E8503A", "red_soft": "#FDEDEA",
+    "blue": "#426A80", "blue_soft": "#E4EDF4",
+    "shadow": "rgba(30,41,59,0.10)",
 }
+
+THEMES = {
+    "anki-aurora": {
+        "name": "极光", "dark": False, "anki": True,
+        "dot": ("#FB923C", "#DB2777"),
+        "bg": {"linear": ("#FFF7F3", "#FEF1F6", "#F6F2FF"),
+               "r1": "#FFCEAA", "r2": "#FFBACE", "solid": "#FBEEE6"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#FCF6F4", "paper2": "#F9EBEF", "line": "#F3DEE6",
+                   "brand": "#DB2777", "brand2": "#9D174D",
+                   "brand_soft": "#FCE7F3", "accent": "#F59E0B",
+                   "accent_soft": "#FEF3C7"},
+    },
+    "anki-ice": {
+        "name": "冰川", "dark": False, "anki": True,
+        "dot": ("#38BDF8", "#4F46E5"),
+        "bg": {"linear": ("#F3F8FF", "#EEF5FE", "#F2F3FF"),
+               "r1": "#AADCFA", "r2": "#BAAFFA", "solid": "#E9F1FB"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#F5F8FF", "paper2": "#E9F2FE", "line": "#DEE7F8",
+                   "brand": "#4F46E5", "brand2": "#3730A3",
+                   "brand_soft": "#E0E7FF", "accent": "#38BDF8",
+                   "accent_soft": "#E0F2FE"},
+    },
+    "anki-mint": {
+        "name": "薄荷", "dark": False, "anki": True,
+        "dot": ("#10B981", "#0EA5E9"),
+        "bg": {"linear": ("#F4FDF8", "#EEFAF4", "#F0F9FF"),
+               "r1": "#96EBC4", "r2": "#B2E4F6", "solid": "#E7F7F0"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#F4FCF9", "paper2": "#E6F8F0", "line": "#D8EEE5",
+                   "brand": "#0E9F6E", "brand2": "#047857",
+                   "brand_soft": "#D1FAE5", "accent": "#0EA5E9",
+                   "accent_soft": "#E0F2FE"},
+    },
+    "anki-champ": {
+        "name": "香槟", "dark": False, "anki": True,
+        "dot": ("#F59E0B", "#EC4899"),
+        "bg": {"linear": ("#FFFCF2", "#FDF6E9", "#FDF1EE"),
+               "r1": "#FADE8C", "r2": "#FFC4C4", "solid": "#FBF3E2"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#FEFAF1", "paper2": "#FDF3DF", "line": "#F1E3C4",
+                   "brand": "#D97706", "brand2": "#92400E",
+                   "brand_soft": "#FEF3C7", "accent": "#EC4899",
+                   "accent_soft": "#FCE7F3"},
+    },
+    "anki-lilac": {
+        "name": "丁香", "dark": False, "anki": True,
+        "dot": ("#A78BFA", "#6366F1"),
+        "bg": {"linear": ("#FAF7FF", "#F5F2FF", "#F1F5FF"),
+               "r1": "#CEB4FC", "r2": "#B2D0FA", "solid": "#F1EBFD"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#F9F5FF", "paper2": "#F1ECFE", "line": "#E6DDF8",
+                   "brand": "#7C3AED", "brand2": "#5B21B6",
+                   "brand_soft": "#EDE9FE", "accent": "#6366F1",
+                   "accent_soft": "#E0E7FF"},
+    },
+    "anki-coral": {
+        "name": "珊瑚", "dark": False, "anki": True,
+        "dot": ("#F97316", "#DB2777"),
+        "bg": {"linear": ("#FFF8F4", "#FEF3EC", "#FDF9F0"),
+               "r1": "#FFB09E", "r2": "#FCD698", "solid": "#FDECE4"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#FFF7F2", "paper2": "#FDECE6", "line": "#F6DFD3",
+                   "brand": "#EA580C", "brand2": "#9A3412",
+                   "brand_soft": "#FFEDD5", "accent": "#DB2777",
+                   "accent_soft": "#FCE7F3"},
+    },
+    "anki-lagoon": {
+        "name": "潟湖", "dark": False, "anki": True,
+        "dot": ("#06B6D4", "#6366F1"),
+        "bg": {"linear": ("#F4FDFD", "#EEFAFB", "#F1F6FF"),
+               "r1": "#8AE4E4", "r2": "#A6C4FA", "solid": "#E6F6F7"},
+        "tokens": {**_ANKI_BASE,
+                   "paper": "#F3FBFC", "paper2": "#E5F8F9", "line": "#D8EEF1",
+                   "brand": "#0891B2", "brand2": "#155E75",
+                   "brand_soft": "#CFFAFE", "accent": "#6366F1",
+                   "accent_soft": "#E0E7FF"},
+    },
+}
+
+DEFAULT_THEME = "anki-mint"
 
 
 def theme_ids() -> list[str]:
@@ -250,7 +276,7 @@ def theme_ids() -> list[str]:
 
 
 def theme_info(tid: str) -> dict:
-    return THEMES.get(tid) or THEMES["paper"]
+    return THEMES.get(tid) or THEMES[DEFAULT_THEME]
 
 
 def theme_tokens(tid: str) -> dict:
@@ -259,4 +285,38 @@ def theme_tokens(tid: str) -> dict:
 
 def theme_is_dark(tid: str) -> bool:
     return bool(theme_info(tid)["dark"])
+
+
+def theme_gradient(tid: str | None) -> dict | None:
+    return theme_info(tid or DEFAULT_THEME).get("bg")
+
+
+def paint_page_bg(p: QPainter, rect, tid: str | None):
+    """把当前 Anki 主题的渐变底色铺满 rect（页面底层 / 设置页 / 复习 chrome）。"""
+    info = theme_info(tid or DEFAULT_THEME)
+    bg = info.get("bg")
+    r = QRectF(rect)
+    if not bg:
+        p.fillRect(r, QColor(info["tokens"]["paper"]))
+        return
+    p.setRenderHint(QPainter.Antialiasing, True)
+    l0, l1, l2 = bg["linear"]
+    g = QLinearGradient(r.topLeft(), r.bottomRight())
+    g.setColorAt(0.0, QColor(l0))
+    g.setColorAt(0.52, QColor(l1))
+    g.setColorAt(1.0, QColor(l2))
+    p.fillRect(r, g)
+
+    for (px, py), col, rad in (((0.88, 0.08), bg["r1"], 0.56),
+                               ((0.06, 0.92), bg["r2"], 0.58)):
+        rg = QRadialGradient(QPointF(r.left() + r.width() * px,
+                                     r.top() + r.height() * py),
+                             max(r.width(), r.height()) * rad)
+        c = QColor(col)
+        c.setAlphaF(0.92)
+        c0 = QColor(col)
+        c0.setAlpha(0)
+        rg.setColorAt(0, c)
+        rg.setColorAt(1, c0)
+        p.fillRect(r, rg)
 

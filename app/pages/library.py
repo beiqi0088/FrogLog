@@ -911,7 +911,7 @@ class LibraryPage(Page):
         for r in rounds:
             # 圆桌只显示「时间 · 多少个卡包」，其余统计省略，避免手机上被截断
             dcount, _ccount, _rcount = s.subtree_counts(r["id"])
-            sub = f"{_date_text(r.get('created'))} · {dcount} 个卡包"
+            sub = f"{_date_text(r.get('created'))} · {dcount} 个文件"
             row = EntityRow("round", r["name"], sub,
                             on_more=lambda btn, rr=r: self._round_menu(btn, rr))
             row.clicked.connect(lambda rr=r: self.app.show_page(

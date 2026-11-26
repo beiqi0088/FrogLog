@@ -7,6 +7,7 @@ import os
 import time
 import zipfile
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QLabel, QHBoxLayout, QVBoxLayout, QWidget,
                                QGridLayout,
                                QFileDialog, QMessageBox)
@@ -31,21 +32,36 @@ class SettingsPage(Page):
 
         self.group("外观")
         themes = W.Card()
-        themes.body.addWidget(label("主题", "h3"))
+        head = QWidget()
+        hl = QHBoxLayout(head)
+        hl.setContentsMargins(0, 0, 0, 0)
+        hl.setSpacing(6)
+        hl.addWidget(label("主题", "h3"), 1)
+        tag = QLabel("7 套")
+        tag.setStyleSheet(
+            f"color:{W.T['ink3']};font-size:10px;background:{W.T['paper2']};"
+            f"border:none;border-radius:8px;padding:2px 8px;")
+        hl.addWidget(tag, 0, Qt.AlignVCenter)
+        themes.body.addWidget(head)
         grid_host = QWidget()
         grid = QGridLayout(grid_host)
         grid.setContentsMargins(0, 2, 0, 0)
         grid.setHorizontalSpacing(8)
         grid.setVerticalSpacing(8)
-        current = getattr(self.app, "theme_id", "paper")
+        current = getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME)
         for i, (tid, info) in enumerate(theme_mod.THEMES.items()):
             chip = W.ThemeChip(tid, info["name"], info["tokens"],
-                               selected=(tid == current))
+                               selected=(tid == current), dot=info.get("dot"))
             chip.clicked.connect(lambda t=tid: self.app.set_theme(t))
             grid.addWidget(chip, i // 2, i % 2)
         for c in range(2):
             grid.setColumnStretch(c, 1)
         themes.body.addWidget(grid_host)
+        foot = QLabel("7 套 Anki 模板配色；卡片模板与复习卡区保持不变。")
+        foot.setWordWrap(False)
+        foot.setStyleSheet(
+            f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")
+        themes.body.addWidget(foot)
         self.add(themes)
 
         self.group("每日节奏")
