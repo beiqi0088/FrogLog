@@ -8,8 +8,9 @@ from __future__ import annotations
 import time
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (QGraphicsOpacityEffect, QHBoxLayout, QLabel,
-                               QPushButton, QVBoxLayout, QWidget)
+                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 import widgets as W
 
@@ -43,6 +44,29 @@ def h3(text: str):
     lb = QLabel(text)
     lb.setStyleSheet(f"font-size:13px;font-weight:700;color:{W.T['ink']};")
     return lb
+
+
+class _ElideLabel(QLabel):
+    """单行超出用 … 截断，并允许布局把它收缩到任意窄，避免被屏幕裁掉。"""
+
+    def __init__(self, text: str = "", parent=None):
+        super().__init__(text, parent)
+        self._full = text or ""
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.setMinimumWidth(1)
+        self._apply()
+
+    def setText(self, text: str):
+        self._full = text or ""
+        self._apply()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._apply()
+
+    def _apply(self):
+        fm = QFontMetrics(self.font())
+        QLabel.setText(self, fm.elidedText(self._full, Qt.ElideRight, max(1, self.width())))
 
 
 def hline_msg(text: str):
@@ -196,8 +220,8 @@ class OverviewPanel(Panel):
     def _boss(self):
         b = self.store.game["boss"]
         card = W.Card()
-        card.body.setContentsMargins(16, 13, 16, 15)
-        card.body.setSpacing(7)
+        card.body.setContentsMargins(14, 11, 14, 12)
+        card.body.setSpacing(6)
 
         total = self.store.frogs_eaten()
         total_min = self.store.study_minutes()
@@ -221,9 +245,9 @@ class OverviewPanel(Panel):
         row = QWidget()
         rl = QHBoxLayout(row)
         rl.setContentsMargins(0, 0, 0, 0)
-        rl.setSpacing(10)
+        rl.setSpacing(8)
         mon = Monster()
-        mon.set_scale(0.70)
+        mon.set_scale(0.50)
         mon.set_state(int(b.get("lv") or 1), False)
         rl.addWidget(mon, 0, Qt.AlignVCenter)
 
@@ -237,11 +261,11 @@ class OverviewPanel(Panel):
             cell = QWidget()
             cell.setStyleSheet(f"background:{W.T['paper2']};border-radius:12px;")
             cl = QVBoxLayout(cell)
-            cl.setContentsMargins(10, 8, 10, 8)
+            cl.setContentsMargins(10, 7, 10, 7)
             cl.setSpacing(1)
-            lb = QLabel(label)
+            lb = _ElideLabel(label)
             lb.setStyleSheet(f"font-size:10px;color:{W.T['ink3']};")
-            v = QLabel(value)
+            v = _ElideLabel(value)
             px = 17 if len(value) <= 7 else 14
             v.setStyleSheet(f"font-size:{px}px;font-weight:700;color:{W.T['brand']};")
             cl.addWidget(lb)
@@ -278,18 +302,26 @@ class OverviewPanel(Panel):
         hl.addWidget(link, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
 
-        mrow = QWidget()
-        ml = QHBoxLayout(mrow)
-        ml.setContentsMargins(2, 0, 2, 0)
-        ml.setSpacing(4)
-        for i, (key, name, need, _emoji) in enumerate(FROG_MEDALS[1:]):
-            dot = MedalDot(total >= need, FROG_MEDAL_COLORS[i + 1])
-            tip = f"{name} · 累计吃掉 {need} 只青蛙"
-            dot.setToolTip(tip if total >= need else f"{tip}（还差 {need - total} 只）")
-            if i:
-                ml.addStretch(1)       # 勋章之间均分，排满整行
-            ml.addWidget(dot)
-        card.body.addWidget(mrow)
+        # 12 枚勋章拆成两排（每排 6 个），单排最小宽度减半，窄屏不再被裁
+        medals = FROG_MEDALS[1:]
+        for r in range(2):
+            mrow = QWidget()
+            ml = QHBoxLayout(mrow)
+            ml.setContentsMargins(2, 0, 2, 0)
+            ml.setSpacing(0)
+            for j in range(6):
+                i = r * 6 + j
+                if i >= len(medals):
+                    break
+                _key, name, need, _emoji = medals[i]
+                dot = MedalDot(total >= need, FROG_MEDAL_COLORS[i + 1],
+                               shape=i, size=32)
+                tip = f"{name} · 累计吃掉 {need} 只青蛙"
+                dot.setToolTip(tip if total >= need else f"{tip}（还差 {need - total} 只）")
+                if j:
+                    ml.addStretch(1)
+                ml.addWidget(dot, 0, Qt.AlignHCenter)
+            card.body.addWidget(mrow)
 
         if nxt:
             span = max(1, nxt[2] - cur[2])
@@ -298,10 +330,13 @@ class OverviewPanel(Panel):
             foot = QWidget()
             fl = QHBoxLayout(foot)
             fl.setContentsMargins(2, 0, 2, 0)
-            fl.addWidget(small(f"当前「{cur[1]}」", 10.5, W.T["ink2"]))
+            cur_lb = _ElideLabel(f"当前「{cur[1]}」")
+            cur_lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
+            nxt_lb = _ElideLabel(f"下一枚「{nxt[1]}」还差 {nxt[2] - total} 只")
+            nxt_lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+            fl.addWidget(cur_lb, 1)
             fl.addStretch(1)
-            fl.addWidget(small(f"下一枚「{nxt[1]}」还差 {nxt[2] - total} 只",
-                               10.5, W.T["ink3"]))
+            fl.addWidget(nxt_lb, 1)
             card.body.addWidget(foot)
         else:
             card.body.addWidget(ThinBar(100, W.T["brand"], W.T["paper2"], 8))

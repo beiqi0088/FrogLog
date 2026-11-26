@@ -44,7 +44,7 @@ class MedalsPage(Page):
         rl.setContentsMargins(2, 8, 2, 8)
         rl.setSpacing(10)
 
-        dot = MedalDot(got, FROG_MEDAL_COLORS[idx + 1])
+        dot = MedalDot(got, FROG_MEDAL_COLORS[idx + 1], shape=idx, size=34)
         rl.addWidget(dot, 0, Qt.AlignVCenter)
 
         col = QVBoxLayout()

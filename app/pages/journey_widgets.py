@@ -71,36 +71,128 @@ def frog_medal(total: int):
     return cur, nxt
 
 
-class MedalDot(QWidget):
-    """勋章条上的小圆点：解锁了是彩底白星，没解锁是灰底灰星。"""
+def _shape_path(shape: int) -> QPainterPath:
+    """在 0..100 的虚拟坐标里画 12 种不同形状的勋章轮廓（按索引取）。"""
+    path = QPainterPath()
+    s = int(shape) % 12
+    if s == 0:                                  # 圆章
+        path.addEllipse(QRectF(10, 10, 80, 80))
+    elif s == 1:                                # 六边形
+        pts = [(50 + 42 * math.cos(math.radians(a)),
+                 50 + 42 * math.sin(math.radians(a)))
+               for a in (90, 150, 210, 270, 330, 30)]
+        path.moveTo(*pts[0])
+        for x, y in pts[1:]:
+            path.lineTo(x, y)
+        path.closeSubpath()
+    elif s == 2:                                # 菱形
+        for x, y in ((50, 8), (92, 50), (50, 92), (8, 50)):
+            path.lineTo(x, y) if path.elementCount() else path.moveTo(x, y)
+        path.closeSubpath()
+    elif s == 3:                                # 盾牌
+        path.moveTo(22, 16)
+        path.lineTo(78, 16)
+        path.lineTo(78, 50)
+        path.cubicTo(78, 72, 64, 86, 50, 92)
+        path.cubicTo(36, 86, 22, 72, 22, 50)
+        path.closeSubpath()
+    elif s == 4:                                # 五角星
+        pts = []
+        for i in range(10):
+            ang = math.radians(-90 + i * 36)
+            r = 42 if i % 2 == 0 else 18
+            pts.append((50 + r * math.cos(ang), 50 + r * math.sin(ang)))
+        path.moveTo(*pts[0])
+        for x, y in pts[1:]:
+            path.lineTo(x, y)
+        path.closeSubpath()
+    elif s == 5:                                # 八边形
+        pts = [(50 + 44 * math.cos(math.radians(a)),
+                 50 + 44 * math.sin(math.radians(a)))
+               for a in (22.5 + 45 * k for k in range(8))]
+        path.moveTo(*pts[0])
+        for x, y in pts[1:]:
+            path.lineTo(x, y)
+        path.closeSubpath()
+    elif s == 6:                                # 圆环
+        path.setFillRule(Qt.OddEvenFill)
+        path.addEllipse(QRectF(10, 10, 80, 80))
+        path.addEllipse(QRectF(32, 32, 36, 36))
+    elif s == 7:                                # 爱心
+        path.moveTo(50, 86)
+        path.cubicTo(18, 62, 18, 26, 34, 22)
+        path.cubicTo(44, 20, 50, 30, 50, 36)
+        path.cubicTo(50, 30, 56, 20, 66, 22)
+        path.cubicTo(82, 26, 82, 62, 50, 86)
+        path.closeSubpath()
+    elif s == 8:                                # 三叶草
+        path.addEllipse(QRectF(22, 22, 32, 32))
+        path.addEllipse(QRectF(46, 22, 32, 32))
+        path.addEllipse(QRectF(34, 44, 32, 32))
+        path.addRoundedRect(QRectF(47, 62, 6, 24), 3, 3)
+    elif s == 9:                                # 火焰
+        path.moveTo(50, 14)
+        path.cubicTo(72, 34, 74, 52, 50, 88)
+        path.cubicTo(26, 52, 28, 34, 50, 14)
+        path.closeSubpath()
+    elif s == 10:                               # 皇冠
+        path.moveTo(18, 78)
+        path.lineTo(22, 40)
+        path.lineTo(34, 58)
+        path.lineTo(50, 26)
+        path.lineTo(66, 58)
+        path.lineTo(78, 40)
+        path.lineTo(82, 78)
+        path.closeSubpath()
+        path.addRect(18, 72, 64, 9)
+    else:                                       # 奖杯
+        path.moveTo(32, 20)
+        path.lineTo(68, 20)
+        path.lineTo(62, 52)
+        path.lineTo(38, 52)
+        path.closeSubpath()
+        path.addRect(45, 52, 10, 14)
+        path.addRoundedRect(QRectF(30, 66, 40, 9), 4, 4)
+    return path
 
-    def __init__(self, earned: bool = False, color: str = "#C9A227", parent=None):
+
+class MedalDot(QWidget):
+    """勋章：按 shape 画不同形状；解锁=彩色+内圈高光，未解锁=灰底描边。"""
+
+    def __init__(self, earned: bool = False, color: str = "#C9A227",
+                 shape: int = 0, size: int = 22, parent=None):
         super().__init__(parent)
         self.earned = bool(earned)
         self.color = color
-        self.setFixedSize(22, 22)
+        self.shape = int(shape)
+        self.setFixedSize(size, size)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(self.color if self.earned else W.T["paper2"]))
-        p.drawEllipse(QRectF(1, 1, 20, 20))
-        if not self.earned:
-            p.setBrush(Qt.NoBrush)
-            p.setPen(QPen(QColor(W.T["line"]), 1))
-            p.drawEllipse(QRectF(1, 1, 20, 20))
-        path = QPainterPath()
-        cx, cy = 11, 11
-        for i in range(10):
-            ang = -math.pi / 2 + i * math.pi / 5
-            r = 5.6 if i % 2 == 0 else 2.4
-            pt = QPointF(cx + r * math.cos(ang), cy + r * math.sin(ang))
-            path.moveTo(pt) if i == 0 else path.lineTo(pt)
-        path.closeSubpath()
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor("#FFFFFF" if self.earned else W.T["line"]))
-        p.drawPath(path)
+        s = float(self.width())
+        p.save()
+        p.scale(s / 100.0, s / 100.0)            # 统一在 0..100 坐标里画
+        path = _shape_path(self.shape)
+
+        if self.earned:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(self.color))
+            p.drawPath(path)
+            # 内圈高光：同形状缩小到 70%，用更亮的同色
+            p.save()
+            p.translate(50, 50)
+            p.scale(0.68, 0.68)
+            p.translate(-50, -50)
+            p.setBrush(QColor(self.color).lighter(138))
+            p.drawPath(path)
+            p.restore()
+        else:
+            p.setPen(QPen(QColor(W.T["line"]), 2.4))
+            p.setBrush(QColor(W.T["paper2"]))
+            p.drawPath(path)
+        p.restore()
+
 
 
 def fmt_mmss(ms: int) -> str:
