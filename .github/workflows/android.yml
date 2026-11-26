@@ -112,7 +112,7 @@ jobs:
           path: |
             ~/.pyside6_android_deploy
             .android-wheels
-          key: pyside-android-api36-16kb-${{ runner.os }}-6.11.1
+          key: pyside-android-api36-16kb2-${{ runner.os }}-6.11.1
 
       - name: 缓存 Gradle（buildozer 打包时使用）
         uses: actions/cache@v4
@@ -150,11 +150,21 @@ jobs:
           cd "$BUILD"
           git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
           cd pyside-setup
-          # 6.11.1 默认用 NDK r27c，编出来的 libshiboken6/abi3.so 只有 4 KB 对齐；
-          # 换成 r28c，NDK 会默认生成 16 KB 对齐的 ELF（Android 16 16 KB 页要求）
-          sed -i "s/^ANDROID_NDK_VERSION = \"27c\"$/ANDROID_NDK_VERSION = \"$NDK_VERSION\"/" \
-            tools/cross_compile_android/android_utilities.py
-          grep -n "ANDROID_NDK_VERSION =" tools/cross_compile_android/android_utilities.py
+          # 注意：PySide6 轮子仍用 6.11.1 默认的 NDK r27c。换成 r28c 后 shiboken 的
+          # ApiExtractor 在解析 Qt 头文件时会失败（r28 的 libc++ 引用
+          # pthread_cond_clockwait，而 libclang 用的 target triple 不带 API level）。
+          # 16 KB 页对齐改为显式加链接参数 -Wl,-z,max-page-size=16384 实现。
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("tools/cross_compile_android/templates/toolchain_default.tmpl.cmake")
+          s = p.read_text()
+          old = 'set(QT_LINKER_FLAGS "-Wl,-O1'
+          assert old in s, "QT_LINKER_FLAGS not found in toolchain template"
+          if "max-page-size=16384" not in s:
+              s = s.replace(old, 'set(QT_LINKER_FLAGS "-Wl,-z,max-page-size=16384 -Wl,-O1', 1)
+              p.write_text(s)
+          print([l for l in s.splitlines() if "QT_LINKER_FLAGS" in l][:1])
+          PY
           # 6.11.1 的 toolchain 模板漏了 QT_HOST_PATH，交叉编译 Qt6 会报
           # "please set the QT_HOST_PATH cache variable to the location of your host Qt"
           sed -i 's|^set(CMAKE_SYSTEM_NAME Android)$|set(CMAKE_SYSTEM_NAME Android)\nset(QT_HOST_PATH "{{ qt_install_path }}/gcc_64" CACHE PATH "")|' \

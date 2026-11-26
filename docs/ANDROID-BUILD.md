@@ -48,8 +48,11 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
 1. 装编译工具 + JDK 17；
 2. `aqtinstall` 装 Qt for Android 6.11.1（与桌面 PySide6 同版本）；
 3. 克隆 `pyside-setup` 6.11.1，跑 `tools/cross_compile_android/main.py`：
-   自动下载 Android NDK **r28c**、SDK、python.org 的 Android CPython，然后编出
+   自动下载 Android NDK **r27c**、SDK、python.org 的 Android CPython，然后编出
    `PySide6-*-android_arm64_v8a.whl` 和 `shiboken6-*.whl`；
+   注意不能用 r28c 编轮子：r28 的 libc++ 会引用 `pthread_cond_clockwait`，
+   而 shiboken ApiExtractor 传给 libclang 的 triple 不带 API level，直接编译失败。
+   16 KB 页对齐通过给链接器加 `-Wl,-z,max-page-size=16384` 实现（改 toolchain 模板）；
 4. `pip install pyside6==6.11.1` 拿到 `pyside6-android-deploy` 工具；
 5. `scripts/android16_deploy.py`（包装 `pyside6-android-deploy`）在 buildozer
    真正开始前做两件事：把 `buildozer.spec` 改成 `android.api = 36` / `android.minapi = 28`，
