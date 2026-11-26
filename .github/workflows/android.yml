@@ -275,7 +275,7 @@ jobs:
           while IFS= read -r f; do
             cp -v "$f" "$GITHUB_WORKSPACE/out/"
             FOUND=1
-          done < <(find "$STAGE" -type f -name '*.apk' 2>/dev/null)
+          done < <(find "$STAGE" -type f \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null)
           echo "=== 产物 ==="
           ls -lh "$GITHUB_WORKSPACE/out" || true
           if [ "$FOUND" -eq 0 ]; then
