@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import threading
 
-from PySide6.QtCore import QEvent, QTimer
+from PySide6.QtCore import QEvent, QTimer, Qt
 from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
-                               QButtonGroup)
+                               QButtonGroup, QDialog)
 
 import widgets as W
 import brand
@@ -82,6 +82,8 @@ class MainWindow(QMainWindow):
         self.resize(430, 880)
         self.setMaximumWidth(560)
         self.setStyleSheet(f"QMainWindow{{background:{theme.LIGHT['paper2']};}}")
+        # 安卓系统返回键会作为 Qt.Key_Back 送到应用里，这里全局接住
+        QApplication.instance().installEventFilter(self)
 
         root = QWidget()
         root.setObjectName("root")
@@ -255,6 +257,8 @@ class MainWindow(QMainWindow):
                 old.deleteLater()
         if hasattr(page, "on_show"):
             page.on_show()
+        # 安卓没有滚轮：页面里的 QScrollArea 必须装 QScroller 才能手指拖动
+        W.enable_touch_scroll_deep(page)
         self.nav.setVisible(key not in NO_NAV)
         if key in self.nav_buttons:
             self.nav_buttons[key].setChecked(True)
@@ -626,6 +630,29 @@ class MainWindow(QMainWindow):
                 self._nav_back = False
             return
         self.show_page("today")
+
+    # ------------------------------------------------- 系统返回键（安卓）
+    def handle_back(self) -> bool:
+        """返回键：先退出学习页，再退回上一页；已在首页则交给系统（退出应用）。"""
+        cur = getattr(self, "_cur_spec", None)
+        if cur is not None and cur[0] == "review":
+            self.exit_review()
+            return True
+        if self._history:
+            self.go_back()
+            return True
+        return False
+
+    def eventFilter(self, obj, ev):
+        if ev.type() == QEvent.KeyPress and ev.key() == Qt.Key_Back:
+            modal = QApplication.activeModalWidget()
+            if isinstance(modal, QDialog):
+                modal.reject()          # 有弹窗时，返回键先关弹窗
+                return True
+            if modal is not None:
+                return False
+            return self.handle_back()
+        return super().eventFilter(obj, ev)
 
     def exit_review(self):
         self.session = None

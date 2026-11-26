@@ -13,7 +13,7 @@ from PySide6.QtGui import (QGuiApplication, QColor, QPainter, QPen, QBrush, QFon
                            QPainterPath, QLinearGradient)
 from PySide6.QtWidgets import (QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
-                               QProgressBar)
+                               QProgressBar, QScrollArea, QScroller)
 
 import theme
 from theme import LIGHT
@@ -24,6 +24,29 @@ T = dict(LIGHT)
 def set_tokens(t: dict):
     global T
     T = dict(t)
+
+
+def enable_touch_scroll(area: QScrollArea) -> None:
+    """让 QScrollArea 支持手指拖动滚动。
+
+    桌面端有滚轮，QScrollArea 不装 QScroller 也能滚；Android 上没有滚轮，
+    不显式抓 TouchGesture 的话页面完全拖不动。
+    """
+    vp = area.viewport()
+    if vp is None or vp.property("froglogTouchScroll"):
+        return
+    vp.setProperty("froglogTouchScroll", True)
+    QScroller.grabGesture(vp, QScroller.ScrollerGestureType.TouchGesture)
+
+
+def enable_touch_scroll_deep(root: QWidget) -> None:
+    """把 root 里所有 QScrollArea 都开启手指滚动（幂等）。"""
+    areas = []
+    if isinstance(root, QScrollArea):
+        areas.append(root)
+    areas.extend(root.findChildren(QScrollArea))
+    for area in areas:
+        enable_touch_scroll(area)
 
 
 def _c(key: str, alpha: int | None = None) -> QColor:

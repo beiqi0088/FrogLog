@@ -120,6 +120,12 @@ jobs:
           path: ~/.gradle
           key: gradle-android-${{ runner.os }}-${{ hashFiles('.github/workflows/android.yml') }}
 
+      - name: 缓存 Android 调试签名（否则每次构建签名都变，升级安装会失败）
+        uses: actions/cache@v4
+        with:
+          path: ~/.android
+          key: android-debug-keystore-v1
+
       - name: 交叉编译 PySide6 / shiboken6 的 Android 轮子
         shell: bash
         run: |
@@ -424,11 +430,18 @@ jobs:
 
             ## 本次修复了什么
 
-            上一版**打开即闪退**的根因：PySide6 的 Android 轮子是按 CPython 3.11 编译的，
+            **1. 打开即闪退**：PySide6 的 Android 轮子是按 CPython 3.11 编译的，
             扩展模块依赖 `libpython3.11.so`；而 python-for-android 的新版默认编出的是
-            `libpython3.14.so`。所以一执行 `import PySide6` 就 dlopen 失败，进程直接退出，
-            界面上什么都看不到。本版把 p4a 的 `python3` / `hostpython3` 钉回 3.11.11，
-            与轮子对齐；CI 里也加了「libpython 依赖闭环」检查，以后再错会直接构建失败。
+            `libpython3.14.so`，一执行 `import PySide6` 就 dlopen 失败。本版把 p4a 的
+            `python3` / `hostpython3` 钉回 3.11.11，与轮子对齐。
+
+            **2. 安卓上的操作**：
+            - **系统返回键**（手机底部/侧边手势）现在可用：先关弹窗，再退回上一页，
+              已在首页时退出应用；
+            - **手指上下滑动**现在可以滚动页面（之前只支持鼠标滚轮）。
+
+            安装提示：如果覆盖安装提示「应用未安装/签名不一致」，先卸载旧版再安装。
+            本版起会缓存调试签名，以后可以覆盖升级。
 
             ## 如果还是闪退：日志在「下载/FrogLog」里（不用进 Android/data）
 
