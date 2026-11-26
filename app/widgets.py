@@ -8,9 +8,9 @@ from __future__ import annotations
 import math
 
 from PySide6.QtCore import (Qt, QRectF, QPointF, Signal, QEvent, QTimer,
-                            QPropertyAnimation, Property, QEasingCurve)
+                            QPropertyAnimation, Property, QEasingCurve, QSize)
 from PySide6.QtGui import (QGuiApplication, QColor, QPainter, QPen, QBrush, QFont,
-                           QPainterPath, QLinearGradient)
+                           QPainterPath, QLinearGradient, QFontMetrics)
 from PySide6.QtWidgets import (QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
                                QProgressBar, QScrollArea, QScroller)
@@ -242,24 +242,60 @@ class GhostButton(QPushButton):
         self.setMinimumHeight(40)
 
 
-class ThemeDot(QWidget):
-    """主题色点：外圈 paper、内圈 brand。"""
+class ElideLabel(QLabel):
+    """单行超出用 … 截断：有空间时完整显示，空间不够才省略，且不会被挤没。"""
 
-    def __init__(self, tokens: dict, size: int = 20, parent=None):
+    def __init__(self, text: str = "", parent=None):
+        super().__init__(text, parent)
+        self._full = text or ""
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.setMinimumWidth(1)
+        self._apply()
+
+    def setText(self, text: str):
+        self._full = text or ""
+        self.updateGeometry()
+        self._apply()
+
+    def sizeHint(self):
+        return QFontMetrics(self.font()).size(Qt.TextSingleLine, self._full)
+
+    def minimumSizeHint(self):
+        # 允许被压缩到极窄（此时显示 …），而不是把整行撑宽
+        fm = QFontMetrics(self.font())
+        return QSize(1, fm.height() + 2)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._apply()
+
+    def _apply(self):
+        fm = QFontMetrics(self.font())
+        QLabel.setText(self, fm.elidedText(self._full, Qt.ElideRight, max(1, self.width())))
+
+
+class ThemeDot(QWidget):
+    """主题色点：选中=实心，未选中=空心圆环。"""
+
+    def __init__(self, tokens: dict, size: int = 20, selected: bool = False,
+                 parent=None):
         super().__init__(parent)
         self.tokens = tokens
+        self.selected = selected
         self.setFixedSize(size, size)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = self.rect().adjusted(1, 1, -1, -1)
-        p.setPen(QPen(QColor(self.tokens.get("line", "#DDD")), 1))
-        p.setBrush(QColor(self.tokens.get("paper", "#FFF")))
+        ring = self.tokens.get("brand" if self.selected else "line", "#BBB")
+        p.setPen(QPen(QColor(ring), 1.5))
+        p.setBrush(QColor(self.tokens.get("panel", self.tokens.get("paper", "#FFF"))))
         p.drawEllipse(r)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(self.tokens.get("brand", "#333")))
-        p.drawEllipse(r.adjusted(6, 6, -6, -6))
+        if self.selected:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(self.tokens.get("brand", "#333")))
+            p.drawEllipse(r.adjusted(5, 5, -5, -5))
 
 
 class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
@@ -277,16 +313,12 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(12, 6, 12, 6)
         lay.setSpacing(9)
-        lay.addWidget(ThemeDot(tokens, 20), 0, Qt.AlignVCenter)
-        lb = QLabel(name)
+        lay.addWidget(ThemeDot(tokens, 20, selected=selected), 0, Qt.AlignVCenter)
+        lb = ElideLabel(name)
         lb.setStyleSheet(
             f"font-size:12.5px;font-weight:600;color:"
             f"{(tokens.get('brand') if selected else tokens.get('ink'))};")
         lay.addWidget(lb, 1)
-        if selected:
-            tick = QLabel("✓")
-            tick.setStyleSheet(f"color:{tokens.get('brand')};font-size:12px;")
-            lay.addWidget(tick)
         border = tokens.get("brand") if selected else tokens.get("line")
         bg = tokens.get("brand_soft") if selected else tokens.get("panel")
         self.setStyleSheet(

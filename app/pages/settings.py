@@ -62,7 +62,7 @@ class SettingsPage(Page):
         self.row("导出备份", "生成 .zip 备份，可再导入", on_click=self._export)
         self.row("导入备份", "从 .zip 恢复（兼容 JSON）", on_click=self._import)
         self.row("清零青蛙记录",
-                 "吃掉青蛙数、勋章、累计学习时长归零（不影响卡片复习进度）",
+                 "青蛙数、勋章、累计学习时长归零",
                  on_click=self._reset_frogs, danger=True)
 
         self.group("关于")
@@ -91,18 +91,19 @@ class SettingsPage(Page):
         lay.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(2)
-        t = QLabel(title)
+        t = W.ElideLabel(title)
         t.setStyleSheet(f"font-size:13px;font-weight:600;color:{W.T['red'] if danger else W.T['ink']};")
         col.addWidget(t)
         if desc:
             d = QLabel(desc)
             d.setObjectName("sub")
+            d.setWordWrap(True)
             col.addWidget(d)
         lay.addLayout(col, 1)
         if widget is not None:
             lay.addWidget(widget)
         if value:
-            v = QLabel(value)
+            v = W.ElideLabel(value)
             v.setObjectName("sub")
             lay.addWidget(v)
         if on_click:
