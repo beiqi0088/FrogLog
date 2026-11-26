@@ -52,8 +52,11 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
    `PySide6-*-android_arm64_v8a.whl` 和 `shiboken6-*.whl`；
 4. `pip install pyside6==6.11.1` 拿到 `pyside6-android-deploy` 工具；
 5. `scripts/android16_deploy.py`（包装 `pyside6-android-deploy`）在 buildozer
-   真正开始前把 `buildozer.spec` 改成 `android.api = 36`、`android.minapi = 28`，
-   内部用 buildozer 打包成 APK；
+   真正开始前做两件事：把 `buildozer.spec` 改成 `android.api = 36` / `android.minapi = 28`，
+   并把 buildozer 源码里的默认常量 `ANDROID_API` / `ANDROID_MINAPI` 也改成 36 / 28。
+   后者是必须的：buildozer 1.5.0 不会把 `android.api` 传给 python-for-android 的
+   `apk` 命令，spec 里这两项还是注释行，只会回落到默认常量；不改常量的话
+   APK 的 `targetSdkVersion` 会停在 31；
 6. 用 `aapt2` 校验 APK 的 `targetSdkVersion` 必须为 36；
 7. 上传 APK artifact，并发布到 GitHub Releases（标签 `android16-api36-<run>`，
    推 `android-*` 标签时用该标签名）。
