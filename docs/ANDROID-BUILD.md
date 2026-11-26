@@ -48,7 +48,7 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
 1. 装编译工具 + JDK 17；
 2. `aqtinstall` 装 Qt for Android 6.11.1（与桌面 PySide6 同版本）；
 3. 克隆 `pyside-setup` 6.11.1，跑 `tools/cross_compile_android/main.py`：
-   自动下载 Android NDK r27c、SDK、python.org 的 Android CPython，然后编出
+   自动下载 Android NDK **r28c**、SDK、python.org 的 Android CPython，然后编出
    `PySide6-*-android_arm64_v8a.whl` 和 `shiboken6-*.whl`；
 4. `pip install pyside6==6.11.1` 拿到 `pyside6-android-deploy` 工具；
 5. `scripts/android16_deploy.py`（包装 `pyside6-android-deploy`）在 buildozer
@@ -57,7 +57,9 @@ Android 的 PySide6 轮子官方只发给商业用户，但 PySide6 的源码是
    后者是必须的：buildozer 1.5.0 不会把 `android.api` 传给 python-for-android 的
    `apk` 命令，spec 里这两项还是注释行，只会回落到默认常量；不改常量的话
    APK 的 `targetSdkVersion` 会停在 31；
-6. 用 `aapt2` 校验 APK 的 `targetSdkVersion` 必须为 36；
+6. 用 `aapt2` 校验 APK 的 `targetSdkVersion` 必须为 36，并逐个检查
+   `lib/arm64-v8a/*.so` 的 LOAD 段是否 16 KB 对齐（Android 16 的 16 KB 页设备要求，
+   否则会黑屏闪退，例如 iQOO 15）；
 7. 上传 APK artifact，并发布到 GitHub Releases（标签 `android16-api36-<run>`，
    推 `android-*` 标签时用该标签名）。
 

@@ -31,7 +31,7 @@ from pathlib import Path
 
 TARGET_API = "36"
 MIN_API = "28"
-NDK_VERSION = "27c"
+NDK_VERSION = "28c"
 
 PATCHED_KEYS = {
     "android.api": TARGET_API,

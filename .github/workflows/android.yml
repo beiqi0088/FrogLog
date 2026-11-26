@@ -19,6 +19,9 @@ concurrency:
 env:
   TARGET_API: "36"   # Android 16
   MIN_API: "28"      # Qt 6.11 for Android 要求的最低 API
+  # NDK r28 起默认按 16 KB 页对齐编译；Android 16 设备（如 iQOO 15）可能用 16 KB 页，
+  # 用 r27 编出来的 4 KB 对齐 .so 会在 dlopen 时失败，表现为黑屏闪退。
+  NDK_VERSION: "28c"
 
 jobs:
   build:
@@ -109,7 +112,7 @@ jobs:
           path: |
             ~/.pyside6_android_deploy
             .android-wheels
-          key: pyside-android-api36-${{ runner.os }}-6.11.1
+          key: pyside-android-api36-16kb-${{ runner.os }}-6.11.1
 
       - name: 缓存 Gradle（buildozer 打包时使用）
         uses: actions/cache@v4
@@ -147,6 +150,11 @@ jobs:
           cd "$BUILD"
           git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup.git
           cd pyside-setup
+          # 6.11.1 默认用 NDK r27c，编出来的 libshiboken6/abi3.so 只有 4 KB 对齐；
+          # 换成 r28c，NDK 会默认生成 16 KB 对齐的 ELF（Android 16 16 KB 页要求）
+          sed -i "s/^ANDROID_NDK_VERSION = \"27c\"$/ANDROID_NDK_VERSION = \"$NDK_VERSION\"/" \
+            tools/cross_compile_android/android_utilities.py
+          grep -n "ANDROID_NDK_VERSION =" tools/cross_compile_android/android_utilities.py
           # 6.11.1 的 toolchain 模板漏了 QT_HOST_PATH，交叉编译 Qt6 会报
           # "please set the QT_HOST_PATH cache variable to the location of your host Qt"
           sed -i 's|^set(CMAKE_SYSTEM_NAME Android)$|set(CMAKE_SYSTEM_NAME Android)\nset(QT_HOST_PATH "{{ qt_install_path }}/gcc_64" CACHE PATH "")|' \
@@ -170,6 +178,20 @@ jobs:
           done
           ls -lh "$WHEELS"
           ls "$WHEELS"/*.whl >/dev/null 2>&1
+
+      - name: 确保 Android NDK r28c（16 KB 页对齐）
+        shell: bash
+        run: |
+          NDK_DIR="$HOME/.pyside6_android_deploy/android-ndk"
+          NDK="$NDK_DIR/android-ndk-r$NDK_VERSION"
+          if [ ! -d "$NDK" ]; then
+            mkdir -p "$NDK_DIR"
+            curl -fsSL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-r${NDK_VERSION}-linux.zip"
+            unzip -q /tmp/ndk.zip -d "$NDK_DIR"
+            rm -f /tmp/ndk.zip
+          fi
+          ls "$NDK" | head
+          cat "$NDK/source.properties" | head -5
 
       - name: 失败时打印交叉编译日志尾部
         if: failure()
@@ -217,10 +239,12 @@ jobs:
           cp -v app/pages/*.py "$STAGE/app/pages/"
           cd "$STAGE"
           # 用包装器把 buildozer.spec 的 android.api/minapi 改成 Android 16 的要求
+          # --ndk-path 指向 r28c：p4a 用它编译 CPython/openssl/sqlite 等，保证 16 KB 对齐
           python3 "$GITHUB_WORKSPACE/scripts/android16_deploy.py" \
             --name FrogLog \
             --wheel-pyside "$PS" \
             --wheel-shiboken "$SH" \
+            --ndk-path "$HOME/.pyside6_android_deploy/android-ndk/android-ndk-r$NDK_VERSION" \
             --keep-deployment-files \
             --force \
             -v 2>&1 | tee "$GITHUB_WORKSPACE/deploy.log"
@@ -255,6 +279,25 @@ jobs:
             echo "::error::targetSdk 不是 36（Android 16），实际为 $TARGET"
             exit 1
           fi
+          # Android 16 设备可能用 16 KB 页：native 库的 LOAD 段必须 16 KB 对齐，
+          # 否则 dlopen 失败，表现就是打开黑屏后闪退（iQOO 15 等新机）
+          TMP=$(mktemp -d)
+          unzip -q -o "$APK" 'lib/arm64-v8a/*.so' -d "$TMP"
+          BAD=0
+          for f in "$TMP"/lib/arm64-v8a/*.so; do
+            ALIGN=$(readelf -lW "$f" | awk '$1=="LOAD"{print $NF}' | sort -u | tr '\n' ' ')
+            case "$ALIGN" in
+              *0x1000*)
+                echo "::error::$(basename "$f") 的 LOAD 段是 4 KB 对齐（$ALIGN），不支持 16 KB 页"
+                BAD=1
+                ;;
+            esac
+          done
+          rm -rf "$TMP"
+          if [ "$BAD" -ne 0 ]; then
+            exit 1
+          fi
+          echo "16 KB 页对齐检查通过"
           mkdir -p dist
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
           ls -lh dist
@@ -297,6 +340,7 @@ jobs:
             - `targetSdkVersion` / `compileSdkVersion`：36（Android 16）
             - `minSdkVersion`：28（Android 9）
             - 架构：arm64-v8a
+            - native 库按 **16 KB 页**对齐（NDK r28c），可用于 16 KB 页的 Android 16 设备
             - 构建方式：Qt 6.11.1 Open Source + PySide6 源码交叉编译（LGPL）
             - 提交：${{ github.sha }}
             - 运行：${{ github.run_number }}
