@@ -1758,11 +1758,11 @@ class DeckPage(Page):
         back = W.BackButton(30)
         back.set_light(True)
         back.clicked.connect(self.app.go_back)
-        bl.addWidget(back, 0, Qt.AlignTop)
+        bl.addWidget(back, 0, Qt.AlignVCenter)
         title = QLabel(d["name"])
         title.setObjectName("h1")
         bl.addWidget(title, 1)
-        bl.addWidget(imp, 0, Qt.AlignTop)
+        bl.addWidget(imp, 0, Qt.AlignVCenter)
         band.lay.addWidget(bar)
         self.top_lay.addWidget(band)
 

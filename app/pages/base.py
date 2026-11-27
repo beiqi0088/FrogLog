@@ -76,7 +76,7 @@ class Page(QWidget):
             btn = W.BackButton(30)
             btn.set_light(True)
             btn.clicked.connect(back)
-            lay.addWidget(btn, 0, Qt.AlignTop)
+            lay.addWidget(btn, 0, Qt.AlignVCenter)
         col = QVBoxLayout()
         col.setSpacing(2)
         h = QLabel(title)
@@ -84,7 +84,7 @@ class Page(QWidget):
         col.addWidget(h)
         lay.addLayout(col, 1)
         if right is not None:
-            lay.addWidget(right, 0, Qt.AlignTop)
+            lay.addWidget(right, 0, Qt.AlignVCenter)
         band.lay.addWidget(row)
         self.set_band(band)
         return row
@@ -104,7 +104,7 @@ class Page(QWidget):
         col.addWidget(h)
         lay.addLayout(col, 1)
         if right is not None:
-            lay.addWidget(right, 0, Qt.AlignTop)
+            lay.addWidget(right, 0, Qt.AlignVCenter)
         band.lay.addWidget(row)
         self.set_band(band)
         return row
