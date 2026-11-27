@@ -777,8 +777,7 @@ class LibraryPage(Page):
         btn.setToolTip("新建圆桌 / 卡包，或管理知识域")
         btn.setStyleSheet(
             f"QFrame#plusIcon{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
-            f"border-radius:16px;}}"
-            f"QFrame#plusIcon:hover{{background:#FFE9BD;}}")
+            f"border-radius:16px;}}")
         lay = QHBoxLayout(btn)
         lay.setContentsMargins(0, 0, 0, 0)
         icon = PlusIcon(18, W.T["deep"])

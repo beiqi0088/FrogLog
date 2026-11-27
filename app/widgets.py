@@ -643,12 +643,12 @@ class MoreButton(QPushButton):
         p.setRenderHint(QPainter.Antialiasing)
         w, h = self.width(), self.height()
         cx, cy = w / 2, h / 2
-        if self.underMouse():
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(T["panel"]))
-            p.drawRoundedRect(QRectF(0, 0, w, h), w / 2, h / 2)
+        # 跟「＋」一样的奶油圆底 + 墨线，点击不变色
+        p.setPen(QPen(QColor(T["ink"]), 1.5))
+        p.setBrush(QColor("#FFF3D6"))
+        p.drawEllipse(QRectF(1, 1, w - 2, h - 2))
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(T["ink3"]))
+        p.setBrush(QColor(T["ink"]))
         for dx in (-6.6, 0.0, 6.6):
             p.drawEllipse(QPointF(cx + dx, cy), 2.0, 2.0)
 
