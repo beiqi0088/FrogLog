@@ -12,7 +12,7 @@ from PySide6.QtCore import QEvent, QTimer, Qt
 from PySide6.QtGui import QFont, QFontDatabase, QPainter
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
-                               QButtonGroup, QDialog)
+                               QButtonGroup, QDialog, QSizePolicy)
 
 import widgets as W
 import brand
@@ -36,6 +36,55 @@ from pages.tools import MemoPage, SplitPage, TemplatesPage
 
 _FAMILY_CACHE: str | None = None
 _IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能再 move()
+
+
+def _android_edge_to_edge():
+    """安卓：直接调 Window API 让内容铺到系统栏后面。
+
+    Qt 在窗口首次显示时会把系统栏设回主题色，这里在显示之后再压一次。
+    jnius / android 模块不存在时静默跳过（桌面构建走不到这里）。
+    """
+    try:
+        from jnius import autoclass
+        from android.runnable import run_on_ui_thread
+    except Exception:
+        return
+
+    @run_on_ui_thread
+    def _apply():
+        try:
+            activity = autoclass("org.kivy.android.PythonActivity").mActivity
+            if activity is None:
+                return
+            Build = autoclass("android.os.Build$VERSION")
+            Color = autoclass("android.graphics.Color")
+            window = activity.getWindow()
+            window.setStatusBarColor(Color.TRANSPARENT)
+            window.setNavigationBarColor(Color.TRANSPARENT)
+            if Build.SDK_INT >= 30:
+                window.setDecorFitsSystemWindows(False)
+                ctrl = window.getInsetsController()
+                if ctrl is not None:
+                    mask = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
+                    ctrl.setSystemBarsAppearance(mask, mask)
+            else:
+                decor = window.getDecorView()
+                decor.setSystemUiVisibility(
+                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
+        except Exception:
+            pass
+
+    try:
+        _apply()
+    except Exception:
+        pass
+
+
+def _android_edge_to_edge_safe():
+    try:
+        _android_edge_to_edge()
+    except Exception:
+        pass
 
 
 def resolve_family() -> str:
@@ -98,9 +147,17 @@ class MainWindow(QMainWindow):
         # 没这个提示时 Qt 会把窗口退回安全区内，系统栏区域会露出主题白底。
         if hasattr(Qt, "ExpandedClientAreaHint"):
             self.setWindowFlag(Qt.ExpandedClientAreaHint, True)
-        self.setMinimumSize(380, 700)
-        self.resize(430, 880)
-        self.setMaximumWidth(560)
+        if _IS_ANDROID:
+            # 安卓必须让窗口铺满整块屏幕。固定 resize()/maximumWidth() 会让窗口
+            # 比屏幕小一圈，右侧和底部就会露出 Activity 的白底。
+            self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            scr = QApplication.primaryScreen()
+            if scr is not None:
+                self.resize(scr.size())
+        else:
+            self.setMinimumSize(380, 700)
+            self.resize(430, 880)
+            self.setMaximumWidth(560)
         self.setStyleSheet(f"QMainWindow{{background:{theme.LIGHT['paper2']};}}")
         # 安卓系统返回键会作为 Qt.Key_Back 送到应用里，这里全局接住
         QApplication.instance().installEventFilter(self)
@@ -225,21 +282,10 @@ class MainWindow(QMainWindow):
             self.bg.update()
 
     def _sync_bg(self):
-        # 渐变背景层必须铺满整块屏幕（含状态栏/手势条区域），
-        # 不能只铺 self.rect() 或 root.rect()——Qt 在 Android 上即使开了
-        # ExpandedClientAreaHint，central widget 还是会被限制在窗口安全区内。
+        # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，
+        # root.rect() 就是整块屏幕（含状态栏/手势条区域）。
         if hasattr(self, "bg") and hasattr(self, "root"):
-            try:
-                scr = self.screen() or QGuiApplication.primaryScreen()
-                if scr is not None:
-                    g = scr.geometry()
-                    # bg 是 root 的子 widget，坐标要换成 root 的本地坐标
-                    origin = self.bg.mapFromGlobal(g.topLeft())
-                    self.bg.setGeometry(origin.x(), origin.y(), g.width(), g.height())
-                else:
-                    self.bg.setGeometry(self.root.rect())
-            except Exception:
-                self.bg.setGeometry(self.root.rect())
+            self.bg.setGeometry(self.root.rect())
             self.bg.lower()
 
     def _sync_system_insets(self):
@@ -307,10 +353,29 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self._sync_bg)
         QTimer.singleShot(0, self._sync_system_insets)
         QTimer.singleShot(120, self._sync_system_insets)
+        if _IS_ANDROID:
+            self._fit_screen()
+            QTimer.singleShot(200, self._fit_screen)
+            QTimer.singleShot(800, self._fit_screen)
+            QTimer.singleShot(1200, _android_edge_to_edge_safe)
+            QTimer.singleShot(3000, _android_edge_to_edge_safe)
         if not getattr(self, "_centered", False):
             self._centered = True
             if not _IS_ANDROID:
                 W.center_on_screen(self)
+
+    def _fit_screen(self):
+        """安卓：把窗口拉到整块屏幕，避免右侧/底部露出白边。"""
+        try:
+            scr = self.screen()
+            if scr is not None:
+                g = scr.geometry()
+                if self.geometry() != g:
+                    self.setGeometry(g)
+        except Exception:
+            pass
+        self._sync_bg()
+        self._sync_system_insets()
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
