@@ -79,10 +79,6 @@ class Page(QWidget):
             lay.addWidget(btn, 0, Qt.AlignTop)
         col = QVBoxLayout()
         col.setSpacing(2)
-        if eyebrow:
-            eb = QLabel(eyebrow)
-            eb.setObjectName("eyebrow")
-            col.addWidget(eb)
         h = QLabel(title)
         h.setObjectName("h1")
         col.addWidget(h)
@@ -106,10 +102,6 @@ class Page(QWidget):
         h = QLabel(title)
         h.setObjectName("h1")
         col.addWidget(h)
-        if sub:
-            sb = QLabel(sub)
-            sb.setStyleSheet("font-size:9.5px;color:#FFE9BD;")
-            col.addWidget(sb)
         lay.addLayout(col, 1)
         if right is not None:
             lay.addWidget(right, 0, Qt.AlignTop)

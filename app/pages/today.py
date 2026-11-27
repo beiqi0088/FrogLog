@@ -288,11 +288,6 @@ class TodayPage(Page):
         rl.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(3)
-        weekday = "一二三四五六日"[today.tm_wday]
-        date = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 周{weekday} · "
-                      f"今天还差 {left_n} 张")
-        date.setStyleSheet("font-size:9.5px;color:#FFE9BD;")
-        col.addWidget(date)
         title = QLabel("<span style='color:#FFFDF8;'>今日</span>")
         title.setTextFormat(Qt.RichText)
         title.setStyleSheet("font-size:23px;font-weight:700;")
