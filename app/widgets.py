@@ -816,14 +816,14 @@ class NavButton(QPushButton):
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
         cx = w / 2
-        r = QRectF(cx - 10, 7, 20, 20)
+        r = QRectF(cx - 10, 9, 20, 20)
         self._icon(p, self.key, r)
 
         p.setPen(col)
         f = QFont(theme.FONT, 8.5)
         f.setBold(active)
         p.setFont(f)
-        p.drawText(QRectF(0, 29, w, h - 31), Qt.AlignHCenter | Qt.AlignTop, self.label)
+        p.drawText(QRectF(0, 32, w, h - 34), Qt.AlignHCenter | Qt.AlignTop, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):
