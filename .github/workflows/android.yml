@@ -367,14 +367,6 @@ jobs:
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
           ls -lh dist
 
-      - name: 上传 APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: FrogLog-android16-apk
-          path: dist/*.apk
-          if-no-files-found: error
-          retention-days: 30
-
       - name: 上传部署日志
         if: always()
         uses: actions/upload-artifact@v4

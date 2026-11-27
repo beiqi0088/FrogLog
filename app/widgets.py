@@ -82,14 +82,39 @@ class Card(QFrame):
 class ClickFrame(QFrame):
     clicked = Signal()
 
+    # 位移超过这个阈值就视为滑动，不触发点击
+    _DRAG_THRESHOLD = 8
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.PointingHandCursor)
+        self._press_pos: QPoint | None = None
+        self._press_time: float = 0.0
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self._press_pos = e.position().toPoint()
+            self._press_time = e.timestamp()
+        super().mousePressEvent(e)
 
     def mouseReleaseEvent(self, e):
-        if e.button() == Qt.LeftButton and self.rect().contains(e.position().toPoint()):
-            self.clicked.emit()
+        if e.button() == Qt.LeftButton and self._press_pos is not None:
+            pos = e.position().toPoint()
+            drag = (pos - self._press_pos).manhattanLength()
+            inside = self.rect().contains(pos)
+            # 只有位移很小 + 抬手在区域内才算点击；滑动过程中抬到按钮上也不会误触
+            if drag <= self._DRAG_THRESHOLD and inside:
+                self.clicked.emit()
+        self._press_pos = None
         super().mouseReleaseEvent(e)
+
+    def mouseMoveEvent(self, e):
+        # 位移超过阈值就不再作为点击候选，避免拖动手指时最后抬手还误触发
+        if self._press_pos is not None:
+            drag = (e.position().toPoint() - self._press_pos).manhattanLength()
+            if drag > self._DRAG_THRESHOLD:
+                self._press_pos = None
+        super().mouseMoveEvent(e)
 
 
 class ListRow(ClickFrame):
