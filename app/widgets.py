@@ -448,25 +448,17 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
+        # 顶部色块统一跟今日页同高（180px）：不再放 wordmark，只留 appbar/hero 内容
+        self.setFixedHeight(180)
         self.lay = QVBoxLayout(self)
-        # 紧凑色带：只留 wordmark + 标题，高度约 80–100px
-        self.lay.setContentsMargins(18, 3, 18, 16)
-        self.lay.setSpacing(3)
+        self.lay.setContentsMargins(20, 8, 20, 18)
+        self.lay.setSpacing(4)
 
+        # 给今日页的同步胶囊留一个右上角插槽（其余页面为空）
         self.word = QWidget()
         self.word_lay = QHBoxLayout(self.word)
         self.word_lay.setContentsMargins(0, 0, 0, 0)
         self.word_lay.setSpacing(6)
-        self.word_lay.addWidget(FrogMascot(18, "band"), 0, Qt.AlignVCenter)
-        wcol = QVBoxLayout()
-        wcol.setSpacing(0)
-        t = QLabel("FROGLOG")
-        t.setStyleSheet("font-size:6.5px;font-weight:700;color:#FFE9BD;letter-spacing:1.8px;")
-        t2 = QLabel("蛙记 · 池塘纸感")
-        t2.setStyleSheet("font-size:8.5px;font-weight:700;color:#FFFDF8;")
-        wcol.addWidget(t)
-        wcol.addWidget(t2)
-        self.word_lay.addLayout(wcol)
         self.word_lay.addStretch(1)
         self.lay.addWidget(self.word)
 
