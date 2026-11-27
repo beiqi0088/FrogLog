@@ -124,17 +124,18 @@ class MainWindow(QMainWindow):
         col.addWidget(self.stack, 1)
 
         self.nav = QFrame()
-        self.nav.setFixedHeight(84)
+        self.nav.setFixedHeight(64)
         self.nav.setStyleSheet("QFrame{background:transparent;}")
         nav_outer = QHBoxLayout(self.nav)
-        nav_outer.setContentsMargins(16, 6, 16, 16)
+        nav_outer.setContentsMargins(12, 6, 12, 12)
         nav_outer.setSpacing(0)
         self.nav_bar = QFrame()
         self.nav_bar.setObjectName("navBar")
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         nav_lay = QHBoxLayout(self.nav_bar)
-        nav_lay.setContentsMargins(6, 4, 6, 4)
-        nav_lay.setSpacing(0)
+        nav_lay.setContentsMargins(4, 2, 4, 2)
+        nav_lay.setSpacing(4)
+        nav_lay.setAlignment(Qt.AlignCenter)
         nav_outer.addWidget(self.nav_bar)
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
@@ -224,8 +225,21 @@ class MainWindow(QMainWindow):
             self.bg.update()
 
     def _sync_bg(self):
+        # 渐变背景层必须铺满整块屏幕（含状态栏/手势条区域），
+        # 不能只铺 self.rect() 或 root.rect()——Qt 在 Android 上即使开了
+        # ExpandedClientAreaHint，central widget 还是会被限制在窗口安全区内。
         if hasattr(self, "bg") and hasattr(self, "root"):
-            self.bg.setGeometry(self.root.rect())
+            try:
+                scr = self.screen() or QGuiApplication.primaryScreen()
+                if scr is not None:
+                    g = scr.geometry()
+                    # bg 是 root 的子 widget，坐标要换成 root 的本地坐标
+                    origin = self.bg.mapFromGlobal(g.topLeft())
+                    self.bg.setGeometry(origin.x(), origin.y(), g.width(), g.height())
+                else:
+                    self.bg.setGeometry(self.root.rect())
+            except Exception:
+                self.bg.setGeometry(self.root.rect())
             self.bg.lower()
 
     def _sync_system_insets(self):

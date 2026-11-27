@@ -516,7 +516,7 @@ class StackBar(QWidget):
 
 
 class NavButton(QPushButton):
-    """底部导航：图标 + 文字，选中态用品牌色。"""
+    """底部导航：图标 + 文字水平放在圆角胶囊里；选中态用品牌色浅底。"""
 
     def __init__(self, key: str, label: str, parent=None):
         super().__init__("", parent)
@@ -525,7 +525,12 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(56)
+        self.setFixedHeight(40)
+
+    def sizeHint(self):
+        f = QFont(theme.FONT, 12)
+        mw = QFontMetrics(f).horizontalAdvance(self.label) + 34  # 图标 22 + 间距 6 + 左右 padding
+        return QSize(mw, self.height())
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -533,27 +538,31 @@ class NavButton(QPushButton):
         active = self.isChecked()
         col = QColor(T["brand"]) if active else QColor(T["ink2"])
         w, h = self.width(), self.height()
-        cx = w / 2
 
-        # 选中：浅底胶囊
+        # 选中：胶囊包住整个按钮（图标 + 文字）
         if active:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(T["brand_soft"]))
-            p.drawRoundedRect(QRectF(cx - 35, 6, 70, h - 10), 16, 16)
+            p.drawRoundedRect(QRectF(2, 4, w - 4, h - 8), 14, 14)
 
+        # 图标：靠左
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
-        r = QRectF(cx - 10, 8, 20, 20)
+        cx = 15
+        r = QRectF(cx - 10, h / 2 - 10, 20, 20)
         self._icon(p, self.key, r)
 
+        # 文字：靠右
         p.setPen(col)
         f = QFont(theme.FONT, 12)
         f.setBold(active)
         p.setFont(f)
-        p.drawText(QRectF(0, h - 23, w, 21), Qt.AlignHCenter | Qt.AlignVCenter, self.label)
+        tx = 30
+        tw = w - tx - 6
+        p.drawText(QRectF(tx, 0, tw, h), Qt.AlignLeft | Qt.AlignVCenter, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):
