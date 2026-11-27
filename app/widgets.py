@@ -460,9 +460,9 @@ class BandHeader(QFrame):
         wcol = QVBoxLayout()
         wcol.setSpacing(0)
         t = QLabel("FROGLOG")
-        t.setStyleSheet("font-size:7.5px;font-weight:700;color:#FFE9BD;letter-spacing:1.8px;")
+        t.setStyleSheet(f"font-size:7.5px;font-weight:700;color:{T['ink2']};letter-spacing:1.8px;")
         t2 = QLabel("蛙记 · 池塘纸感")
-        t2.setStyleSheet("font-size:9px;font-weight:700;color:#FFFDF8;")
+        t2.setStyleSheet(f"font-size:9px;font-weight:700;color:{T['ink']};")
         wcol.addWidget(t)
         wcol.addWidget(t2)
         self.word_lay.addLayout(wcol)
@@ -472,22 +472,8 @@ class BandHeader(QFrame):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        w, h = self.width(), self.height()
-        p.fillRect(QRectF(0, 0, w, h), QColor(T["deep"]))
-        # 池塘波浪：底部三瓣，浅纸色
-        y = h - 22
-        path = QPainterPath()
-        path.moveTo(0, y + 12)
-        for i in range(3):
-            x0 = i * w / 3
-            x1 = (i + 1) * w / 3
-            path.cubicTo(x0 + w / 12, y - 7, x1 - w / 12, y - 7, x1, y + 12)
-        path.lineTo(w, h)
-        path.lineTo(0, h)
-        path.closeSubpath()
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(T["paper"]))
-        p.drawPath(path)
+        # 顶部标题区跟页面同色：不再铺深色色带 / 波浪
+        p.fillRect(QRectF(0, 0, self.width(), self.height()), QColor(T["paper"]))
 
 
 class ThemeCard(ClickFrame):
@@ -573,18 +559,18 @@ class ProgressRing(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect()).adjusted(5, 5, -5, -5)
-        p.setPen(QPen(QColor(255, 253, 248, 60), 6))
+        p.setPen(QPen(QColor(T["line"]), 6))
         p.setBrush(Qt.NoBrush)
         p.drawArc(r, 0, 360 * 16)
-        p.setPen(QPen(QColor("#F2C14E"), 6, Qt.SolidLine, Qt.RoundCap))
+        p.setPen(QPen(QColor(T["butter"]), 6, Qt.SolidLine, Qt.RoundCap))
         p.drawArc(r, 90 * 16, -int(360 * 16 * self.frac))
-        p.setPen(QColor("#FFFDF8"))
+        p.setPen(QColor(T["ink"]))
         f = QFont(theme.FONT, 13)
         f.setBold(True)
         p.setFont(f)
         p.drawText(QRectF(0, 0, self.width(), self.height() - 8),
                    Qt.AlignCenter, self.label)
-        p.setPen(QColor("#FFE9BD"))
+        p.setPen(QColor(T["ink2"]))
         f2 = QFont(theme.FONT, 7.5)
         p.setFont(f2)
         p.drawText(QRectF(0, self.height() - 24, self.width(), 16),

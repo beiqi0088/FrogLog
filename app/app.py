@@ -66,11 +66,12 @@ def _android_edge_to_edge():
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
                     flags = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
-                    # 深色主题色带 / dock 上用白色图标：清掉 light 标记
-                    ctrl.setSystemBarsAppearance(0, flags)
+                    # 浅纸色状态栏 / 手势条：深色系统图标
+                    ctrl.setSystemBarsAppearance(flags, flags)
             else:
                 decor = window.getDecorView()
-                decor.setSystemUiVisibility(0x0100 | 0x0200 | 0x0400)
+                decor.setSystemUiVisibility(
+                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
         except Exception:
             pass
 
@@ -124,15 +125,7 @@ class BgLayer(QWidget):
         win = self.window()
         tid = getattr(win, "theme_id", None)
         theme.paint_page_bg(p, self.rect(), tid)
-        info = theme.theme_info(tid)
-        deep = QColor(info.get("deep", "#B23A5B"))
-        top = int(getattr(win, "_sys_top", 0) or 0)
-        bottom = int(getattr(win, "_sys_bottom", 0) or 0)
-        # 状态栏 / 手势条 = 主题深色，和顶部色带、底部 dock 完全同色。
-        if top > 0:
-            p.fillRect(0, 0, self.width(), top, deep)
-        if bottom > 0:
-            p.fillRect(0, self.height() - bottom, self.width(), bottom, deep)
+        # 状态栏 / 手势条区域不再铺深色块：直接透出页面浅纸色（深色系统图标）。
 
 
 class MainWindow(QMainWindow):

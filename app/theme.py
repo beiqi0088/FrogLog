@@ -98,18 +98,18 @@ def build_qss(t: dict) -> str:
     QScrollArea > QWidget > QWidget {{ background: transparent; }}
     QScrollBar:vertical {{ width: 0px; background: transparent; }}
 
-    /* 顶部深色色带：内部文字全部反白 */
+    /* 顶部标题区：跟页面同色，不再铺深色色带 */
     QFrame#bandHeader, QWidget#bandHeader {{ background: transparent; border: none; }}
-    QWidget#bandHeader QLabel#h1 {{ color: {cream}; font-size: 27px; font-weight: 700; }}
-    QWidget#bandHeader QLabel#h2 {{ color: {cream}; font-size: 16px; font-weight: 700; }}
-    QWidget#bandHeader QLabel#h3 {{ color: {cream}; font-size: 13px; font-weight: 600; }}
+    QWidget#bandHeader QLabel#h1 {{ color: {t['ink']}; font-size: 27px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h2 {{ color: {t['ink']}; font-size: 16px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h3 {{ color: {t['ink']}; font-size: 13px; font-weight: 600; }}
     QWidget#bandHeader QLabel#sub,
-    QWidget#bandHeader QLabel#eyebrow {{ color: {band_sub}; }}
-    QWidget#bandHeader QLabel {{ color: {cream}; }}
-    QWidget#bandHeader QPushButton {{ color: {cream}; }}
+    QWidget#bandHeader QLabel#eyebrow {{ color: {t['ink2']}; }}
+    QWidget#bandHeader QLabel {{ color: {t['ink']}; }}
+    QWidget#bandHeader QPushButton {{ color: {t['ink']}; }}
     QWidget#bandHeader QPushButton#ghost {{
-        background: transparent; border: 1.5px solid rgba(255,253,248,0.55);
-        color: {cream};
+        background: transparent; border: 1.5px solid {t['ink']};
+        color: {t['ink']};
     }}
 
     QFrame#card {{
@@ -127,16 +127,16 @@ def build_qss(t: dict) -> str:
         background: {t['brand']};
         border: 1.5px solid {t['ink']};
     }}
-    QWidget#reviewTop {{ background: {t['deep']}; }}
-    QWidget#reviewTop QLabel {{ color: #FFFDF8; }}
-    QWidget#reviewTop QPushButton {{ color: #FFFDF8; }}
-    QWidget#reviewTop QLabel#h2 {{ color: #FFFDF8; }}
+    QWidget#reviewTop {{ background: {t['paper']}; }}
+    QWidget#reviewTop QLabel {{ color: {t['ink']}; }}
+    QWidget#reviewTop QPushButton {{ color: {t['ink']}; }}
+    QWidget#reviewTop QLabel#h2 {{ color: {t['ink']}; }}
     QWidget#reviewTop QFrame {{ background: transparent; }}
     QWidget#reviewTop QPushButton#iconBtn {{
-        background: rgba(255,253,248,0.16);
-        border: 1px solid rgba(255,253,248,0.35);
+        background: {t['panel']};
+        border: 1.5px solid {t['ink']};
         border-radius: 15px;
-        color: #FFFDF8;
+        color: {t['ink']};
     }}
 
 
