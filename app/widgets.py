@@ -448,8 +448,8 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一高度（140px）：不再放 wordmark，减少留白
-        self.setFixedHeight(140)
+        # 顶部色块统一高度（100px）：不再放 wordmark，减少留白
+        self.setFixedHeight(100)
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(20, 8, 20, 16)
         self.lay.setSpacing(4)

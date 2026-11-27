@@ -302,8 +302,8 @@ class TodayPage(Page):
         right = QVBoxLayout()
         right.setSpacing(4)
         right.setAlignment(Qt.AlignHCenter)
-        # 同步状态：高识别度奶油黄实心胶囊
-        pill = QPushButton("● 有未同步的修改" if dirty else "● 已同步")
+        # 同步状态：高识别度奶油黄实心胶囊（带同步图标）
+        pill = QPushButton("⟳ 有未同步的修改" if dirty else "⟳ 已同步")
         pill.setCursor(Qt.PointingHandCursor)
         pill.setFixedHeight(22)
         pill.setStyleSheet(
@@ -338,9 +338,6 @@ class TodayPage(Page):
                 lambda k=keys[i]: self.app.show_page("cards", kind=k))
             grid.addWidget(tile, i // 2, i % 2)
         self.add(grid_host)
-
-        # ---------- 最近 7 天 ----------
-        self.add(self._streak_card())
 
         # ---------- 继续学习 ----------
         groups = collect_groups(s, due_all)
