@@ -92,6 +92,10 @@ class MainWindow(QMainWindow):
         self.quest_timer.setInterval(1000)
         self.quest_timer.timeout.connect(self._quest_tick)
         self.setWindowTitle(brand.NAME)
+        # Qt 6.9+：内容铺到状态栏和手势条后面，渐变背景才能覆盖整块屏幕。
+        # 没这个提示时 Qt 会把窗口退回安全区内，系统栏区域会露出主题白底。
+        if hasattr(Qt, "ExpandedClientAreaHint"):
+            self.setWindowFlag(Qt.ExpandedClientAreaHint, True)
         self.setMinimumSize(380, 700)
         self.resize(430, 880)
         self.setMaximumWidth(560)
