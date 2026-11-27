@@ -101,7 +101,7 @@ python main.py
 | anki-coral | 珊瑚 | #C4562E | #F9ECE4 |
 | anki-lagoon | 潟湖 | #0F7C86 | #E8F4F5 |
 
-页面全部纯色、无渐变；卡片 1.5px 墨线 + 硬投影；顶部标题区为页面浅纸色（不铺深色带），底部 dock 主题深色；状态栏 / 手势条透出页面浅纸色，深色系统图标。复习卡区仍按「卡片模板」的 7 套皮肤（天蓝薰衣等），7 套卡片模板保持不变。选择存在 settings.theme；旧版本的 paper / mist / cream / ink / celadon / sunset / night / dusk 会回落到 anki-aurora（极光）。
+页面全部纯色、无渐变；卡片 1.5px 墨线 + 硬投影；顶部色带（紧凑，约 80–100px）主题深色 + 小波浪，底部 dock 主题深色；状态栏 / 手势条透出页面浅纸色，深色系统图标。复习卡区仍按「卡片模板」的 7 套皮肤（天蓝薰衣等），7 套卡片模板保持不变。选择存在 settings.theme；旧版本的 paper / mist / cream / ink / celadon / sunset / night / dusk 会回落到 anki-aurora（极光）。
 
 ## 调度算法：FSRS-6（Anki 26 默认）
 

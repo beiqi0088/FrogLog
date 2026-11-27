@@ -287,10 +287,10 @@ class TodayPage(Page):
         pill.setCursor(Qt.PointingHandCursor)
         pill.setFixedHeight(24)
         pill.setStyleSheet(
-            f"QPushButton{{background:{W.T['butter_soft']};color:{W.T['ink']};"
-            f"border:1.5px solid {W.T['ink']};border-radius:12px;"
-            f"padding:0 10px;font-size:8.5px;font-weight:700;}}"
-            f"QPushButton:hover{{background:#FFE9BD;}}")
+            "QPushButton{background:rgba(255,253,248,0.16);color:#FFFDF8;"
+            "border:1px solid rgba(255,253,248,0.35);border-radius:12px;"
+            "padding:0 10px;font-size:8.5px;font-weight:700;}"
+            "QPushButton:hover{background:rgba(255,253,248,0.24);}")
         pill.clicked.connect(self._do_sync)
         band.word_lay.addWidget(pill, 0, Qt.AlignVCenter)
 
@@ -303,16 +303,16 @@ class TodayPage(Page):
         weekday = "一二三四五六日"[today.tm_wday]
         date = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 周{weekday} · "
                       f"今天还差 {left_n} 张")
-        date.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
+        date.setStyleSheet("font-size:9.5px;color:#FFE9BD;")
         col.addWidget(date)
-        title = QLabel(f"<span style='color:{W.T['ink']};'>今天，吃掉</span>"
-                       f"<span style='color:{W.T['deep']};'>那只青蛙</span>")
+        title = QLabel("<span style='color:#FFFDF8;'>今天，吃掉</span>"
+                       "<span style='color:#F2C14E;'>那只青蛙</span>")
         title.setTextFormat(Qt.RichText)
-        title.setStyleSheet("font-size:27px;font-weight:700;")
+        title.setStyleSheet("font-size:23px;font-weight:700;")
         col.addWidget(title)
         rl.addLayout(col, 1)
         rl.addWidget(W.ProgressRing(done / total if total else 0,
-                                    f"{done}/{total}", "今日", 78), 0, Qt.AlignTop)
+                                    f"{done}/{total}", "今日", 58), 0, Qt.AlignTop)
         band.lay.addWidget(row)
         self.set_band(band)
 
