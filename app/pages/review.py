@@ -17,11 +17,11 @@ from core import now_ms
 from pages.library import OneLineLabel
 
 RATE_DEFS = [
-    # idx, 名称, 主色, 浅底, 浅描边, 文字色
-    (0, "重来", "#E8503A", "#FDEDEA", "#F3CCC5", "#C0392B"),
-    (1, "困难", "#BF5B38", "#FDF1EA", "#F1D3C1", "#A64B2A"),
-    (2, "记住", "#2F6A43", "#EDF4EE", "#C9DFCE", "#2F6A43"),
-    (3, "轻松", "#91C89C", "#F1F8EA", "#D6E7C3", "#4F8A2F"),
+    # idx, 名称, 主色, 实心底色, 描边, 文字色（深底白字，识别度更高）
+    (0, "重来", "#C4562E", "#C4562E", "#C4562E", "#FFFDF8"),
+    (1, "困难", "#B45309", "#B45309", "#B45309", "#FFFDF8"),
+    (2, "记住", "#2F7A4F", "#2F7A4F", "#2F7A4F", "#FFFDF8"),
+    (3, "轻松", "#0E9F6E", "#0E9F6E", "#0E9F6E", "#FFFDF8"),
 ]
 
 

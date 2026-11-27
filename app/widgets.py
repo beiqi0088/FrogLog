@@ -1111,7 +1111,7 @@ class RatingButton(ClickFrame):
         t.setStyleSheet(f"font-size:14.5px;font-weight:700;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
-        h.setStyleSheet(f"font-size:10.5px;color:{T['ink3']};")
+        h.setStyleSheet("font-size:10.5px;color:rgba(255,253,248,0.82);")
         lay.addWidget(t)
         lay.addWidget(h)
         self._hint = h
