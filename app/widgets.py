@@ -448,10 +448,10 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一跟今日页同高（180px）：不再放 wordmark，只留 appbar/hero 内容
-        self.setFixedHeight(180)
+        # 顶部色块统一高度（140px）：不再放 wordmark，减少留白
+        self.setFixedHeight(140)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(20, 8, 20, 18)
+        self.lay.setContentsMargins(20, 8, 20, 16)
         self.lay.setSpacing(4)
 
         # 给今日页的同步胶囊留一个右上角插槽（其余页面为空）

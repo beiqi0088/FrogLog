@@ -283,16 +283,6 @@ class TodayPage(Page):
         total = done + left_n
         band = W.BandHeader()
         dirty = self._dirty()
-        pill = QPushButton("● 有未同步的修改" if dirty else "● 已同步")
-        pill.setCursor(Qt.PointingHandCursor)
-        pill.setFixedHeight(24)
-        pill.setStyleSheet(
-            "QPushButton{background:rgba(255,253,248,0.16);color:#FFFDF8;"
-            "border:1px solid rgba(255,253,248,0.35);border-radius:12px;"
-            "padding:0 10px;font-size:8.5px;font-weight:700;}"
-            "QPushButton:hover{background:rgba(255,253,248,0.24);}")
-        pill.clicked.connect(self._do_sync)
-        band.word_lay.addWidget(pill, 0, Qt.AlignVCenter)
 
         row = QWidget()
         rl = QHBoxLayout(row)
@@ -311,8 +301,24 @@ class TodayPage(Page):
         title.setStyleSheet("font-size:23px;font-weight:700;")
         col.addWidget(title)
         rl.addLayout(col, 1)
-        rl.addWidget(W.ProgressRing(done / total if total else 0,
-                                    f"{done}/{total}", "今日", 58), 0, Qt.AlignTop)
+        right = QVBoxLayout()
+        right.setSpacing(4)
+        right.setAlignment(Qt.AlignHCenter)
+        right.addWidget(W.ProgressRing(done / total if total else 0,
+                                       f"{done}/{total}", "今日", 52),
+                        0, Qt.AlignHCenter)
+        # 同步状态：高识别度奶油黄实心胶囊，放在进度环正下方
+        pill = QPushButton("● 有未同步的修改" if dirty else "● 已同步")
+        pill.setCursor(Qt.PointingHandCursor)
+        pill.setFixedHeight(22)
+        pill.setStyleSheet(
+            "QPushButton{background:#F2C14E;color:#211B1C;"
+            "border:1.5px solid #211B1C;border-radius:11px;"
+            "padding:0 8px;font-size:8px;font-weight:700;}"
+            "QPushButton:hover{background:#FFE9BD;}")
+        pill.clicked.connect(self._do_sync)
+        right.addWidget(pill, 0, Qt.AlignHCenter)
+        rl.addLayout(right)
         band.lay.addWidget(row)
         self.set_band(band)
 
