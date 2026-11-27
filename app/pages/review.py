@@ -432,7 +432,7 @@ class ReviewPage(QWidget):
         self.top = QWidget()
         self.top.setObjectName("reviewTop")
         self.top.setAttribute(Qt.WA_StyledBackground, True)
-        self.top.setFixedHeight(80)
+        self.top.setFixedHeight(88)
         self.top_v = QVBoxLayout(self.top)
         self.top_v.setContentsMargins(16, 8, 16, 8)
         self.top_v.setSpacing(6)

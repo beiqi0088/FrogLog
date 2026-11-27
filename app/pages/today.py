@@ -293,8 +293,7 @@ class TodayPage(Page):
                       f"今天还差 {left_n} 张")
         date.setStyleSheet("font-size:9.5px;color:#FFE9BD;")
         col.addWidget(date)
-        title = QLabel("<span style='color:#FFFDF8;'>今天，吃掉</span>"
-                       "<span style='color:#F2C14E;'>那只青蛙</span>")
+        title = QLabel("<span style='color:#FFFDF8;'>今日</span>")
         title.setTextFormat(Qt.RichText)
         title.setStyleSheet("font-size:23px;font-weight:700;")
         col.addWidget(title)

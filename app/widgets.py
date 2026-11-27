@@ -448,10 +448,10 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一高度（80px）：不再放 wordmark，减少留白
-        self.setFixedHeight(80)
+        # 顶部色块统一高度（88px）：留一点呼吸感
+        self.setFixedHeight(88)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(20, 8, 20, 16)
+        self.lay.setContentsMargins(20, 10, 20, 18)
         self.lay.setSpacing(4)
 
         # 给今日页的同步胶囊留一个右上角插槽（其余页面为空）
@@ -607,20 +607,21 @@ class SyncCircle(QPushButton):
         p.setPen(Qt.NoPen)
         p.setBrush(QColor("#FFFDF8"))
         p.drawEllipse(QRectF(1, 1, w - 2, h - 2))
-        p.setPen(QPen(QColor(T["deep"]), 2.0))
+        # 螺旋纹路
+        path = QPainterPath()
+        cx, cy = w / 2, h / 2
+        for i in range(46):
+            t = i / 45 * math.pi * 3.4
+            rad = 1.8 + i * 0.30
+            x = cx + math.cos(t) * rad
+            y = cy + math.sin(t) * rad
+            if i == 0:
+                path.moveTo(x, y)
+            else:
+                path.lineTo(x, y)
+        p.setPen(QPen(QColor(T["deep"]), 2.2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         p.setBrush(Qt.NoBrush)
-        p.drawEllipse(QRectF(4, 4, w - 8, h - 8))
-        p.setPen(QPen(QColor(T["deep"]), 2.2, Qt.SolidLine, Qt.RoundCap))
-        p.drawArc(QRectF(w * 0.22, h * 0.22, w * 0.56, h * 0.56), 40 * 16, 280 * 16)
-        arrow = QPainterPath()
-        ax, ay = w * 0.73, h * 0.28
-        arrow.moveTo(ax - 2, ay - 6)
-        arrow.lineTo(ax + 7, ay - 2)
-        arrow.lineTo(ax + 1, ay + 5)
-        arrow.closeSubpath()
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(T["deep"]))
-        p.drawPath(arrow)
+        p.drawPath(path)
         if self.dirty:
             p.setPen(QPen(QColor("#FFFDF8"), 1.5))
             p.setBrush(QColor(T["red"]))
