@@ -7,7 +7,7 @@ import time
 from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QLabel, QHBoxLayout, QVBoxLayout, QWidget,
-                               QPushButton, QGridLayout, QSizePolicy, QProgressBar)
+                               QPushButton, QGridLayout, QSizePolicy)
 
 import theme
 
@@ -279,8 +279,6 @@ class TodayPage(Page):
         # ---------- 顶栏色带 ----------
         today = time.localtime()
         left_n = len(due_all)
-        done = len(today_reviews)
-        total = done + left_n
         band = W.BandHeader()
         dirty = self._dirty()
 
@@ -304,10 +302,7 @@ class TodayPage(Page):
         right = QVBoxLayout()
         right.setSpacing(4)
         right.setAlignment(Qt.AlignHCenter)
-        right.addWidget(W.ProgressRing(done / total if total else 0,
-                                       f"{done}/{total}", "今日", 52),
-                        0, Qt.AlignHCenter)
-        # 同步状态：高识别度奶油黄实心胶囊，放在进度环正下方
+        # 同步状态：高识别度奶油黄实心胶囊
         pill = QPushButton("● 有未同步的修改" if dirty else "● 已同步")
         pill.setCursor(Qt.PointingHandCursor)
         pill.setFixedHeight(22)
@@ -321,9 +316,6 @@ class TodayPage(Page):
         rl.addLayout(right)
         band.lay.addWidget(row)
         self.set_band(band)
-
-        # ---------- 今日青蛙卡 ----------
-        self.add(self._frog_card(left_n, len(review_due), len(new_cards), done))
 
         # ---------- 四宫格 ----------
         grid_host = QWidget()
@@ -382,50 +374,6 @@ class TodayPage(Page):
     def _dirty(self) -> bool:
         last = self._last_sync()
         return self.store.updated_at() > last + 1000
-
-    def _frog_card(self, left: int, due: int, new: int, done: int) -> QWidget:
-        box = W.Card()
-        box.body.setContentsMargins(14, 12, 14, 12)
-        box.body.setSpacing(6)
-        head = QWidget()
-        hl = QHBoxLayout(head)
-        hl.setContentsMargins(0, 0, 0, 0)
-        hl.setSpacing(10)
-        hl.addWidget(W.FrogMascot(46, "green"), 0, Qt.AlignVCenter)
-        col = QVBoxLayout()
-        col.setSpacing(2)
-        t = QLabel(f"今天还差 {left} 张")
-        t.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
-        s = QLabel(f"待复习 {due} · 待学新卡 {new}")
-        s.setStyleSheet(f"font-size:9.5px;color:{W.T['ink2']};")
-        col.addWidget(t)
-        col.addWidget(s)
-        hl.addLayout(col, 1)
-        btn = W.PrimaryButton("继续学习")
-        btn.setFixedSize(104, 36)
-        btn.setCursor(Qt.PointingHandCursor)
-        btn.clicked.connect(self._start_next)
-        hl.addWidget(btn, 0, Qt.AlignVCenter)
-        box.body.addWidget(head)
-
-        bar = QProgressBar()
-        bar.setRange(0, max(1, done + left))
-        bar.setValue(done)
-        bar.setTextVisible(False)
-        bar.setFixedHeight(6)
-        bar.setStyleSheet(
-            f"QProgressBar{{background:{W.T['paper2']};border:none;border-radius:3px;}}"
-            f"QProgressBar::chunk{{background:#F2C14E;border-radius:3px;}}")
-        box.body.addWidget(bar)
-        return box
-
-    def _start_next(self):
-        groups = collect_groups(self.store, self.store.due_cards())
-        if groups:
-            g = groups[0]
-            self.app.start_review(g["deck"]["id"], group=g["group"])
-        else:
-            self.app.show_page("cards", kind="due")
 
     def _streak_card(self) -> QWidget:
         box = W.Card()
