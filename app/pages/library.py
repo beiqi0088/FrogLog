@@ -1784,8 +1784,22 @@ class DeckPage(Page):
 
         imp = W.Chip("导入")
         imp.clicked.connect(self._import_word)
-        self.appbar(d["name"], None,
-                    back=self.app.go_back, right=imp)
+        # 固定在头部的 appbar：返回 / 卡包名 / 导入，不会被下方列表滚走
+        band = W.BandHeader()
+        bar = QWidget()
+        bl = QHBoxLayout(bar)
+        bl.setContentsMargins(0, 4, 0, 0)
+        bl.setSpacing(8)
+        back = W.BackButton(30)
+        back.set_light(True)
+        back.clicked.connect(self.app.go_back)
+        bl.addWidget(back, 0, Qt.AlignTop)
+        title = QLabel(d["name"])
+        title.setObjectName("h1")
+        bl.addWidget(title, 1)
+        bl.addWidget(imp, 0, Qt.AlignTop)
+        band.lay.addWidget(bar)
+        self.top_lay.addWidget(band)
 
         # 三档
         seg = QWidget()

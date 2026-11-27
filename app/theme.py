@@ -107,6 +107,11 @@ def build_qss(t: dict) -> str:
     QWidget#bandHeader QLabel#eyebrow {{ color: {band_sub}; font-size: 9px; }}
     QWidget#bandHeader QLabel {{ color: {cream}; }}
     QWidget#bandHeader QPushButton {{ color: {cream}; }}
+    QWidget#bandHeader QPushButton#chip {{
+        background: rgba(255,253,248,0.18);
+        color: #FFFDF8;
+        border: 1px solid rgba(255,253,248,0.35);
+    }}
     QWidget#bandHeader QPushButton#ghost {{
         background: transparent; border: 1.5px solid rgba(255,253,248,0.55);
         color: {cream};

@@ -20,6 +20,14 @@ class Page(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
+        # 顶部色带固定在滚动区之外：返回 / 标题 / ＋ 不会被滚走
+        self.band_host = QWidget()
+        self.band_lay = QVBoxLayout(self.band_host)
+        self.band_lay.setContentsMargins(0, 0, 0, 0)
+        self.band_lay.setSpacing(0)
+        self.band_host.hide()
+        outer.addWidget(self.band_host)
+
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -27,14 +35,6 @@ class Page(QWidget):
         self.content_lay = QVBoxLayout(self.content)
         self.content_lay.setContentsMargins(0, 0, 0, 0)
         self.content_lay.setSpacing(0)
-
-        # 顶部深色色带（全宽、不跟 body 的 20px 边距走）
-        self.band_host = QWidget()
-        self.band_lay = QVBoxLayout(self.band_host)
-        self.band_lay.setContentsMargins(0, 0, 0, 0)
-        self.band_lay.setSpacing(0)
-        self.band_host.hide()
-        self.content_lay.addWidget(self.band_host)
 
         # 页面正文（浅纸底 + 20px 边距）
         self.body_host = QWidget()
@@ -44,7 +44,7 @@ class Page(QWidget):
         self.body.setAlignment(Qt.AlignTop)
         self.content_lay.addWidget(self.body_host, 1)
         self.scroll.setWidget(self.content)
-        outer.addWidget(self.scroll)
+        outer.addWidget(self.scroll, 1)
 
     def on_show(self):
         self.build()
