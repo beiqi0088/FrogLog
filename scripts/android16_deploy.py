@@ -375,6 +375,10 @@ import android.view.WindowInsetsController;
 public final class FrogLogSystemBars {
     private FrogLogSystemBars() {}
 
+    // Python 端按当前主题写入的颜色（ARGB）。默认透明：Qt 界面铺满时由界面
+    // 自己铺主题深色；Python 刷色后，这里的重放也用同一个颜色，不会冲回透明。
+    public static int barColor = Color.TRANSPARENT;
+
     // Qt 在窗口首次 show 时会重新设置系统栏（恢复主题色、把内容收回安全区），
     // 只在前台 onCreate 里调用一次会被覆盖。这里在启动后多次重放，最后一次
     // 一定落在 Qt 的首次 show 之后，渐变才能真正铺到状态栏和手势条后面。
@@ -432,8 +436,8 @@ public final class FrogLogSystemBars {
             // 不加 LIGHT_STATUS_BAR / LIGHT_NAVIGATION_BAR：深色底上用白色系统图标
             window.getDecorView().setSystemUiVisibility(flags);
         }
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(Color.TRANSPARENT);
+        window.setStatusBarColor(barColor);
+        window.setNavigationBarColor(barColor);
         if (Build.VERSION.SDK_INT >= 29) {
             window.setStatusBarContrastEnforced(false);
             window.setNavigationBarContrastEnforced(false);
