@@ -182,9 +182,9 @@ class MainWindow(QMainWindow):
 
         self.nav = QFrame()
         self.nav.setFixedHeight(64)
-        self.nav.setStyleSheet("QFrame{background:transparent;}")
+        self.nav.setObjectName("navFrame")
         nav_outer = QHBoxLayout(self.nav)
-        nav_outer.setContentsMargins(12, 6, 12, 12)
+        nav_outer.setContentsMargins(12, 2, 12, 16)
         nav_outer.setSpacing(0)
         self.nav_bar = QFrame()
         self.nav_bar.setObjectName("navBar")
@@ -273,9 +273,12 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper2']};}}")
-        # 底部导航条：透明无底框，选中态由按钮自身的品牌色胶囊表达
-        if hasattr(self, "nav_bar"):
-            self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
+        # 底部导航条：半透明品牌色打底 + 胶囊表达选中态
+        brand_soft = t.get("brand_soft", t["paper"])
+        self.nav.setStyleSheet(
+            f"QFrame#navFrame{{background:{brand_soft};border:none;}}"
+        )
+        self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
             b.update()
         if hasattr(self, "bg"):

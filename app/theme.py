@@ -214,8 +214,8 @@ THEMES = {
     "anki-mint": {
         "name": "薄荷", "dark": False, "anki": True,
         "dot": ("#10B981", "#0EA5E9"),
-        "bg": {"linear": ("#F4FDF8", "#EEFAF4", "#F0F9FF"),
-               "r1": "#96EBC4", "r2": "#B2E4F6", "solid": "#E7F7F0"},
+        "bg": {"linear": ("#F4FDF8", "#EEFAF4", "#E7F7EF"),
+               "r1": "#96EBC4", "r2": "#B8EFCD", "solid": "#E7F7F0"},
         "tokens": {**_ANKI_BASE,
                    "paper": "#F4FCF9", "paper2": "#E6F8F0", "line": "#D8EEE5",
                    "brand": "#0E9F6E", "brand2": "#047857",
@@ -307,13 +307,14 @@ def paint_page_bg(p: QPainter, rect, tid: str | None):
     g.setColorAt(1.0, QColor(l2))
     p.fillRect(r, g)
 
-    for (px, py), col, rad in (((0.88, 0.08), bg["r1"], 0.56),
-                               ((0.06, 0.92), bg["r2"], 0.58)):
+    # 两个角上的径向光斑只做装饰，半径限制在 30–35% 避免把渐变主色调染花。
+    for (px, py), col, rad, alpha in (((0.88, 0.08), bg["r1"], 0.30, 0.75),
+                                      ((0.06, 0.92), bg["r2"], 0.35, 0.70)):
         rg = QRadialGradient(QPointF(r.left() + r.width() * px,
                                      r.top() + r.height() * py),
                              max(r.width(), r.height()) * rad)
         c = QColor(col)
-        c.setAlphaF(0.92)
+        c.setAlphaF(alpha)
         c0 = QColor(col)
         c0.setAlpha(0)
         rg.setColorAt(0, c)
