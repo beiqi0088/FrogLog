@@ -56,7 +56,7 @@ class SettingsPage(Page):
         for c in range(2):
             grid.setColumnStretch(c, 1)
         themes.body.addWidget(grid_host)
-        foot = QLabel("7 套平涂主题；顶部色带 / 底部 dock / 状态栏 / 手势条 = 主题深色，连成一整块。")
+        foot = QLabel("7 套平涂主题；顶部色带 / 底部 dock = 主题深色；状态栏 / 手势条 = 页面浅纸色。")
         foot.setWordWrap(True)
         foot.setStyleSheet(
             f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")

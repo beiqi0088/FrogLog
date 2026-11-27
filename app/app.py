@@ -66,12 +66,12 @@ def _android_edge_to_edge():
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
                     flags = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
-                    # 主题深色状态栏 / 手势条：白色系统图标（清掉 light 标志）
-                    ctrl.setSystemBarsAppearance(0, flags)
+                    # 浅纸色状态栏 / 手势条：深色系统图标
+                    ctrl.setSystemBarsAppearance(flags, flags)
             else:
                 decor = window.getDecorView()
-                # 只保留沉浸式布局标志，不带 LIGHT_STATUS_BAR / LIGHT_NAVIGATION_BAR
-                decor.setSystemUiVisibility(0x0100 | 0x0200 | 0x0400)
+                decor.setSystemUiVisibility(
+                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
         except Exception:
             pass
 
@@ -125,19 +125,7 @@ class BgLayer(QWidget):
         win = self.window()
         tid = getattr(win, "theme_id", None)
         theme.paint_page_bg(p, self.rect(), tid)
-        # 状态栏 / 手势条区域铺满主题深色，和顶部色带、底部 dock 连成一整块
-        # （系统图标为白色，见 _android_edge_to_edge / FrogLogSystemBars）。
-        top = max(0, getattr(win, "_sys_top", 0))
-        bottom = max(0, getattr(win, "_sys_bottom", 0))
-        if top or bottom:
-            info = theme.theme_info(tid)
-            deep = info.get("deep", info["tokens"].get("brand", "#B23A5B"))
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(deep))
-            if top:
-                p.drawRect(0, 0, self.width(), top)
-            if bottom:
-                p.drawRect(0, self.height() - bottom, self.width(), bottom)
+        # 状态栏 / 手势条区域不再铺深色块：直接透出页面浅纸色（深色系统图标）。
 
 
 class MainWindow(QMainWindow):
