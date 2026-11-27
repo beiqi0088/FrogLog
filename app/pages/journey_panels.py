@@ -140,6 +140,16 @@ class OverviewPanel(Panel):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.addWidget(h3("今日任务"))
         hl.addStretch(1)
+        self.q_reset = QPushButton("重置")
+        self.q_reset.setFixedHeight(26)
+        self.q_reset.setCursor(Qt.PointingHandCursor)
+        self.q_reset.setToolTip("把这次任务清零：计时和这次学的时间都不算，回 15:00")
+        self.q_reset.setStyleSheet(
+            f"QPushButton{{background:{W.T['paper2']};border:none;color:{W.T['ink']};"
+            f"border-radius:12px;font-size:10.5px;font-weight:700;padding:0 10px;}}"
+            f"QPushButton:disabled{{color:{W.T['ink3']};}}")
+        self.q_reset.clicked.connect(self.page.reset_quest)
+        hl.addWidget(self.q_reset, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
 
         self.q_time = QLabel("")
@@ -199,10 +209,9 @@ class OverviewPanel(Panel):
                 f"font-size:42px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
             self.q_hint.setText("打开开关后，进学习页才开始计时")
 
-        reset = getattr(self.page, "q_reset", None)
-        if reset is not None:
-            reset.setEnabled(self.store.quest_has_progress()
-                             and self.store.quest_elapsed() > 0)
+        if hasattr(self, "q_reset"):
+            self.q_reset.setEnabled(self.store.quest_has_progress()
+                                    and self.store.quest_elapsed() > 0)
 
     # ---- 首领 ----
     def _boss(self):

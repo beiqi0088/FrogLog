@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import widgets as W
 from pages.base import Page
@@ -57,16 +57,7 @@ class PlanPage(Page):
         QTimer.singleShot(0, self.app.maybe_settle)
 
     def _band_quest(self):
-        """色带右上角：奶油色胶囊里放「重置」+ 任务开关。"""
-        self.q_reset = QPushButton("重置")
-        self.q_reset.setFixedHeight(24)
-        self.q_reset.setCursor(Qt.PointingHandCursor)
-        self.q_reset.setToolTip("把这次任务清零：计时和这次学的时间都不算，回 15:00")
-        self.q_reset.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;color:{W.T['ink']};"
-            f"font-size:10.5px;font-weight:700;padding:0 2px;}}"
-            f"QPushButton:disabled{{color:{W.T['ink3']};}}")
-        self.q_reset.clicked.connect(self.reset_quest)
+        """色带右上角：奶油胶囊里放「专注」+ 任务开关；重置放回今日任务卡。"""
         self.q_switch = ToggleSwitch(self.store.quest.get("status") == "active")
         self.q_switch.setToolTip("打开后进学习页才计时；离开学习页自动暂停")
         self.q_switch.toggled.connect(self.toggle_quest)
@@ -75,9 +66,11 @@ class PlanPage(Page):
         wrap.setStyleSheet(
             "QFrame#bandQuest{background:#FFF3D6;border:none;border-radius:16px;}")
         lay = QHBoxLayout(wrap)
-        lay.setContentsMargins(9, 3, 5, 3)
-        lay.setSpacing(4)
-        lay.addWidget(self.q_reset, 0, Qt.AlignVCenter)
+        lay.setContentsMargins(10, 3, 5, 3)
+        lay.setSpacing(6)
+        lab = QLabel("专注")
+        lab.setStyleSheet(f"color:{W.T['ink']};font-size:10.5px;font-weight:700;")
+        lay.addWidget(lab, 0, Qt.AlignVCenter)
         lay.addWidget(self.q_switch, 0, Qt.AlignVCenter)
         return wrap
 
