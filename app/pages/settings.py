@@ -23,7 +23,7 @@ class SettingsPage(Page):
     def build(self):
         super().build()
         s = self.store
-        self.appbar("设置", brand.NAME, back=self.app.go_back)
+        self.appbar("设置", "外观 · 7 套平涂主题", back=self.app.go_back)
 
         self.group("卡片与模板")
         tpl_name = TEMPLATES.get(s.settings.get("default_template", "bean"), {}).get("name", "豆沙绿语")
@@ -50,14 +50,13 @@ class SettingsPage(Page):
         grid.setVerticalSpacing(8)
         current = getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME)
         for i, (tid, info) in enumerate(theme_mod.THEMES.items()):
-            chip = W.ThemeChip(tid, info["name"], info["tokens"],
-                               selected=(tid == current), dot=info.get("dot"))
-            chip.clicked.connect(lambda t=tid: self.app.set_theme(t))
-            grid.addWidget(chip, i // 2, i % 2)
+            card = W.ThemeCard(tid, info, selected=(tid == current))
+            card.clicked.connect(lambda t=tid: self.app.set_theme(t))
+            grid.addWidget(card, i // 2, i % 2)
         for c in range(2):
             grid.setColumnStretch(c, 1)
         themes.body.addWidget(grid_host)
-        foot = QLabel("7 套 Anki 模板配色；卡片模板与复习卡区保持不变。")
+        foot = QLabel("7 套平涂主题；状态栏 / 手势条 = 主题深色；无渐变。")
         foot.setWordWrap(True)
         foot.setStyleSheet(
             f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")

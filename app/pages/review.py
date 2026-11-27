@@ -398,7 +398,7 @@ class MaskModeButton(QPushButton):
         super().paintEvent(e)
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        pen = QPen(QColor(W.T["ink2"]), 1.7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        pen = QPen(QColor("#FFFDF8"), 1.7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
         box = QRectF(8, 7, 18, 20)
@@ -430,6 +430,8 @@ class ReviewPage(QWidget):
 
         # 顶栏（应用 chrome）：两行 —— 进度一行，卡组名一行
         self.top = QWidget()
+        self.top.setObjectName("reviewTop")
+        self.top.setAttribute(Qt.WA_StyledBackground, True)
         self.top_v = QVBoxLayout(self.top)
         self.top_v.setContentsMargins(16, 8, 16, 8)
         self.top_v.setSpacing(6)
@@ -885,7 +887,7 @@ class ReviewPage(QWidget):
 
             self._grp_label = OneLineLabel("")
             self._grp_label.setStyleSheet(
-                f"color:{W.T['ink']};font-size:15px;font-weight:700;letter-spacing:0.2px;")
+                f"color:#FFFDF8;font-size:15px;font-weight:700;letter-spacing:0.2px;")
             self.top_lay.addWidget(self._grp_label, 1)
 
             # 任务计时胶囊：就在「卡组名」和右侧 ⋯ 之间那块空位

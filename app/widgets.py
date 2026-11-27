@@ -77,6 +77,12 @@ class Card(QFrame):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(16, 14, 16, 14)
         self.body.setSpacing(8)
+        # 「池塘纸感」的硬投影：2.5px 偏移、不模糊，配合 1.5px 墨线描边。
+        eff = QGraphicsDropShadowEffect(self)
+        eff.setBlurRadius(0)
+        eff.setOffset(2.5, 3.0)
+        eff.setColor(QColor(33, 27, 28, 32))
+        self.setGraphicsEffect(eff)
 
 
 class ClickFrame(QFrame):
@@ -232,11 +238,16 @@ class BackButton(QPushButton):
         self.setStyleSheet("QPushButton{background:transparent;border:none;}")
         self._stroke = max(2.4, size * 0.085)      # 36px → 3.1px
         self._span = size * 0.30
+        self.light = False
+
+    def set_light(self, light: bool):
+        self.light = bool(light)
+        self.update()
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        pen = QPen(QColor(T["ink"]), self._stroke)
+        pen = QPen(QColor("#FFFDF8" if self.light else T["ink"]), self._stroke)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
@@ -376,6 +387,208 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
         if e.button() == Qt.LeftButton:
             self.clicked.emit(self.tid)
         super().mouseReleaseEvent(e)
+
+
+def paint_frog(p: QPainter, x: float, y: float, s: float,
+               body: str, belly: str, eye: str = "#FFFDF8",
+               pupil: str = "#211B1C", smile: str = "#211B1C"):
+    """平涂青蛙：两个眼包 + 笑嘴 + 奶油肚皮。用于 dock/色带/空状态。"""
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(body))
+    p.drawEllipse(QRectF(x, y + s * 0.26, s, s * 0.74))
+    p.setBrush(QColor(belly))
+    p.drawEllipse(QRectF(x + s * 0.17, y + s * 0.46, s * 0.66, s * 0.44))
+    p.setBrush(QColor(body))
+    p.drawEllipse(QRectF(x + s * 0.06, y + s * 0.05, s * 0.38, s * 0.38))
+    p.drawEllipse(QRectF(x + s * 0.56, y + s * 0.05, s * 0.38, s * 0.38))
+    p.setBrush(QColor(eye))
+    p.drawEllipse(QRectF(x + s * 0.13, y + s * 0.12, s * 0.24, s * 0.24))
+    p.drawEllipse(QRectF(x + s * 0.63, y + s * 0.12, s * 0.24, s * 0.24))
+    p.setBrush(QColor(pupil))
+    p.drawEllipse(QRectF(x + s * 0.20, y + s * 0.19, s * 0.11, s * 0.13))
+    p.drawEllipse(QRectF(x + s * 0.70, y + s * 0.19, s * 0.11, s * 0.13))
+    pen = QPen(QColor(smile), max(1.2, s * 0.055), Qt.SolidLine, Qt.RoundCap)
+    p.setPen(pen)
+    p.setBrush(Qt.NoBrush)
+    p.drawArc(QRectF(x + s * 0.24, y + s * 0.42, s * 0.52, s * 0.32), 200 * 16, 140 * 16)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor("#F2C14E"))
+    p.setOpacity(0.85)
+    p.drawEllipse(QRectF(x + s * 0.06, y + s * 0.52, s * 0.14, s * 0.10))
+    p.drawEllipse(QRectF(x + s * 0.80, y + s * 0.52, s * 0.14, s * 0.10))
+    p.setOpacity(1.0)
+
+
+class FrogMascot(QWidget):
+    """青蛙吉祥物：band（奶油蛙，深色瞳孔）/ green（绿蛙，奶油肚皮）/ cream。"""
+
+    def __init__(self, size: int = 44, kind: str = "green", parent=None):
+        super().__init__(parent)
+        self.kind = kind
+        self.setFixedSize(size, size)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        s = min(self.width(), self.height())
+        x = (self.width() - s) / 2
+        y = (self.height() - s) / 2
+        if self.kind == "band":
+            body, belly, eye, pupil, smile = "#F2C14E", "#FFE9BD", "#FFFDF8", T["deep"], T["deep"]
+        elif self.kind == "cream":
+            body, belly, eye, pupil, smile = "#FFFDF8", "#F2C14E", "#FFFDF8", T["deep"], T["deep"]
+        else:
+            body, belly, eye, pupil, smile = "#2F7A4F", "#F2C14E", "#FFFDF8", T["ink"], T["ink"]
+        paint_frog(p, x, y, s, body, belly, eye, pupil, smile)
+
+
+class BandHeader(QFrame):
+    """页面顶部的深色色带 + 池塘波浪；appbar/hero 内容放在 self.lay 里。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("bandHeader")
+        self.lay = QVBoxLayout(self)
+        self.lay.setContentsMargins(20, 8, 20, 34)
+        self.lay.setSpacing(6)
+
+        self.word = QWidget()
+        self.word_lay = QHBoxLayout(self.word)
+        self.word_lay.setContentsMargins(0, 0, 0, 0)
+        self.word_lay.setSpacing(8)
+        self.word_lay.addWidget(FrogMascot(22, "band"), 0, Qt.AlignVCenter)
+        wcol = QVBoxLayout()
+        wcol.setSpacing(0)
+        t = QLabel("FROGLOG")
+        t.setStyleSheet("font-size:7.5px;font-weight:700;color:#FFE9BD;letter-spacing:1.8px;")
+        t2 = QLabel("蛙记 · 池塘纸感")
+        t2.setStyleSheet("font-size:9px;font-weight:700;color:#FFFDF8;")
+        wcol.addWidget(t)
+        wcol.addWidget(t2)
+        self.word_lay.addLayout(wcol)
+        self.word_lay.addStretch(1)
+        self.lay.addWidget(self.word)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        w, h = self.width(), self.height()
+        p.fillRect(QRectF(0, 0, w, h), QColor(T["deep"]))
+        # 池塘波浪：底部三瓣，浅纸色
+        y = h - 22
+        path = QPainterPath()
+        path.moveTo(0, y + 12)
+        for i in range(3):
+            x0 = i * w / 3
+            x1 = (i + 1) * w / 3
+            path.cubicTo(x0 + w / 12, y - 7, x1 - w / 12, y - 7, x1, y + 12)
+        path.lineTo(w, h)
+        path.lineTo(0, h)
+        path.closeSubpath()
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(T["paper"]))
+        p.drawPath(path)
+
+
+class ThemeCard(ClickFrame):
+    """设置里的平涂主题卡：迷你色带 + 纸底 + 迷你 dock，选中描墨线 + 奶油勾。"""
+
+    def __init__(self, tid: str, info: dict, selected: bool = False, parent=None):
+        super().__init__(parent)
+        self.tid = tid
+        self.info = info
+        self.selected = selected
+        self.setObjectName("themeCard")
+        self.setFixedHeight(78)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setStyleSheet("QFrame#themeCard{background:transparent;border:none;}")
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(1, 1, -3, -3)
+        deep, page = self.info["deep"], self.info["page"]
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(33, 27, 28, 26))
+        p.drawRoundedRect(r.adjusted(2, 2.5, 2, 2.5), 14, 14)
+        p.setBrush(QColor(T["panel"]))
+        p.drawRoundedRect(r, 14, 14)
+        p.setPen(QPen(QColor(T["ink"]), 2.2 if self.selected else 1.5))
+        p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(r, 14, 14)
+
+        clip = QPainterPath()
+        clip.addRoundedRect(r.adjusted(2, 2, -2, -2), 12, 12)
+        p.save()
+        p.setClipPath(clip)
+        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 27), QColor(deep))
+        p.fillRect(QRectF(r.left() + 2, r.top() + 29, r.width() - 4, r.height() - 31),
+                   QColor(page))
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#FFFDF8"))
+        p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 36, r.width() - 24, 20), 6, 6)
+        p.setBrush(QColor(deep))
+        p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 17, r.width() - 24, 9), 4.5, 4.5)
+        p.restore()
+
+        p.setPen(QColor("#FFFDF8"))
+        f = QFont(theme.FONT, 9)
+        f.setBold(True)
+        p.setFont(f)
+        p.drawText(QRectF(r.left() + 10, r.top() + 4, r.width() - 40, 22),
+                   Qt.AlignLeft | Qt.AlignVCenter, self.info["name"])
+        paint_frog(p, r.right() - 29, r.top() + 6, 17,
+                   "#F2C14E", "#FFE9BD", "#FFFDF8", deep, deep)
+        if self.selected:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor("#F2C14E"))
+            p.drawEllipse(QRectF(r.right() - 25, r.top() + 4, 18, 18))
+            p.setPen(QColor(T["ink"]))
+            f2 = QFont(theme.FONT, 9)
+            f2.setBold(True)
+            p.setFont(f2)
+            p.drawText(QRectF(r.right() - 25, r.top() + 4, 18, 18),
+                       Qt.AlignCenter, "✓")
+
+
+class ProgressRing(QWidget):
+    """奶油色圆环进度：今日完成数 / 今日总量。"""
+
+    def __init__(self, frac: float = 0.0, label: str = "", cap: str = "今日",
+                 size: int = 78, parent=None):
+        super().__init__(parent)
+        self.frac = max(0.0, min(1.0, float(frac)))
+        self.label = label
+        self.cap = cap
+        self.setFixedSize(size, size)
+
+    def set_value(self, frac: float, label: str | None = None):
+        self.frac = max(0.0, min(1.0, float(frac)))
+        if label is not None:
+            self.label = label
+        self.update()
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(5, 5, -5, -5)
+        p.setPen(QPen(QColor(255, 253, 248, 60), 6))
+        p.setBrush(Qt.NoBrush)
+        p.drawArc(r, 0, 360 * 16)
+        p.setPen(QPen(QColor("#F2C14E"), 6, Qt.SolidLine, Qt.RoundCap))
+        p.drawArc(r, 90 * 16, -int(360 * 16 * self.frac))
+        p.setPen(QColor("#FFFDF8"))
+        f = QFont(theme.FONT, 13)
+        f.setBold(True)
+        p.setFont(f)
+        p.drawText(QRectF(0, 0, self.width(), self.height() - 8),
+                   Qt.AlignCenter, self.label)
+        p.setPen(QColor("#FFE9BD"))
+        f2 = QFont(theme.FONT, 7.5)
+        p.setFont(f2)
+        p.drawText(QRectF(0, self.height() - 24, self.width(), 16),
+                   Qt.AlignCenter, self.cap)
 
 
 class MoreButton(QPushButton):
@@ -550,44 +763,38 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(40)
+        self.setFixedHeight(54)
 
     def sizeHint(self):
-        f = QFont(theme.FONT, 12)
-        mw = QFontMetrics(f).horizontalAdvance(self.label) + 34  # 图标 22 + 间距 6 + 左右 padding
-        return QSize(mw, self.height())
+        return QSize(80, 54)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         active = self.isChecked()
-        col = QColor(T["brand"]) if active else QColor(T["ink2"])
+        col = QColor(T["deep"]) if active else QColor("#FFFDF8")
         w, h = self.width(), self.height()
 
-        # 选中：胶囊包住整个按钮（图标 + 文字）
+        # 选中：奶油黄胶囊，深色图标/文字；未选中：深色 dock 上的白色
         if active:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(T["brand_soft"]))
-            p.drawRoundedRect(QRectF(2, 4, w - 4, h - 8), 14, 14)
+            p.setBrush(QColor("#FFF3D6"))
+            p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 16, 16)
 
-        # 图标：靠左
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
-        cx = 15
-        r = QRectF(cx - 10, h / 2 - 10, 20, 20)
+        cx = w / 2
+        r = QRectF(cx - 10, 7, 20, 20)
         self._icon(p, self.key, r)
 
-        # 文字：靠右
         p.setPen(col)
-        f = QFont(theme.FONT, 12)
+        f = QFont(theme.FONT, 8.5)
         f.setBold(active)
         p.setFont(f)
-        tx = 30
-        tw = w - tx - 6
-        p.drawText(QRectF(tx, 0, tw, h), Qt.AlignLeft | Qt.AlignVCenter, self.label)
+        p.drawText(QRectF(0, 29, w, h - 31), Qt.AlignHCenter | Qt.AlignTop, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):

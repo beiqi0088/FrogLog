@@ -65,12 +65,12 @@ def _android_edge_to_edge():
                 window.setDecorFitsSystemWindows(False)
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
-                    mask = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
-                    ctrl.setSystemBarsAppearance(mask, mask)
+                    flags = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
+                    # 深色主题色带 / dock 上用白色图标：清掉 light 标记
+                    ctrl.setSystemBarsAppearance(0, flags)
             else:
                 decor = window.getDecorView()
-                decor.setSystemUiVisibility(
-                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
+                decor.setSystemUiVisibility(0x0100 | 0x0200 | 0x0400)
         except Exception:
             pass
 
@@ -124,15 +124,15 @@ class BgLayer(QWidget):
         win = self.window()
         tid = getattr(win, "theme_id", None)
         theme.paint_page_bg(p, self.rect(), tid)
-        # 状态栏 / 手势条区域：用主题取色，跟 App 顶部 / 底部同色
+        info = theme.theme_info(tid)
+        deep = QColor(info.get("deep", "#B23A5B"))
         top = int(getattr(win, "_sys_top", 0) or 0)
         bottom = int(getattr(win, "_sys_bottom", 0) or 0)
-        # 状态栏不铺纯色块：让上面的主题渐变直接透过去（与 App 背景同一渐变）；
-        # 底部手势条与底部导航同色，保持一整块。
+        # 状态栏 / 手势条 = 主题深色，和顶部色带、底部 dock 完全同色。
+        if top > 0:
+            p.fillRect(0, 0, self.width(), top, deep)
         if bottom > 0:
-            info = theme.theme_info(tid)
-            p.fillRect(0, self.height() - bottom, self.width(), bottom,
-                       QColor(info.get("bar_bottom", "#FFFFFF")))
+            p.fillRect(0, self.height() - bottom, self.width(), bottom, deep)
 
 
 class MainWindow(QMainWindow):
@@ -168,7 +168,8 @@ class MainWindow(QMainWindow):
             self.setMinimumSize(380, 700)
             self.resize(430, 880)
             self.setMaximumWidth(560)
-        self.setStyleSheet(f"QMainWindow{{background:{theme.LIGHT['paper2']};}}")
+        _default = theme.theme_tokens(theme.DEFAULT_THEME)
+        self.setStyleSheet(f"QMainWindow{{background:{_default['paper']};}}")
         # 安卓系统返回键会作为 Qt.Key_Back 送到应用里，这里全局接住
         QApplication.instance().installEventFilter(self)
 
@@ -191,10 +192,10 @@ class MainWindow(QMainWindow):
         col.addWidget(self.stack, 1)
 
         self.nav = QFrame()
-        self.nav.setFixedHeight(64)
+        self.nav.setFixedHeight(70)
         self.nav.setObjectName("navFrame")
         nav_outer = QHBoxLayout(self.nav)
-        nav_outer.setContentsMargins(12, 2, 12, 16)
+        nav_outer.setContentsMargins(12, 4, 12, 10)
         nav_outer.setSpacing(0)
         self.nav_bar = QFrame()
         self.nav_bar.setObjectName("navBar")
@@ -282,12 +283,13 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
-        self.setStyleSheet(f"QMainWindow{{background:{t['paper2']};}}")
-        # 底部导航条：与系统手势条同色打底 + 胶囊表达选中态
+        self.setStyleSheet(f"QMainWindow{{background:{t['paper']};}}")
+        # 底部 dock：主题深色，与系统手势条同色；选中项奶油黄胶囊
         info = theme.theme_info(self.theme_id)
-        nav_bg = info.get("bar_bottom", t.get("brand_soft", t["paper"]))
+        nav_bg = info.get("deep", t.get("brand", "#B23A5B"))
         self.nav.setStyleSheet(
-            f"QFrame#navFrame{{background:{nav_bg};border:none;}}"
+            f"QFrame#navFrame{{background:{nav_bg};border:none;"
+            f"border-top-left-radius:22px;border-top-right-radius:22px;}}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():

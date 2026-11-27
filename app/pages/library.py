@@ -723,7 +723,7 @@ class LibraryPage(Page):
                               for d in s.decks if d["domain"] == self.domain)
             self.hero(
                 "记忆",
-                f"{len(s.domains)} 个知识域 · {total_decks} 个卡包 · {total_cards} 张卡片",
+                f"{len(s.domains)} 个知识域 · {total_decks} 个文件 · {total_cards} 张卡片",
                 right=self._actions_group(True))
 
         # 知识域只在最上层显示
@@ -732,7 +732,7 @@ class LibraryPage(Page):
 
         # 搜索（当前层）
         search = QLineEdit()
-        search.setPlaceholderText("搜索圆桌、卡包或卡片")
+        search.setPlaceholderText("搜索圆桌、文件或卡片")
         search.addAction(self._search_icon(), QLineEdit.LeadingPosition)
         search.setText(self.query)
         search.textChanged.connect(self._on_search)
@@ -776,11 +776,12 @@ class LibraryPage(Page):
         btn.setAttribute(Qt.WA_Hover, True)
         btn.setToolTip("新建圆桌 / 卡包，或管理知识域")
         btn.setStyleSheet(
-            f"QFrame#plusIcon{{background:transparent;border:none;border-radius:16px;}}"
-            f"QFrame#plusIcon:hover{{background:{W.T['panel']};}}")
+            f"QFrame#plusIcon{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
+            f"border-radius:16px;}}"
+            f"QFrame#plusIcon:hover{{background:#FFE9BD;}}")
         lay = QHBoxLayout(btn)
         lay.setContentsMargins(0, 0, 0, 0)
-        icon = PlusIcon(18, W.T["ink3"])
+        icon = PlusIcon(18, W.T["deep"])
         icon.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         lay.addWidget(icon, 0, Qt.AlignCenter)
         btn.clicked.connect(lambda: self._add_menu(btn, with_manage))
@@ -943,6 +944,40 @@ class LibraryPage(Page):
             box.body.addWidget(t)
             box.body.addWidget(tip)
             self.list_lay.addWidget(box)
+
+        if not q and not self.round_id:
+            self.list_lay.addWidget(self._new_file_card())
+
+    def _new_file_card(self):
+        """列表底部的虚线「新建文件」卡（平涂改版的空位入口）。"""
+        card = W.ClickFrame()
+        card.setObjectName("newFileCard")
+        card.setFixedHeight(76)
+        card.setCursor(Qt.PointingHandCursor)
+        card.setStyleSheet(
+            f"QFrame#newFileCard{{background:transparent;"
+            f"border:1.5px dashed {W.T['ink2']};border-radius:16px;}}")
+        lay = QHBoxLayout(card)
+        lay.setContentsMargins(16, 10, 16, 10)
+        lay.setSpacing(12)
+        plus = QLabel("＋")
+        plus.setFixedSize(36, 36)
+        plus.setAlignment(Qt.AlignCenter)
+        plus.setStyleSheet(
+            "background:#FCEBC4;border-radius:12px;color:#9A6B12;"
+            "font-size:18px;font-weight:700;")
+        lay.addWidget(plus, 0, Qt.AlignVCenter)
+        col = QVBoxLayout()
+        col.setSpacing(2)
+        t = QLabel("新建文件")
+        t.setStyleSheet(f"font-size:12px;font-weight:700;color:{W.T['ink']};")
+        sub = QLabel("新建卡包 / 导入 Word")
+        sub.setStyleSheet(f"font-size:9.5px;color:{W.T['ink2']};")
+        col.addWidget(t)
+        col.addWidget(sub)
+        lay.addLayout(col, 1)
+        card.clicked.connect(lambda: self._add_menu(card, True))
+        return card
 
     # ---------------- 移动到… ----------------
     def _collect_dests(self, domain, parent, prefix, kind, obj, labels, targets):

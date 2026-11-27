@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 theme.py - 设计令牌 + 全局 QSS
-7 套 Anki card-anki 模板配色（极光/冰川/薄荷/香槟/丁香/珊瑚/潟湖）+ 渐变页面底色。
+7 套「池塘纸感」平涂主题（极光/冰川/薄荷/香檟/丁香/珊瑚/潟湖），纯色、无渐变。
 """
 
-from PySide6.QtCore import QPointF, QRectF
-from PySide6.QtGui import QColor, QLinearGradient, QPainter, QRadialGradient
+from PySide6.QtCore import QRectF
+from PySide6.QtGui import QColor, QPainter
 
 
 LIGHT = {
@@ -83,6 +83,8 @@ def tokens(dark: bool) -> dict:
 
 
 def build_qss(t: dict) -> str:
+    cream = "#FFFDF8"
+    band_sub = "#FFE9BD"
     return f"""
     QWidget {{
         font-family: "{FONT}", "Microsoft YaHei UI", "Microsoft YaHei", "SimHei", sans-serif;
@@ -96,21 +98,53 @@ def build_qss(t: dict) -> str:
     QScrollArea > QWidget > QWidget {{ background: transparent; }}
     QScrollBar:vertical {{ width: 0px; background: transparent; }}
 
+    /* 顶部深色色带：内部文字全部反白 */
+    QFrame#bandHeader, QWidget#bandHeader {{ background: transparent; border: none; }}
+    QWidget#bandHeader QLabel#h1 {{ color: {cream}; font-size: 27px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h2 {{ color: {cream}; font-size: 16px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h3 {{ color: {cream}; font-size: 13px; font-weight: 600; }}
+    QWidget#bandHeader QLabel#sub,
+    QWidget#bandHeader QLabel#eyebrow {{ color: {band_sub}; }}
+    QWidget#bandHeader QLabel {{ color: {cream}; }}
+    QWidget#bandHeader QPushButton {{ color: {cream}; }}
+    QWidget#bandHeader QPushButton#ghost {{
+        background: transparent; border: 1.5px solid rgba(255,253,248,0.55);
+        color: {cream};
+    }}
+
     QFrame#card {{
         background: {t['panel']};
-        border: 1px solid {t['line']};
-        border-radius: 18px;
+        border: 1.5px solid {t['ink']};
+        border-radius: 16px;
     }}
     QFrame#flatCard {{
-        background: {t['paper2']};
-        border: none;
+        background: {t['panel']};
+        border: 1.5px solid {t['ink']};
         border-radius: 16px;
     }}
     QFrame#hero {{
-        border-radius: 26px;
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 {t.get('hero_a', t['brand2'])}, stop:1 {t.get('hero_b', t['brand'])});
+        border-radius: 24px;
+        background: {t['brand']};
+        border: 1.5px solid {t['ink']};
     }}
+    QWidget#reviewTop {{ background: {t['deep']}; }}
+    QWidget#reviewTop QLabel {{ color: #FFFDF8; }}
+    QWidget#reviewTop QPushButton {{ color: #FFFDF8; }}
+    QWidget#reviewTop QLabel#h2 {{ color: #FFFDF8; }}
+    QWidget#reviewTop QFrame {{ background: transparent; }}
+    QWidget#reviewTop QPushButton#iconBtn {{
+        background: rgba(255,253,248,0.16);
+        border: 1px solid rgba(255,253,248,0.35);
+        border-radius: 15px;
+        color: #FFFDF8;
+    }}
+
+
+    QFrame#navFrame {{
+        background: {t['deep']};
+        border: none;
+    }}
+    QFrame#navBar {{ background: transparent; border: none; }}
 
     QLabel {{ background: transparent; }}
     QLabel#h1 {{ font-size: 27px; font-weight: 700; color: {t['ink']}; }}
@@ -118,49 +152,50 @@ def build_qss(t: dict) -> str:
     QLabel#h3 {{ font-size: 13px; font-weight: 600; color: {t['ink']}; }}
     QLabel#sub {{ color: {t['ink2']}; font-size: 11px; }}
     QLabel#eyebrow {{ color: {t['ink2']}; font-size: 11px; font-weight: 600; letter-spacing: 1px; }}
-    QLabel#big {{ font-size: 46px; font-weight: 600; color: {t['brand_soft']}; }}
-    QLabel#heroCap {{ color: {t['brand_soft']}; font-size: 12px; }}
+    QLabel#big {{ font-size: 46px; font-weight: 700; color: {t['butter']}; }}
+    QLabel#heroCap {{ color: {cream}; font-size: 12px; }}
 
     QPushButton {{
         border: none; background: transparent; color: {t['ink']};
         padding: 8px 12px; border-radius: 999px;
     }}
     QPushButton#primary {{
-        background: {t['brand']}; color: {t['brand_soft']};
-        font-weight: 600; padding: 11px 18px; border-radius: 22px;
+        background: {t['brand']}; color: {cream};
+        font-weight: 700; padding: 11px 18px; border-radius: 22px;
+        border: 1.5px solid {t['ink']};
     }}
     QPushButton#primary:hover {{ background: {t['brand2']}; }}
     QPushButton#ghost {{
-        background: {t['panel']}; border: 1px solid {t['line']};
+        background: {t['panel']}; border: 1.5px solid {t['ink']};
         color: {t['ink']}; padding: 10px 16px; border-radius: 20px;
     }}
-    QPushButton#ghost:hover {{ background: {t['paper2']}; }}
+    QPushButton#ghost:hover {{ background: {t['butter_soft']}; }}
     QPushButton#chip {{
-        background: {t['panel']}; border: 1px solid {t['line']};
+        background: {t['panel']}; border: 1.5px solid {t['line']};
         color: {t['ink2']}; padding: 7px 14px; border-radius: 15px; font-size: 12px;
     }}
     QPushButton#chip[on="true"] {{
-        background: {t['brand2']}; color: #FFFFFF; border-color: {t['brand2']};
+        background: {t['brand']}; color: {cream}; border-color: {t['brand']};
     }}
     QPushButton#iconBtn {{
-        background: {t['paper2']}; border-radius: 20px; padding: 0px;
-        font-size: 15px; color: {t['ink']};
+        background: {t['panel']}; border: 1.5px solid {t['ink']};
+        border-radius: 20px; padding: 0px; font-size: 15px; color: {t['ink']};
     }}
-    QPushButton#iconBtn:hover {{ background: {t['line']}; }}
+    QPushButton#iconBtn:hover {{ background: {t['butter_soft']}; }}
     QPushButton#tab {{
         color: {t['ink2']}; font-size: 10px; padding: 6px 0 8px 0; border-radius: 0;
     }}
     QPushButton#tab[on="true"] {{ color: {t['brand']}; font-weight: 700; }}
 
     QLineEdit, QTextEdit {{
-        background: {t['paper2']}; border: 1px solid {t['line']};
+        background: {t['panel']}; border: 1.5px solid {t['ink']};
         border-radius: 14px; padding: 10px 12px; color: {t['ink']};
         selection-background-color: {t['brand']};
     }}
-    QLineEdit:focus, QTextEdit:focus {{ border: 1px solid {t['brand']}; }}
+    QLineEdit:focus, QTextEdit:focus {{ border: 1.5px solid {t['brand']}; }}
 
     QComboBox {{
-        background: {t['panel']}; border: 1px solid {t['line']};
+        background: {t['panel']}; border: 1.5px solid {t['ink']};
         border-radius: 12px; padding: 8px 12px; color: {t['ink']};
     }}
     QComboBox QAbstractItemView {{
@@ -172,111 +207,77 @@ def build_qss(t: dict) -> str:
     QFrame#grabber {{ background: {t['line']}; border-radius: 2px; }}
     QToolTip {{
         background: {t['panel']}; color: {t['ink']};
-        border: 1px solid {t['line']}; border-radius: 10px;
+        border: 1.5px solid {t['ink']}; border-radius: 10px;
         padding: 7px 12px; font-size: 12px;
     }}
     """
 
 # ---------------------------------------------------------------- 主题
-# 只保留 apkg 里 card-anki 模板的 7 个 ColorClass 配色；原来的 8 套已删除。
-_ANKI_BASE = {
-    "panel": "#FFFFFF",
-    "ink": "#1E293B", "ink2": "#64748B", "ink3": "#94A3B8",
-    "green": "#2E9E67", "green_soft": "#EAF7F0",
-    "red": "#E8503A", "red_soft": "#FDEDEA",
-    "blue": "#426A80", "blue_soft": "#E4EDF4",
-    "shadow": "rgba(30,41,59,0.10)",
+# 「池塘纸感」7 套平涂主题：主题深色 + 浅纸色，全部纯色、无渐变。
+_POND_BASE = {
+    "panel": "#FFFDF8",
+    "ink": "#211B1C", "ink2": "#6F5F60", "ink3": "#A08F90",
+    "green": "#2F7A4F", "green_soft": "#DCEFE2",
+    "red": "#C4562E", "red_soft": "#F8DCCF",
+    "blue": "#2E5E8C", "blue_soft": "#DCE8F5",
+    "accent": "#F2C14E", "accent_soft": "#FCEBC4",
+    "butter": "#F2C14E", "butter_soft": "#FCEBC4",
+    "shadow": "rgba(33,27,28,0.10)",
 }
 
 THEMES = {
     "anki-aurora": {
-        "name": "极光", "dark": False, "anki": True,
-        "dot": ("#FB923C", "#DB2777"),
-        "bg": {"linear": ("#FFF7F3", "#FEF1F6", "#F6F2FF"),
-               "r1": "#FFCEAA", "r2": "#FFBACE", "solid": "#FBEEE6"},
-        "bar_top": "#FFE0CC", "bar_bottom": "#FCE7F3",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#FCF6F4", "paper2": "#F9EBEF", "line": "#F3DEE6",
-                   "brand": "#DB2777", "brand2": "#9D174D",
-                   "brand_soft": "#FCE7F3", "accent": "#F59E0B",
-                   "accent_soft": "#FEF3C7"},
+        "name": "极光", "dark": False, "deep": "#B23A5B", "page": "#F8E9E6",
+        "tokens": {**_POND_BASE,
+                   "paper": "#F8E9E6", "paper2": "#F3DADF", "line": "#E7CFD4",
+                   "brand": "#B23A5B", "brand2": "#8E2946", "brand_soft": "#F3DADF",
+                   "deep": "#B23A5B", "page": "#F8E9E6"},
     },
     "anki-ice": {
-        "name": "冰川", "dark": False, "anki": True,
-        "dot": ("#38BDF8", "#4F46E5"),
-        "bg": {"linear": ("#F3F8FF", "#EEF5FE", "#F2F3FF"),
-               "r1": "#AADCFA", "r2": "#BAAFFA", "solid": "#E9F1FB"},
-        "bar_top": "#D2ECFD", "bar_bottom": "#E0E7FF",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#F5F8FF", "paper2": "#E9F2FE", "line": "#DEE7F8",
-                   "brand": "#4F46E5", "brand2": "#3730A3",
-                   "brand_soft": "#E0E7FF", "accent": "#38BDF8",
-                   "accent_soft": "#E0F2FE"},
+        "name": "冰川", "dark": False, "deep": "#2E5E8C", "page": "#EAF1F7",
+        "tokens": {**_POND_BASE,
+                   "paper": "#EAF1F7", "paper2": "#D9E6F3", "line": "#CFDDEB",
+                   "brand": "#2E5E8C", "brand2": "#234A70", "brand_soft": "#D9E6F3",
+                   "deep": "#2E5E8C", "page": "#EAF1F7"},
     },
     "anki-mint": {
-        "name": "薄荷", "dark": False, "anki": True,
-        "dot": ("#10B981", "#0EA5E9"),
-        "bg": {"linear": ("#F4FDF8", "#EEFAF4", "#E7F7EF"),
-               "r1": "#96EBC4", "r2": "#B8EFCD", "solid": "#E7F7F0"},
-        "bar_top": "#C3F0D9", "bar_bottom": "#DAF9E7",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#F4FCF9", "paper2": "#E6F8F0", "line": "#D8EEE5",
-                   "brand": "#0E9F6E", "brand2": "#047857",
-                   "brand_soft": "#D1FAE5", "accent": "#0EA5E9",
-                   "accent_soft": "#E0F2FE"},
+        "name": "薄荷", "dark": False, "deep": "#2F7A4F", "page": "#EAF4EC",
+        "tokens": {**_POND_BASE,
+                   "paper": "#EAF4EC", "paper2": "#D8EEDD", "line": "#CFE4D5",
+                   "brand": "#2F7A4F", "brand2": "#235F3D", "brand_soft": "#D8EEDD",
+                   "deep": "#2F7A4F", "page": "#EAF4EC"},
     },
     "anki-champ": {
-        "name": "香槟", "dark": False, "anki": True,
-        "dot": ("#F59E0B", "#EC4899"),
-        "bg": {"linear": ("#FFFCF2", "#FDF6E9", "#FDF1EE"),
-               "r1": "#FADE8C", "r2": "#FFC4C4", "solid": "#FBF3E2"},
-        "bar_top": "#FCEBB8", "bar_bottom": "#FEF3C7",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#FEFAF1", "paper2": "#FDF3DF", "line": "#F1E3C4",
-                   "brand": "#D97706", "brand2": "#92400E",
-                   "brand_soft": "#FEF3C7", "accent": "#EC4899",
-                   "accent_soft": "#FCE7F3"},
+        "name": "香檟", "dark": False, "deep": "#A9761C", "page": "#F8F0E1",
+        "tokens": {**_POND_BASE,
+                   "paper": "#F8F0E1", "paper2": "#F1E2C4", "line": "#E8D7B5",
+                   "brand": "#A9761C", "brand2": "#855A12", "brand_soft": "#F1E2C4",
+                   "deep": "#A9761C", "page": "#F8F0E1"},
     },
     "anki-lilac": {
-        "name": "丁香", "dark": False, "anki": True,
-        "dot": ("#A78BFA", "#6366F1"),
-        "bg": {"linear": ("#FAF7FF", "#F5F2FF", "#F1F5FF"),
-               "r1": "#CEB4FC", "r2": "#B2D0FA", "solid": "#F1EBFD"},
-        "bar_top": "#E2D6FD", "bar_bottom": "#EDE9FE",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#F9F5FF", "paper2": "#F1ECFE", "line": "#E6DDF8",
-                   "brand": "#7C3AED", "brand2": "#5B21B6",
-                   "brand_soft": "#EDE9FE", "accent": "#6366F1",
-                   "accent_soft": "#E0E7FF"},
+        "name": "丁香", "dark": False, "deep": "#6B4EA8", "page": "#F1ECF8",
+        "tokens": {**_POND_BASE,
+                   "paper": "#F1ECF8", "paper2": "#E4DAF5", "line": "#DCCFEF",
+                   "brand": "#6B4EA8", "brand2": "#543B87", "brand_soft": "#E4DAF5",
+                   "deep": "#6B4EA8", "page": "#F1ECF8"},
     },
     "anki-coral": {
-        "name": "珊瑚", "dark": False, "anki": True,
-        "dot": ("#F97316", "#DB2777"),
-        "bg": {"linear": ("#FFF8F4", "#FEF3EC", "#FDF9F0"),
-               "r1": "#FFB09E", "r2": "#FCD698", "solid": "#FDECE4"},
-        "bar_top": "#FFD2C6", "bar_bottom": "#FFEDD5",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#FFF7F2", "paper2": "#FDECE6", "line": "#F6DFD3",
-                   "brand": "#EA580C", "brand2": "#9A3412",
-                   "brand_soft": "#FFEDD5", "accent": "#DB2777",
-                   "accent_soft": "#FCE7F3"},
+        "name": "珊瑚", "dark": False, "deep": "#C4562E", "page": "#F9ECE4",
+        "tokens": {**_POND_BASE,
+                   "paper": "#F9ECE4", "paper2": "#F5DCCF", "line": "#EBCABC",
+                   "brand": "#C4562E", "brand2": "#9E4423", "brand_soft": "#F5DCCF",
+                   "deep": "#C4562E", "page": "#F9ECE4"},
     },
     "anki-lagoon": {
-        "name": "潟湖", "dark": False, "anki": True,
-        "dot": ("#06B6D4", "#6366F1"),
-        "bg": {"linear": ("#F4FDFD", "#EEFAFB", "#F1F6FF"),
-               "r1": "#8AE4E4", "r2": "#A6C4FA", "solid": "#E6F6F7"},
-        "bar_top": "#C0F0F0", "bar_bottom": "#CFFAFE",
-        "tokens": {**_ANKI_BASE,
-                   "paper": "#F3FBFC", "paper2": "#E5F8F9", "line": "#D8EEF1",
-                   "brand": "#0891B2", "brand2": "#155E75",
-                   "brand_soft": "#CFFAFE", "accent": "#6366F1",
-                   "accent_soft": "#E0E7FF"},
+        "name": "潟湖", "dark": False, "deep": "#0F7C86", "page": "#E8F4F5",
+        "tokens": {**_POND_BASE,
+                   "paper": "#E8F4F5", "paper2": "#D3EBED", "line": "#C6E1E3",
+                   "brand": "#0F7C86", "brand2": "#0A5F67", "brand_soft": "#D3EBED",
+                   "deep": "#0F7C86", "page": "#E8F4F5"},
     },
 }
 
-DEFAULT_THEME = "anki-mint"
-
+DEFAULT_THEME = "anki-aurora"
 
 def theme_ids() -> list[str]:
     return list(THEMES.keys())
@@ -294,37 +295,7 @@ def theme_is_dark(tid: str) -> bool:
     return bool(theme_info(tid)["dark"])
 
 
-def theme_gradient(tid: str | None) -> dict | None:
-    return theme_info(tid or DEFAULT_THEME).get("bg")
-
-
 def paint_page_bg(p: QPainter, rect, tid: str | None):
-    """把当前 Anki 主题的渐变底色铺满 rect（页面底层 / 设置页 / 复习 chrome）。"""
+    """平涂纸底：整页只铺主题浅纸色，不再画任何渐变。"""
     info = theme_info(tid or DEFAULT_THEME)
-    bg = info.get("bg")
-    r = QRectF(rect)
-    if not bg:
-        p.fillRect(r, QColor(info["tokens"]["paper"]))
-        return
-    p.setRenderHint(QPainter.Antialiasing, True)
-    l0, l1, l2 = bg["linear"]
-    g = QLinearGradient(r.topLeft(), r.bottomRight())
-    g.setColorAt(0.0, QColor(l0))
-    g.setColorAt(0.52, QColor(l1))
-    g.setColorAt(1.0, QColor(l2))
-    p.fillRect(r, g)
-
-    # 两个角上的径向光斑只做装饰，半径限制在 30–35% 避免把渐变主色调染花。
-    for (px, py), col, rad, alpha in (((0.88, 0.08), bg["r1"], 0.30, 0.75),
-                                      ((0.06, 0.92), bg["r2"], 0.35, 0.70)):
-        rg = QRadialGradient(QPointF(r.left() + r.width() * px,
-                                     r.top() + r.height() * py),
-                             max(r.width(), r.height()) * rad)
-        c = QColor(col)
-        c.setAlphaF(alpha)
-        c0 = QColor(col)
-        c0.setAlpha(0)
-        rg.setColorAt(0, c)
-        rg.setColorAt(1, c0)
-        p.fillRect(r, rg)
-
+    p.fillRect(QRectF(rect), QColor(info["page"]))

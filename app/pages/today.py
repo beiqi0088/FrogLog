@@ -7,7 +7,7 @@ import time
 from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QLabel, QHBoxLayout, QVBoxLayout, QWidget,
-                               QPushButton, QGridLayout, QSizePolicy)
+                               QPushButton, QGridLayout, QSizePolicy, QProgressBar)
 
 import theme
 
@@ -276,59 +276,48 @@ class TodayPage(Page):
         review_due = [c for c in due_all if c["reps"] > 0]
         overdue = [c for c in due_all if c["due"] < self._day0()]
 
-        # ---------- 顶栏 ----------
-        head = QWidget()
-        hl = QHBoxLayout(head)
-        hl.setContentsMargins(0, 10, 0, 2)
-        hl.setSpacing(10)
+        # ---------- 顶栏色带 ----------
+        today = time.localtime()
+        left_n = len(due_all)
+        done = len(today_reviews)
+        total = done + left_n
+        band = W.BandHeader()
+        dirty = self._dirty()
+        pill = QPushButton("● 有未同步的修改" if dirty else "● 已同步")
+        pill.setCursor(Qt.PointingHandCursor)
+        pill.setFixedHeight(24)
+        pill.setStyleSheet(
+            "QPushButton{background:rgba(255,253,248,0.16);color:#FFFDF8;"
+            "border:1px solid rgba(255,253,248,0.35);border-radius:12px;"
+            "padding:0 10px;font-size:8.5px;font-weight:700;}"
+            "QPushButton:hover{background:rgba(255,253,248,0.24);}")
+        pill.clicked.connect(self._do_sync)
+        band.word_lay.addWidget(pill, 0, Qt.AlignVCenter)
 
+        row = QWidget()
+        rl = QHBoxLayout(row)
+        rl.setContentsMargins(0, 10, 0, 2)
+        rl.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(3)
-        dirty = self._dirty()
-
-        # 同步状态：浅底胶囊
-        chip = QWidget()
-        chip.setAttribute(Qt.WA_StyledBackground, True)
-        chip.setFixedHeight(22)
-        chip.setStyleSheet(
-            f"background:{W.T['red_soft'] if dirty else W.T['brand_soft']};border-radius:11px;")
-        chl = QHBoxLayout(chip)
-        chl.setContentsMargins(9, 0, 11, 0)
-        chl.setSpacing(6)
-        dot = QLabel()
-        dot.setFixedSize(6, 6)
-        dot.setStyleSheet(
-            f"background:{W.T['red'] if dirty else W.T['green']};border-radius:3px;")
-        chl.addWidget(dot, 0, Qt.AlignVCenter)
-        st = QLabel("有未同步的修改" if dirty else self._sync_text().replace("● ", ""))
-        st.setStyleSheet(
-            f"font-size:10.5px;font-weight:700;"
-            f"color:{W.T['red'] if dirty else W.T['brand']};background:transparent;")
-        chl.addWidget(st)
-        chl.addStretch(1)
-        crow = QWidget()
-        crl = QHBoxLayout(crow)
-        crl.setContentsMargins(0, 0, 0, 0)
-        crl.addWidget(chip, 0, Qt.AlignLeft)
-        crl.addStretch(1)
-        col.addWidget(crow)
-
-        title = QLabel("今日")
-        title.setObjectName("h1")
+        weekday = "一二三四五六日"[today.tm_wday]
+        date = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 周{weekday} · "
+                      f"今天还差 {left_n} 张")
+        date.setStyleSheet("font-size:10.5px;color:#FFE9BD;")
+        col.addWidget(date)
+        title = QLabel("<span style='color:#FFFDF8;'>今天，吃掉</span>"
+                       "<span style='color:#F2C14E;'>那只青蛙</span>")
+        title.setTextFormat(Qt.RichText)
+        title.setStyleSheet("font-size:27px;font-weight:700;")
         col.addWidget(title)
+        rl.addLayout(col, 1)
+        rl.addWidget(W.ProgressRing(done / total if total else 0,
+                                    f"{done}/{total}", "今日", 78), 0, Qt.AlignTop)
+        band.lay.addWidget(row)
+        self.set_band(band)
 
-        # 日期 + 还差多少
-        today = time.localtime()
-        left = len(due_all)
-        sub = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 今天还差 {left} 张")
-        sub.setStyleSheet(f"font-size:11.5px;color:{W.T['ink2']};")
-        col.addWidget(sub)
-        hl.addLayout(col, 1)
-
-        sync = SyncButton(dirty)
-        sync.clicked.connect(self._do_sync)
-        hl.addWidget(sync, 0, Qt.AlignTop)
-        self.add(head)
+        # ---------- 今日青蛙卡 ----------
+        self.add(self._frog_card(left_n, len(review_due), len(new_cards), done))
 
         # ---------- 四宫格 ----------
         grid_host = QWidget()
@@ -336,7 +325,7 @@ class TodayPage(Page):
         grid.setContentsMargins(0, 6, 0, 0)
         grid.setHorizontalSpacing(10)
         grid.setVerticalSpacing(10)
-        AMBER, AMBER_SOFT = "#B8792A", "#FBF0E1"
+        AMBER, AMBER_SOFT = "#9A6B12", "#FCEBC4"
         tiles = [
             ("clock", "待复习卡片", str(len(review_due)), W.T["blue"], W.T["blue_soft"], None),
             ("check", "今日已学", str(len(today_reviews)), W.T["brand"], W.T["brand_soft"], None),
@@ -351,6 +340,9 @@ class TodayPage(Page):
                 lambda k=keys[i]: self.app.show_page("cards", kind=k))
             grid.addWidget(tile, i // 2, i % 2)
         self.add(grid_host)
+
+        # ---------- 最近 7 天 ----------
+        self.add(self._streak_card())
 
         # ---------- 继续学习 ----------
         groups = collect_groups(s, due_all)
@@ -384,6 +376,105 @@ class TodayPage(Page):
     def _dirty(self) -> bool:
         last = self._last_sync()
         return self.store.updated_at() > last + 1000
+
+    def _frog_card(self, left: int, due: int, new: int, done: int) -> QWidget:
+        box = W.Card()
+        box.body.setContentsMargins(14, 12, 14, 12)
+        box.body.setSpacing(6)
+        head = QWidget()
+        hl = QHBoxLayout(head)
+        hl.setContentsMargins(0, 0, 0, 0)
+        hl.setSpacing(10)
+        hl.addWidget(W.FrogMascot(46, "green"), 0, Qt.AlignVCenter)
+        col = QVBoxLayout()
+        col.setSpacing(2)
+        t = QLabel(f"今天还差 {left} 张")
+        t.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+        s = QLabel(f"待复习 {due} · 待学新卡 {new}")
+        s.setStyleSheet(f"font-size:9.5px;color:{W.T['ink2']};")
+        col.addWidget(t)
+        col.addWidget(s)
+        hl.addLayout(col, 1)
+        btn = W.PrimaryButton("继续学习")
+        btn.setFixedSize(104, 36)
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.clicked.connect(self._start_next)
+        hl.addWidget(btn, 0, Qt.AlignVCenter)
+        box.body.addWidget(head)
+
+        bar = QProgressBar()
+        bar.setRange(0, max(1, done + left))
+        bar.setValue(done)
+        bar.setTextVisible(False)
+        bar.setFixedHeight(6)
+        bar.setStyleSheet(
+            f"QProgressBar{{background:{W.T['paper2']};border:none;border-radius:3px;}}"
+            f"QProgressBar::chunk{{background:#F2C14E;border-radius:3px;}}")
+        box.body.addWidget(bar)
+        return box
+
+    def _start_next(self):
+        groups = collect_groups(self.store, self.store.due_cards())
+        if groups:
+            g = groups[0]
+            self.app.start_review(g["deck"]["id"], group=g["group"])
+        else:
+            self.app.show_page("cards", kind="due")
+
+    def _streak_card(self) -> QWidget:
+        box = W.Card()
+        box.body.setContentsMargins(14, 10, 14, 10)
+        box.body.setSpacing(4)
+        days = []
+        for i in range(6, -1, -1):
+            lt = time.localtime(time.time() - i * 86400)
+            key = (lt.tm_year, lt.tm_yday)
+            cnt = 0
+            for r in self.store.reviews:
+                rt = time.localtime((r.get("at") or 0) / 1000)
+                if (rt.tm_year, rt.tm_yday) == key:
+                    cnt += 1
+            days.append((lt, cnt))
+        streak = 0
+        for _lt, cnt in reversed(days):
+            if cnt > 0:
+                streak += 1
+            else:
+                break
+
+        head = QWidget()
+        hl = QHBoxLayout(head)
+        hl.setContentsMargins(0, 0, 0, 0)
+        hl.setSpacing(6)
+        t = QLabel("最近 7 天")
+        t.setStyleSheet(f"font-size:10.5px;font-weight:700;color:{W.T['ink']};")
+        hl.addWidget(t)
+        hl.addStretch(1)
+        s = QLabel(f"连续 {streak} 天")
+        s.setStyleSheet(f"font-size:8.5px;color:{W.T['ink2']};")
+        hl.addWidget(s)
+        box.body.addWidget(head)
+
+        row = QWidget()
+        rl = QHBoxLayout(row)
+        rl.setContentsMargins(0, 0, 0, 0)
+        rl.setSpacing(2)
+        for i, (lt, _cnt) in enumerate(days):
+            col = QVBoxLayout()
+            col.setSpacing(2)
+            col.setAlignment(Qt.AlignHCenter)
+            active = i == 6
+            col.addWidget(W.FrogMascot(22, "band" if active else "green"),
+                          0, Qt.AlignHCenter)
+            lb = QLabel("一二三四五六日"[lt.tm_wday])
+            lb.setAlignment(Qt.AlignCenter)
+            lb.setStyleSheet(
+                f"font-size:7.5px;color:{W.T['deep'] if active else W.T['ink2']};"
+                f"font-weight:{700 if active else 400};")
+            col.addWidget(lb, 0, Qt.AlignHCenter)
+            rl.addLayout(col, 1)
+        box.body.addWidget(row)
+        return box
 
     def _sync_text(self) -> str:
         last = self._last_sync()
