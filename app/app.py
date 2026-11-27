@@ -127,14 +127,12 @@ class BgLayer(QWidget):
         # 状态栏 / 手势条区域：用主题取色，跟 App 顶部 / 底部同色
         top = int(getattr(win, "_sys_top", 0) or 0)
         bottom = int(getattr(win, "_sys_bottom", 0) or 0)
-        if top > 0 or bottom > 0:
+        # 状态栏不铺纯色块：让上面的主题渐变直接透过去（与 App 背景同一渐变）；
+        # 底部手势条与底部导航同色，保持一整块。
+        if bottom > 0:
             info = theme.theme_info(tid)
-            if top > 0:
-                p.fillRect(0, 0, self.width(), top,
-                           QColor(info.get("bar_top", "#FFFFFF")))
-            if bottom > 0:
-                p.fillRect(0, self.height() - bottom, self.width(), bottom,
-                           QColor(info.get("bar_bottom", "#FFFFFF")))
+            p.fillRect(0, self.height() - bottom, self.width(), bottom,
+                       QColor(info.get("bar_bottom", "#FFFFFF")))
 
 
 class MainWindow(QMainWindow):
