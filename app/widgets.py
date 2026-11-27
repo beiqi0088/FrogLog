@@ -783,7 +783,7 @@ class StackBar(QWidget):
 
 
 class NavButton(QPushButton):
-    """底部导航：图标 + 文字水平放在圆角胶囊里；选中态用品牌色浅底。"""
+    """底部导航：只画图标（无文字），在圆角胶囊里垂直居中；选中态用奶油黄底。"""
 
     def __init__(self, key: str, label: str, parent=None):
         super().__init__("", parent)
@@ -804,7 +804,7 @@ class NavButton(QPushButton):
         col = QColor(T["deep"]) if active else QColor("#FFFDF8")
         w, h = self.width(), self.height()
 
-        # 选中：奶油黄胶囊，深色图标/文字；未选中：深色 dock 上的白色
+        # 选中：奶油黄胶囊，深色图标；未选中：深色 dock 上的白色图标
         if active:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor("#FFF3D6"))
@@ -816,14 +816,8 @@ class NavButton(QPushButton):
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
         cx = w / 2
-        r = QRectF(cx - 10, 8, 20, 20)
+        r = QRectF(cx - 10, (h - 20) / 2, 20, 20)
         self._icon(p, self.key, r)
-
-        p.setPen(col)
-        f = QFont(theme.FONT, 8.5)
-        f.setBold(active)
-        p.setFont(f)
-        p.drawText(QRectF(0, 30, w, h - 32), Qt.AlignHCenter | Qt.AlignTop, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):

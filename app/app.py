@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 import threading
 
-from PySide6.QtCore import QEvent, QTimer, Qt
+from PySide6.QtCore import QEvent, QRectF, QTimer, Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
@@ -66,12 +66,11 @@ def _android_edge_to_edge():
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
                     flags = 8 | 16   # LIGHT_STATUS_BARS | LIGHT_NAVIGATION_BARS
-                    # 浅纸色状态栏 / 手势条：深色系统图标
-                    ctrl.setSystemBarsAppearance(flags, flags)
+                    # 状态栏 / 手势条为主题深色：系统图标用白色（清掉 LIGHT 标志）
+                    ctrl.setSystemBarsAppearance(0, flags)
             else:
                 decor = window.getDecorView()
-                decor.setSystemUiVisibility(
-                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
+                decor.setSystemUiVisibility(0x0100 | 0x0200 | 0x0400)
         except Exception:
             pass
 
@@ -125,7 +124,17 @@ class BgLayer(QWidget):
         win = self.window()
         tid = getattr(win, "theme_id", None)
         theme.paint_page_bg(p, self.rect(), tid)
-        # 状态栏 / 手势条区域不再铺深色块：直接透出页面浅纸色（深色系统图标）。
+        # 状态栏 / 手势条区域铺主题深色：与顶部色带、底部 dock 连成一整块，
+        # 色块顶边贴屏幕顶、底边贴屏幕底；内容位置不变（root 布局仍按 inset 内缩）。
+        info = theme.theme_info(tid or theme.DEFAULT_THEME)
+        deep = QColor(info["deep"])
+        w, h = self.width(), self.height()
+        top = max(0, getattr(win, "_sys_top", 0))
+        bottom = max(0, getattr(win, "_sys_bottom", 0))
+        if top > 0:
+            p.fillRect(QRectF(0, 0, w, top), deep)
+        if bottom > 0:
+            p.fillRect(QRectF(0, h - bottom, w, bottom), deep)
 
 
 class MainWindow(QMainWindow):
