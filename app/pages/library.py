@@ -1744,9 +1744,8 @@ class DeckPage(Page):
         head_holder = QWidget()
         self._head_holder = head_holder
         self.top_lay = QVBoxLayout(head_holder)
-        self.top_lay.setContentsMargins(20, 0, 20, 8)
-        self.top_lay.setSpacing(12)
-        self.body = self.top_lay
+        self.top_lay.setContentsMargins(0, 0, 0, 8)
+        self.top_lay.setSpacing(0)
 
         imp = W.Chip("导入")
         imp.clicked.connect(self._import_word)
@@ -1766,6 +1765,14 @@ class DeckPage(Page):
         bl.addWidget(imp, 0, Qt.AlignTop)
         band.lay.addWidget(bar)
         self.top_lay.addWidget(band)
+
+        # 色带下方内容：左右 20px 边距（色带本身铺满整宽）
+        content = QWidget()
+        self._head_content = content
+        self.body = QVBoxLayout(content)
+        self.body.setContentsMargins(20, 0, 20, 0)
+        self.body.setSpacing(12)
+        self.top_lay.addWidget(content)
 
         # 三档
         seg = QWidget()
