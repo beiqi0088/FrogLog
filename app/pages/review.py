@@ -450,7 +450,7 @@ class ReviewPage(QWidget):
         self.scroll.setFrameShape(QScrollArea.NoFrame)
         self.area = BgArea("#B3E5FC")
         self.area_lay = QVBoxLayout(self.area)
-        self.area_lay.setContentsMargins(16, 16, 16, 16)
+        self.area_lay.setContentsMargins(16, 24, 16, 16)
         self.area_lay.setSpacing(0)
         self.scroll.setWidget(self.area)
         outer.addWidget(self.scroll, 1)
