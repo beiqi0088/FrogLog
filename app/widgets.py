@@ -792,7 +792,7 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(54)
+        self.setFixedHeight(50)
 
     def sizeHint(self):
         return QSize(80, 54)
@@ -816,14 +816,14 @@ class NavButton(QPushButton):
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
         cx = w / 2
-        r = QRectF(cx - 10, 11, 20, 20)
+        r = QRectF(cx - 10, 8, 20, 20)
         self._icon(p, self.key, r)
 
         p.setPen(col)
         f = QFont(theme.FONT, 8.5)
         f.setBold(active)
         p.setFont(f)
-        p.drawText(QRectF(0, 34, w, h - 36), Qt.AlignHCenter | Qt.AlignTop, self.label)
+        p.drawText(QRectF(0, 30, w, h - 32), Qt.AlignHCenter | Qt.AlignTop, self.label)
 
     @staticmethod
     def _icon(p: QPainter, key: str, r: QRectF):

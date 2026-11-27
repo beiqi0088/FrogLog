@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         self.nav.setFixedHeight(70)
         self.nav.setObjectName("navFrame")
         nav_outer = QHBoxLayout(self.nav)
-        nav_outer.setContentsMargins(12, 4, 12, 10)
+        nav_outer.setContentsMargins(12, 8, 12, 8)
         nav_outer.setSpacing(0)
         self.nav_bar = QFrame()
         self.nav_bar.setObjectName("navBar")
