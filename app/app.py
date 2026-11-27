@@ -9,7 +9,7 @@ import sys
 import threading
 
 from PySide6.QtCore import QEvent, QTimer, Qt
-from PySide6.QtGui import QFont, QFontDatabase, QPainter
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
                                QButtonGroup, QDialog, QSizePolicy)
@@ -121,8 +121,20 @@ class BgLayer(QWidget):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        tid = getattr(self.window(), "theme_id", None)
+        win = self.window()
+        tid = getattr(win, "theme_id", None)
         theme.paint_page_bg(p, self.rect(), tid)
+        # 状态栏 / 手势条区域：用主题取色，跟 App 顶部 / 底部同色
+        top = int(getattr(win, "_sys_top", 0) or 0)
+        bottom = int(getattr(win, "_sys_bottom", 0) or 0)
+        if top > 0 or bottom > 0:
+            info = theme.theme_info(tid)
+            if top > 0:
+                p.fillRect(0, 0, self.width(), top,
+                           QColor(info.get("bar_top", "#FFFFFF")))
+            if bottom > 0:
+                p.fillRect(0, self.height() - bottom, self.width(), bottom,
+                           QColor(info.get("bar_bottom", "#FFFFFF")))
 
 
 class MainWindow(QMainWindow):
@@ -273,10 +285,11 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper2']};}}")
-        # 底部导航条：半透明品牌色打底 + 胶囊表达选中态
-        brand_soft = t.get("brand_soft", t["paper"])
+        # 底部导航条：与系统手势条同色打底 + 胶囊表达选中态
+        info = theme.theme_info(self.theme_id)
+        nav_bg = info.get("bar_bottom", t.get("brand_soft", t["paper"]))
         self.nav.setStyleSheet(
-            f"QFrame#navFrame{{background:{brand_soft};border:none;}}"
+            f"QFrame#navFrame{{background:{nav_bg};border:none;}}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
@@ -305,8 +318,12 @@ class MainWindow(QMainWindow):
                 margins = wh.safeAreaMargins()
                 top = max(0, margins.top())
                 bottom = max(0, margins.bottom())
+        self._sys_top = top
+        self._sys_bottom = bottom
         if hasattr(self, "root_layout"):
             self.root_layout.setContentsMargins(0, top, 0, bottom)
+        if hasattr(self, "bg"):
+            self.bg.update()
         if top + bottom > 0 and not getattr(self, "_insets_logged", False):
             self._insets_logged = True
             write_log = getattr(sys, "froglog_log", None)
