@@ -81,6 +81,9 @@ class StatTile(W.Card):
         self.setCursor(Qt.PointingHandCursor)
         self.body.setContentsMargins(14, 12, 12, 12)
         self.body.setSpacing(4)
+        # 数字和字体加载不会改变格子高度，滚动/刷新时四宫格保持不动。
+        self.setFixedHeight(100)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         head = QWidget()
         hl = QHBoxLayout(head)

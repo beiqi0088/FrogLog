@@ -361,6 +361,73 @@ ACTIVITY_STAGE_BEFORE_SUPER = '''        FrogLogDiagApp.stage(this, "即将调�
 ACTIVITY_STAGE_AFTER_SUPER = '''        FrogLogDiagApp.stage(this, "PythonActivity.super.onCreate 已返回");
 '''
 
+# 状态栏和底部手势区透明，Qt 的渐变背景可以直接画到系统栏后面。
+SYSTEM_BARS_JAVA = r'''package org.kivy.android;
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.Build;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowInsetsController;
+
+public final class FrogLogSystemBars {
+    private FrogLogSystemBars() {}
+
+    public static void apply(Activity activity) {
+        if (activity == null) return;
+        Window window = activity.getWindow();
+        if (Build.VERSION.SDK_INT >= 30) {
+            window.setDecorFitsSystemWindows(false);
+            WindowInsetsController controller = window.getInsetsController();
+            if (controller != null) {
+                int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(light, light);
+            }
+        } else {
+            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+            if (Build.VERSION.SDK_INT >= 23) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            window.getDecorView().setSystemUiVisibility(flags);
+        }
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) {
+            window.setStatusBarContrastEnforced(false);
+            window.setNavigationBarContrastEnforced(false);
+        }
+    }
+}
+'''
+
+# p4a 默认会在第一次返回时弹 “Click again to close the app”，并吞掉这次按键。
+# 改为直接交给 QtActivity，Python 里的 Qt.Key_Back 就能在第一次返回时生效。
+P4A_BACK_DOUBLE_TAP = '''    long lastBackClick = SystemClock.elapsedRealtime();
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // If it wasn't the Back key or there's no web page history, bubble up to the default
+        // system behavior (probably exit the activity)
+        if (SystemClock.elapsedRealtime() - lastBackClick > 2000) {
+            lastBackClick = SystemClock.elapsedRealtime();
+            Toast.makeText(this, "Click again to close the app", Toast.LENGTH_LONG).show();
+            return true;
+        }
+
+        lastBackClick = SystemClock.elapsedRealtime();
+        return super.onKeyDown(keyCode, event);
+    }
+'''
+
+P4A_BACK_DIRECT = '''    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
+    }
+'''
+
 
 def _qt_bootstrap_java_dir(p4a_dir: Path) -> Path | None:
     if not p4a_dir:
@@ -381,8 +448,9 @@ def apply_p4a_diag_patch(p4a_dir: Path) -> None:
     if java_dir is None:
         raise SystemExit(f"[android16] {p4a_dir} 不是 p4a 源码目录（找不到 qt bootstrap）")
 
-    # 1) FrogLogDiagApp.java（Application 级阶梯标记 + 未捕获异常日志）
+    # 1) FrogLogDiagApp.java（启动诊断）+ FrogLogSystemBars.java（全屏渐变系统栏）
     (java_dir / "FrogLogDiagApp.java").write_text(DIAG_APP_JAVA, encoding="utf-8")
+    (java_dir / "FrogLogSystemBars.java").write_text(SYSTEM_BARS_JAVA, encoding="utf-8")
 
     # 2) PythonActivity.onCreate 插入 4 个 Activity 级标记
     py_act = java_dir / "PythonActivity.java"
@@ -406,10 +474,25 @@ def apply_p4a_diag_patch(p4a_dir: Path) -> None:
             if old not in text:
                 raise SystemExit(f"[android16] PythonActivity.java 里找不到锚点：{old.strip()[:60]}")
             text = text.replace(old, new, 1)
-        py_act.write_text(text, encoding="utf-8")
         _log("已在 PythonActivity.onCreate 注入 4 个启动阶梯标记")
 
-    # 3) manifest 模板：Application 换成 FrogLogDiagApp
+    # 3) 首次返回直接交给 Qt，不再先弹英文 Toast
+    if P4A_BACK_DOUBLE_TAP in text:
+        text = text.replace(P4A_BACK_DOUBLE_TAP, P4A_BACK_DIRECT, 1)
+    elif "Click again to close the app" in text:
+        raise SystemExit("[android16] PythonActivity.java 的双击返回代码与固定版本不一致")
+    if "Click again to close the app" not in text and P4A_BACK_DIRECT not in text:
+        raise SystemExit("[android16] PythonActivity.java 没有可替换的返回键实现")
+
+    # 4) Qt 窗口创建后开启沉浸式系统栏，状态栏/手势条都由渐变背景覆盖
+    if "FrogLogSystemBars.apply(this);" not in text:
+        anchor = '        Log.v(TAG, "Did super onCreate");'
+        if anchor not in text:
+            raise SystemExit("[android16] PythonActivity.java 找不到系统栏注入锚点")
+        text = text.replace(anchor, "        FrogLogSystemBars.apply(this);\n" + anchor, 1)
+    py_act.write_text(text, encoding="utf-8")
+
+    # 5) manifest 模板：Application 换成 FrogLogDiagApp
     manifest = _p4a_manifest(p4a_dir)
     text = manifest.read_text(encoding="utf-8")
     if "FrogLogDiagApp" not in text:
@@ -442,18 +525,26 @@ def verify_p4a_patch(p4a_dir: Path) -> None:
     problems = []
     if java_dir is None or not (java_dir / "FrogLogDiagApp.java").exists():
         problems.append("FrogLogDiagApp.java 未生成")
+    if java_dir is None or not (java_dir / "FrogLogSystemBars.java").exists():
+        problems.append("FrogLogSystemBars.java 未生成")
     if "org.kivy.android.FrogLogDiagApp" not in _p4a_manifest(p4a_dir).read_text(encoding="utf-8"):
         problems.append("manifest 未指向 FrogLogDiagApp")
     py_act = java_dir / "PythonActivity.java" if java_dir else None
     if py_act is None or "FrogLogDiagApp.stage(" not in py_act.read_text(encoding="utf-8"):
         problems.append("PythonActivity 未注入阶梯标记")
+    elif py_act is not None:
+        activity = py_act.read_text(encoding="utf-8")
+        if "Click again to close the app" in activity:
+            problems.append("PythonActivity 仍有双击返回提示")
+        if "FrogLogSystemBars.apply(this);" not in activity:
+            problems.append("PythonActivity 未启用全屏渐变系统栏")
     for recipe in ("python3", "hostpython3"):
         path = Path(p4a_dir) / "pythonforandroid" / "recipes" / recipe / "__init__.py"
         if f'version = "{P4A_PYTHON_VERSION}"' not in path.read_text(encoding="utf-8"):
             problems.append(f"{recipe} 版本不是 {P4A_PYTHON_VERSION}")
     if problems:
         raise SystemExit("[android16] p4a 补丁校验失败：" + "；".join(problems))
-    _log("p4a 补丁校验通过（启动阶梯标记 + Python 3.11 recipe）")
+    _log("p4a 补丁校验通过（启动诊断 + 全屏系统栏 + 直接返回 + Python 3.11）")
 
 
 def stage_p4a_for_buildozer(spec: Path, p4a_dir: Path) -> Path:

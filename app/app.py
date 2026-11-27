@@ -106,6 +106,7 @@ class MainWindow(QMainWindow):
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
+        self.root_layout = outer
 
         self.column = QWidget()
         self.column.setObjectName("phoneColumn")
@@ -221,6 +222,23 @@ class MainWindow(QMainWindow):
             self.bg.setGeometry(self.root.rect())
             self.bg.lower()
 
+    def _sync_system_insets(self):
+        """内容避开状态栏/手势条，背景层仍铺满整块屏幕。"""
+        wh = self.windowHandle()
+        top = bottom = 0
+        if wh is not None:
+            if getattr(self, "_insets_window", None) is not wh:
+                self._insets_window = wh
+                if hasattr(wh, "safeAreaMarginsChanged"):
+                    wh.safeAreaMarginsChanged.connect(
+                        lambda *_: self._sync_system_insets())
+            if hasattr(wh, "safeAreaMargins"):
+                margins = wh.safeAreaMargins()
+                top = max(0, margins.top())
+                bottom = max(0, margins.bottom())
+        if hasattr(self, "root_layout"):
+            self.root_layout.setContentsMargins(0, top, 0, bottom)
+
     def _drop_review_cache(self):
         """换主题后让常驻的复习页重建，顶栏/底栏用新主题色。"""
         if getattr(self, "_review_page", None) is not None:
@@ -253,7 +271,10 @@ class MainWindow(QMainWindow):
     def showEvent(self, e):
         super().showEvent(e)
         self._sync_bg()
+        self._sync_system_insets()
         QTimer.singleShot(0, self._sync_bg)
+        QTimer.singleShot(0, self._sync_system_insets)
+        QTimer.singleShot(120, self._sync_system_insets)
         if not getattr(self, "_centered", False):
             self._centered = True
             W.center_on_screen(self)

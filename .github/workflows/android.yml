@@ -354,6 +354,15 @@ jobs:
             exit 1
           fi
           echo "启动诊断标记检查通过"
+          if ! unzip -p "$APK" 'classes*.dex' | strings | grep -q 'FrogLogSystemBars'; then
+            echo "::error::全屏系统栏补丁没有打进 APK"
+            exit 1
+          fi
+          if unzip -p "$APK" 'classes*.dex' | strings | grep -q 'Click again to close the app'; then
+            echo "::error::APK 仍包含双击返回提示"
+            exit 1
+          fi
+          echo "全屏系统栏与直接返回检查通过"
           mkdir -p dist
           cp "$APK" "dist/FrogLog-Android16-API36-${GITHUB_RUN_NUMBER}.apk"
           ls -lh dist
@@ -405,15 +414,11 @@ jobs:
 
             ## 本次修复了什么
 
-            **1. 打开即闪退**：PySide6 的 Android 轮子是按 CPython 3.11 编译的，
-            扩展模块依赖 `libpython3.11.so`；而 python-for-android 的新版默认编出的是
-            `libpython3.14.so`，一执行 `import PySide6` 就 dlopen 失败。本版把 p4a 的
-            `python3` / `hostpython3` 钉回 3.11.11，与轮子对齐。
-
-            **2. 安卓上的操作**：
-            - **系统返回键**（手机底部/侧边手势）现在可用：先关弹窗，再退回上一页，
-              已在首页时退出应用；
-            - **手指上下滑动**现在可以滚动页面（之前只支持鼠标滚轮）。
+            - **滚动更稳定**：关闭边缘回弹，避免页面卡住和顶部板块上下跳动；
+            - **滑动中可直接点按**：惯性滚动尚未停止时，也能直接打开卡片，不用先点一次停住；
+            - **返回不再提示**：移除「Click again to close the app」，第一次返回就直接生效；
+            - **渐变覆盖全屏**：主题渐变延伸到顶部状态栏和底部手势区，内容自动避开系统栏；
+            - **今日四宫格固定高度**：数字刷新、字体加载和滚动时不再改变卡片高度。
 
             安装提示：如果覆盖安装提示「应用未安装/签名不一致」，先卸载旧版再安装。
             本版起会缓存调试签名，以后可以覆盖升级。

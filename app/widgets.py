@@ -13,7 +13,7 @@ from PySide6.QtGui import (QGuiApplication, QColor, QPainter, QPen, QBrush, QFon
                            QPainterPath, QLinearGradient, QFontMetrics)
 from PySide6.QtWidgets import (QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
-                               QProgressBar, QScrollArea, QScroller)
+                               QProgressBar, QScrollArea, QScroller, QScrollerProperties)
 
 import theme
 from theme import LIGHT
@@ -37,6 +37,18 @@ def enable_touch_scroll(area: QScrollArea) -> None:
         return
     vp.setProperty("froglogTouchScroll", True)
     QScroller.grabGesture(vp, QScroller.ScrollerGestureType.TouchGesture)
+
+    scroller = QScroller.scroller(vp)
+    props = scroller.scrollerProperties()
+    metric = QScrollerProperties.ScrollMetric
+    policy = QScrollerProperties.OvershootPolicy.OvershootAlwaysOff
+    # 边缘不回弹，避免顶部卡片在松手后反复上下跳动。
+    props.setScrollMetric(metric.VerticalOvershootPolicy, policy)
+    props.setScrollMetric(metric.HorizontalOvershootPolicy, policy)
+    # 立即分发按下事件；惯性滑动中点按也直接响应，不必先点一次停滚动。
+    props.setScrollMetric(metric.MousePressEventDelay, 0.0)
+    props.setScrollMetric(metric.MaximumClickThroughVelocity, 1.0)
+    scroller.setScrollerProperties(props)
 
 
 def enable_touch_scroll_deep(root: QWidget) -> None:
