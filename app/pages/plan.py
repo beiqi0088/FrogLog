@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QVBoxLayout, QWi
 
 import widgets as W
 from pages.base import Page
-from pages.journey_widgets import fmt_mmss
+from pages.journey_widgets import ToggleSwitch, fmt_mmss
 
 from pages.journey_panels import (OverviewPanel, PartyPanel, RecordsPanel,
                                   RewardsPanel)
@@ -39,7 +39,8 @@ class PlanPage(Page):
         today_n = sum(1 for c in self.store.checkins
                       if time.localtime((c.get("at") or 0) / 1000)[:3]
                       == time.localtime()[:3])
-        self.hero("征途", f"今日 {today_n} 次 · 累计 {total} 次 · Lv.{g.get('lv', 1)}")
+        self.hero("征途", f"今日 {today_n} 次 · 累计 {total} 次 · Lv.{g.get('lv', 1)}",
+                  right=self._band_quest())
 
         self._build_seg()
         self.host = QWidget()
@@ -51,6 +52,32 @@ class PlanPage(Page):
 
         # 跨天结算：不在 build 里直接 exec（会重入），推到事件循环下一拍
         QTimer.singleShot(0, self.app.maybe_settle)
+
+    def _band_quest(self):
+        """色带右上角：奶油色胶囊里放「重置」+ 任务开关。"""
+        self.q_reset = QPushButton("重置")
+        self.q_reset.setFixedHeight(24)
+        self.q_reset.setCursor(Qt.PointingHandCursor)
+        self.q_reset.setToolTip("把这次任务清零：计时和这次学的时间都不算，回 15:00")
+        self.q_reset.setStyleSheet(
+            f"QPushButton{{background:transparent;border:none;color:{W.T['ink']};"
+            f"font-size:10.5px;font-weight:700;padding:0 2px;}}"
+            f"QPushButton:disabled{{color:{W.T['ink3']};}}")
+        self.q_reset.clicked.connect(self.reset_quest)
+        self.q_switch = ToggleSwitch(self.store.quest.get("status") == "active")
+        self.q_switch.setToolTip("打开后进学习页才计时；离开学习页自动暂停")
+        self.q_switch.toggled.connect(self.toggle_quest)
+        wrap = QFrame()
+        wrap.setObjectName("bandQuest")
+        wrap.setStyleSheet(
+            f"QFrame#bandQuest{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
+            f"border-radius:16px;}}")
+        lay = QHBoxLayout(wrap)
+        lay.setContentsMargins(9, 3, 5, 3)
+        lay.setSpacing(4)
+        lay.addWidget(self.q_reset, 0, Qt.AlignVCenter)
+        lay.addWidget(self.q_switch, 0, Qt.AlignVCenter)
+        return wrap
 
     # ---------------- 分段 ----------------
     def _build_seg(self):

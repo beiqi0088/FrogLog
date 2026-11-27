@@ -140,21 +140,6 @@ class OverviewPanel(Panel):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.addWidget(h3("今日任务"))
         hl.addStretch(1)
-        self.q_reset = QPushButton("重置")
-        self.q_reset.setFixedHeight(26)
-        self.q_reset.setCursor(Qt.PointingHandCursor)
-        self.q_reset.setToolTip("把这次任务清零：计时和这次学的时间都不算，回 15:00")
-        self.q_reset.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;color:{W.T['ink3']};"
-            f"font-size:12px;font-weight:600;padding:0 5px;}}"
-            f"QPushButton:hover{{color:{W.T['brand']};}}"
-            f"QPushButton:disabled{{color:{W.T['line']};}}")
-        self.q_reset.clicked.connect(self.page.reset_quest)
-        hl.addWidget(self.q_reset, 0, Qt.AlignVCenter)
-        self.q_switch = ToggleSwitch(status == "active")
-        self.q_switch.setToolTip("打开后进学习页才计时；离开学习页自动暂停")
-        self.q_switch.toggled.connect(self.page.toggle_quest)
-        hl.addWidget(self.q_switch, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
 
         self.q_time = QLabel("")
@@ -176,10 +161,12 @@ class OverviewPanel(Panel):
         mins = int(getattr(self, "_q_mins", 25))
         reward = q.get("reward") or {}
 
-        # 开关跟数据走；blockSignals 避免 setChecked 反过来再触发一次 toggle
-        self.q_switch.blockSignals(True)
-        self.q_switch.setChecked(status == "active")
-        self.q_switch.blockSignals(False)
+        # 开关跟数据走（色带右上角）；blockSignals 避免 setChecked 反过来再触发一次 toggle
+        switch = getattr(self.page, "q_switch", None)
+        if switch is not None:
+            switch.blockSignals(True)
+            switch.setChecked(status == "active")
+            switch.blockSignals(False)
 
         if status == "active":
             self.q_time.setText(fmt_mmss(self.store.quest_left_ms()))
@@ -212,9 +199,10 @@ class OverviewPanel(Panel):
                 f"font-size:42px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
             self.q_hint.setText("打开开关后，进学习页才开始计时")
 
-        if hasattr(self, "q_reset"):
-            self.q_reset.setEnabled(self.store.quest_has_progress()
-                                    and self.store.quest_elapsed() > 0)
+        reset = getattr(self.page, "q_reset", None)
+        if reset is not None:
+            reset.setEnabled(self.store.quest_has_progress()
+                             and self.store.quest_elapsed() > 0)
 
     # ---- 首领 ----
     def _boss(self):
