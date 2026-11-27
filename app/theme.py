@@ -132,16 +132,16 @@ def build_qss(t: dict) -> str:
         background: {t['brand']};
         border: 1.5px solid {t['ink']};
     }}
-    QWidget#reviewTop {{ background: {t['deep']}; }}
-    QWidget#reviewTop QLabel {{ color: #FFFDF8; }}
-    QWidget#reviewTop QPushButton {{ color: #FFFDF8; }}
-    QWidget#reviewTop QLabel#h2 {{ color: #FFFDF8; }}
+    QWidget#reviewTop {{ background: {t['paper']}; }}
+    QWidget#reviewTop QLabel {{ color: {t['ink']}; }}
+    QWidget#reviewTop QPushButton {{ color: {t['ink']}; }}
+    QWidget#reviewTop QLabel#h2 {{ color: {t['ink']}; }}
     QWidget#reviewTop QFrame {{ background: transparent; }}
     QWidget#reviewTop QPushButton#iconBtn {{
-        background: rgba(255,253,248,0.16);
-        border: 1px solid rgba(255,253,248,0.35);
+        background: {t['panel']};
+        border: 1.5px solid {t['ink']};
         border-radius: 15px;
-        color: #FFFDF8;
+        color: {t['ink']};
     }}
 
 
