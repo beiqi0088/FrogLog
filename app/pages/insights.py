@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""pages/insights.py - 细数：六维雷达 + 题型统计。"""
+"""pages/insights.py - 战果：六维雷达 + 题型统计。"""
 from __future__ import annotations
 
 import time
@@ -146,9 +146,10 @@ class InsightsPage(Page):
         rl.setContentsMargins(0, 0, 0, 0)
         rl.setSpacing(6)
         more = W.MoreButton(32)
-        more.clicked.connect(lambda: self._more_menu(more))
+        more.setToolTip("设置")
+        more.clicked.connect(lambda: self.app.show_page("settings"))
         rl.addWidget(more)
-        self.appbar("细数", f"近 31 天 · {len(reviews)} 次复习", right=right)
+        self.appbar("战果", f"近 31 天 · {len(reviews)} 次复习", right=right)
 
         self.add(self._radar_card(now, cards, reviews))
 
@@ -208,16 +209,6 @@ class InsightsPage(Page):
             self.add(box)
 
     # ---------- 六维雷达卡 ----------
-    def _build_more_menu(self) -> QMenu:
-        """细数右上角 ⋯：设置（回收站已移到记忆页）。"""
-        m = QMenu(self)
-        m.addAction("设置", lambda: self.app.show_page("settings"))
-        return m
-
-    def _more_menu(self, anchor: W.MoreButton):
-        m = self._build_more_menu()
-        m.exec(anchor.mapToGlobal(QPoint(0, anchor.height() + 4)))
-
     def _radar_card(self, now: int, cards: list, reviews: list) -> QWidget:
         radar = self._radar_data(now, cards, reviews)
         card = W.Card()

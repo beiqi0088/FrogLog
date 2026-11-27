@@ -108,7 +108,7 @@ def resolve_family() -> str:
 
 
 MAIN_TABS = [("today", "今日"), ("library", "记忆"), ("plan", "征途"),
-             ("insights", "细数")]
+             ("insights", "战果")]
 NO_NAV = {"review", "settings", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash"}
 
 
