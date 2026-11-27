@@ -448,19 +448,11 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一高度（88px）：留一点呼吸感
+        # 顶部色块统一高度（88px）：内容直接从顶部开始，不再留空的 wordmark 行
         self.setFixedHeight(88)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(20, 10, 20, 18)
+        self.lay.setContentsMargins(20, 6, 20, 18)
         self.lay.setSpacing(4)
-
-        # 给今日页的同步胶囊留一个右上角插槽（其余页面为空）
-        self.word = QWidget()
-        self.word_lay = QHBoxLayout(self.word)
-        self.word_lay.setContentsMargins(0, 0, 0, 0)
-        self.word_lay.setSpacing(6)
-        self.word_lay.addStretch(1)
-        self.lay.addWidget(self.word)
 
     def paintEvent(self, e):
         p = QPainter(self)
