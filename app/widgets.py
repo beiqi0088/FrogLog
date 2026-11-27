@@ -448,8 +448,8 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一高度（100px）：不再放 wordmark，减少留白
-        self.setFixedHeight(100)
+        # 顶部色块统一高度（80px）：不再放 wordmark，减少留白
+        self.setFixedHeight(80)
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(20, 8, 20, 16)
         self.lay.setSpacing(4)
@@ -582,6 +582,49 @@ class ProgressRing(QWidget):
         p.setFont(f2)
         p.drawText(QRectF(0, self.height() - 24, self.width(), 16),
                    Qt.AlignCenter, self.cap)
+
+
+class SyncCircle(QPushButton):
+    """同步：奶油圆底 + 深色圆环 + 旋转箭头 + 未同步红点（参考旧版圆形同步图标）。"""
+
+    def __init__(self, dirty: bool = False, size: int = 44, parent=None):
+        super().__init__(parent)
+        self.dirty = dirty
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setStyleSheet("QPushButton{background:transparent;border:none;}")
+        self.setToolTip("有未同步的修改，点一下同步" if dirty else "已同步，点一下再次同步")
+
+    def set_dirty(self, dirty: bool):
+        self.dirty = bool(dirty)
+        self.setToolTip("有未同步的修改，点一下同步" if self.dirty else "已同步，点一下再次同步")
+        self.update()
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        w, h = self.width(), self.height()
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#FFFDF8"))
+        p.drawEllipse(QRectF(1, 1, w - 2, h - 2))
+        p.setPen(QPen(QColor(T["deep"]), 2.0))
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(4, 4, w - 8, h - 8))
+        p.setPen(QPen(QColor(T["deep"]), 2.2, Qt.SolidLine, Qt.RoundCap))
+        p.drawArc(QRectF(w * 0.22, h * 0.22, w * 0.56, h * 0.56), 40 * 16, 280 * 16)
+        arrow = QPainterPath()
+        ax, ay = w * 0.73, h * 0.28
+        arrow.moveTo(ax - 2, ay - 6)
+        arrow.lineTo(ax + 7, ay - 2)
+        arrow.lineTo(ax + 1, ay + 5)
+        arrow.closeSubpath()
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(T["deep"]))
+        p.drawPath(arrow)
+        if self.dirty:
+            p.setPen(QPen(QColor("#FFFDF8"), 1.5))
+            p.setBrush(QColor(T["red"]))
+            p.drawEllipse(QPointF(w - 9, 9), 4.2, 4.2)
 
 
 class MoreButton(QPushButton):

@@ -302,17 +302,10 @@ class TodayPage(Page):
         right = QVBoxLayout()
         right.setSpacing(4)
         right.setAlignment(Qt.AlignHCenter)
-        # 同步状态：高识别度奶油黄实心胶囊（带同步图标）
-        pill = QPushButton("⟳ 有未同步的修改" if dirty else "⟳ 已同步")
-        pill.setCursor(Qt.PointingHandCursor)
-        pill.setFixedHeight(22)
-        pill.setStyleSheet(
-            "QPushButton{background:#F2C14E;color:#211B1C;"
-            "border:1.5px solid #211B1C;border-radius:11px;"
-            "padding:0 8px;font-size:8px;font-weight:700;}"
-            "QPushButton:hover{background:#FFE9BD;}")
-        pill.clicked.connect(self._do_sync)
-        right.addWidget(pill, 0, Qt.AlignHCenter)
+        # 同步：更大的圆形同步图标（奶油圆底 + 深色箭头 + 未同步红点）
+        sync = W.SyncCircle(dirty, 44)
+        sync.clicked.connect(self._do_sync)
+        right.addWidget(sync, 0, Qt.AlignHCenter)
         rl.addLayout(right)
         band.lay.addWidget(row)
         self.set_band(band)
