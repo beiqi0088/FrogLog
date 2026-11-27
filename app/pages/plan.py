@@ -33,6 +33,9 @@ class PlanPage(Page):
         self._mins = int(self.store.quest.get("mins") or 15)
         if self._mins not in self.store.QUEST_TARGETS:
             self._mins = 15
+        # 任务开关默认打开：第一次进征途就领任务（进学习页开始计时）
+        if self.store.quest.get("status", "idle") == "idle":
+            self.store.quest_claim(self._mins)
 
         g = self.store.game
         total = len(self.store.checkins)
@@ -70,8 +73,7 @@ class PlanPage(Page):
         wrap = QFrame()
         wrap.setObjectName("bandQuest")
         wrap.setStyleSheet(
-            f"QFrame#bandQuest{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
-            f"border-radius:16px;}}")
+            "QFrame#bandQuest{background:#FFF3D6;border:none;border-radius:16px;}")
         lay = QHBoxLayout(wrap)
         lay.setContentsMargins(9, 3, 5, 3)
         lay.setSpacing(4)
