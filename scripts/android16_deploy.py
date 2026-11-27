@@ -367,6 +367,7 @@ SYSTEM_BARS_JAVA = r'''package org.kivy.android;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsetsController;
@@ -374,8 +375,46 @@ import android.view.WindowInsetsController;
 public final class FrogLogSystemBars {
     private FrogLogSystemBars() {}
 
-    public static void apply(Activity activity) {
+    // Qt 在窗口首次 show 时会重新设置系统栏（恢复主题色、把内容收回安全区），
+    // 只在前台 onCreate 里调用一次会被覆盖。这里在启动后多次重放，最后一次
+    // 一定落在 Qt 的首次 show 之后，渐变才能真正铺到状态栏和手势条后面。
+    private static final long[] REPLAY_DELAYS = {300L, 1000L, 2500L, 5000L, 8000L};
+
+    public static void apply(final Activity activity) {
         if (activity == null) return;
+        applyNow(activity);
+        final View decor = activity.getWindow().getDecorView();
+        for (long delay : REPLAY_DELAYS) {
+            decor.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    applyNow(activity);
+                }
+            }, delay);
+        }
+        // 兜底：Qt 首次 show 会引发一次布局，此时再校正一次。
+        // 20 秒后自动摘掉监听，之后不再有额外开销。
+        decor.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            private long lastApplied = 0L;
+            private final long startedAt = SystemClock.elapsedRealtime();
+
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                long now = SystemClock.elapsedRealtime();
+                if (now - startedAt > 20000L) {
+                    v.removeOnLayoutChangeListener(this);
+                    return;
+                }
+                if (now - lastApplied < 400L) return;
+                lastApplied = now;
+                applyNow(activity);
+            }
+        });
+    }
+
+    private static void applyNow(Activity activity) {
+        if (activity == null || activity.isFinishing()) return;
         Window window = activity.getWindow();
         if (Build.VERSION.SDK_INT >= 30) {
             window.setDecorFitsSystemWindows(false);

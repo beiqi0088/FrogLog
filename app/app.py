@@ -5,6 +5,7 @@ app.py - 主窗口：手机竖屏单列 + 底部导航 + 页面栈 + Toast
 """
 from __future__ import annotations
 
+import sys
 import threading
 
 from PySide6.QtCore import QEvent, QTimer, Qt
@@ -34,6 +35,7 @@ from pages.backup import BackupPage
 from pages.tools import MemoPage, SplitPage, TemplatesPage
 
 _FAMILY_CACHE: str | None = None
+_IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能再 move()
 
 
 def resolve_family() -> str:
@@ -242,6 +244,18 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         if hasattr(self, "root_layout"):
             self.root_layout.setContentsMargins(0, top, 0, bottom)
+        if top + bottom > 0 and not getattr(self, "_insets_logged", False):
+            self._insets_logged = True
+            write_log = getattr(sys, "froglog_log", None)
+            if callable(write_log):
+                try:
+                    scr = self.screen().geometry()
+                    write_log(f"系统栏适配: 窗口 {self.width()}x{self.height()} "
+                              f"屏幕 {scr.width()}x{scr.height()} "
+                              f"insets={top}/{bottom} "
+                              f"flags=0x{int(self.windowFlags()):x}")
+                except Exception:
+                    pass
 
     def _drop_review_cache(self):
         """换主题后让常驻的复习页重建，顶栏/底栏用新主题色。"""
@@ -281,7 +295,13 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(120, self._sync_system_insets)
         if not getattr(self, "_centered", False):
             self._centered = True
-            W.center_on_screen(self)
+            if not _IS_ANDROID:
+                W.center_on_screen(self)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        # 窗口尺寸（含系统栏适配后的全屏尺寸）变化时重新铺满渐变，避免上下露出底色。
+        self._sync_bg()
 
     def show_page(self, key: str, **kw):
         prev = getattr(self, "_cur_spec", None)
