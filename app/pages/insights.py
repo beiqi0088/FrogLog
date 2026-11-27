@@ -209,12 +209,9 @@ class InsightsPage(Page):
 
     # ---------- 六维雷达卡 ----------
     def _build_more_menu(self) -> QMenu:
-        """细数右上角 ⋯：设置 + 回收站。"""
+        """细数右上角 ⋯：设置（回收站已移到记忆页）。"""
         m = QMenu(self)
         m.addAction("设置", lambda: self.app.show_page("settings"))
-        n = self.store.trash_count()
-        m.addAction(f"回收站（{n}）" if n else "回收站",
-                    lambda: self.app.show_page("trash"))
         return m
 
     def _more_menu(self, anchor: W.MoreButton):

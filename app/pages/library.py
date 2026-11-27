@@ -324,6 +324,32 @@ class PlusIcon(QWidget):
         p.drawLine(QPointF(cx, cy - r), QPointF(cx, cy + r))
 
 
+class TrashIcon(QWidget):
+    """细线回收站：盖子 + 桶身 + 两条竖线。"""
+
+    def __init__(self, size: int = 18, color: str | None = None, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(size, size)
+        self._color = color or W.T["ink3"]
+
+    def paintEvent(self, e):
+        from PySide6.QtCore import QPointF, QRectF
+        from PySide6.QtGui import QPen
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(QColor(self._color), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        p.setPen(pen)
+        p.setBrush(Qt.NoBrush)
+        w, h = self.width(), self.height()
+        p.drawLine(QPointF(w * 0.16, h * 0.28), QPointF(w * 0.84, h * 0.28))
+        p.drawLine(QPointF(w * 0.38, h * 0.28), QPointF(w * 0.38, h * 0.18))
+        p.drawLine(QPointF(w * 0.38, h * 0.18), QPointF(w * 0.62, h * 0.18))
+        p.drawLine(QPointF(w * 0.62, h * 0.18), QPointF(w * 0.62, h * 0.28))
+        p.drawRoundedRect(QRectF(w * 0.25, h * 0.32, w * 0.50, h * 0.52), 2.4, 2.4)
+        p.drawLine(QPointF(w * 0.40, h * 0.44), QPointF(w * 0.40, h * 0.72))
+        p.drawLine(QPointF(w * 0.60, h * 0.44), QPointF(w * 0.60, h * 0.72))
+
+
 class GearButton(QPushButton):
     """自绘齿轮（避免 emoji 彩色字形）。"""
 
@@ -768,7 +794,34 @@ class LibraryPage(Page):
         actions = QWidget()
         al = QHBoxLayout(actions)
         al.setContentsMargins(0, 0, 0, 0)
-        al.setSpacing(0)
+        al.setSpacing(8)
+
+        if with_manage:
+            n = self.store.trash_count()
+            trash = W.ClickFrame()
+            trash.setObjectName("trashIcon")
+            trash.setFixedSize(32, 32)
+            trash.setCursor(Qt.PointingHandCursor)
+            trash.setToolTip("回收站" + (f"（{n} 项）" if n else ""))
+            trash.setStyleSheet(
+                f"QFrame#trashIcon{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
+                f"border-radius:16px;}}")
+            tl = QHBoxLayout(trash)
+            tl.setContentsMargins(0, 0, 0, 0)
+            icon = TrashIcon(17, W.T["deep"])
+            icon.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+            tl.addWidget(icon, 0, Qt.AlignCenter)
+            if n:
+                badge = QLabel(str(n), trash)
+                badge.setFixedSize(16, 16)
+                badge.setAlignment(Qt.AlignCenter)
+                badge.setStyleSheet(
+                    f"background:{W.T['red']};color:#FFFDF8;border-radius:8px;"
+                    "font-size:8px;font-weight:700;")
+                badge.move(21, -3)
+                badge.raise_()
+            trash.clicked.connect(lambda: self.app.show_page("trash"))
+            al.addWidget(trash)
 
         btn = W.ClickFrame()
         btn.setObjectName("plusIcon")
@@ -1144,7 +1197,7 @@ class LibraryPage(Page):
         n = len(self.store.cards_of(d["id"]))
         ok = QMessageBox.question(
             self, "删除卡包",
-            f"删除「{d['name']}」及其 {n} 张卡片？\n会放进回收站（细数 → ⋯ → 回收站），可以恢复。")
+            f"删除「{d['name']}」及其 {n} 张卡片？\n会放进回收站（记忆 → 回收站），可以恢复。")
         if ok == QMessageBox.Yes:
             self.store.delete_deck(d["id"])
             self.build()
