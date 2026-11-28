@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 theme.py - 设计令牌 + 全局 QSS
-7 套奶白纸感主题（极光/冰川/薄荷/香檟/丁香/珊瑚/潟湖）：全站奶白背景 + 细墨字，
-主题色只用作按钮 / 选中态 / 徽章点缀。纯色、无渐变、无深色顶带 / 底栏。
+7 套纸感主题（极光/冰川/薄荷/香檟/丁香/珊瑚/潟湖）：每套都有独立的浅纸底、
+卡片、文字、边框和点缀配色。纯色、无渐变、无深色顶带 / 底栏。
 """
 
 from PySide6.QtCore import QRectF
@@ -222,8 +222,8 @@ def build_qss(t: dict) -> str:
     """
 
 # ---------------------------------------------------------------- 主题
-# 奶白纸感：全站奶白背景 + 细墨字；每套主题只保留一个强调色（deep/brand），
-# 用作选中态、主按钮、徽章等点缀。纯色、无渐变、无深色顶带 / 底栏。
+# 纸感主题：每套都有完整的背景 / 卡片 / 文字 / 边框 / 点缀配色。
+# 共享令牌只负责成功、警告等语义色；中性色由各主题自行覆盖。
 _CREAM = {
     "paper":   "#F3EEDF",
     "paper2":  "#E9E1CB",
@@ -249,40 +249,64 @@ THEMES = {
                    "deep": "#B23A5B"},
     },
     "anki-ice": {
-        "name": "冰川", "dark": False, "deep": "#2E5E8C", "page": _CREAM["page"],
+        "name": "冰川", "dark": False, "deep": "#2E5E8C", "page": "#EDF3F7",
         "tokens": {**_CREAM,
-                   "brand": "#2E5E8C", "brand2": "#234A70", "brand_soft": "#DCE6F3",
-                   "deep": "#2E5E8C"},
+                   "paper": "#EDF3F7", "paper2": "#DDE8EF", "page": "#EDF3F7",
+                   "panel": "#F8FBFD", "ink": "#22303A", "ink2": "#647C8C",
+                   "ink3": "#9CB0BC", "line": "#CFDDE6",
+                   "brand": "#2E5E8C", "brand2": "#234A70", "brand_soft": "#D6E5F0",
+                   "deep": "#2E5E8C", "accent": "#4B7FA3", "accent_soft": "#DCE8F1",
+                   "butter": "#4B7FA3", "butter_soft": "#DCE8F1"},
     },
     "anki-mint": {
-        "name": "薄荷", "dark": False, "deep": "#2F7A4F", "page": _CREAM["page"],
+        "name": "薄荷", "dark": False, "deep": "#2F7A4F", "page": "#EDF4EC",
         "tokens": {**_CREAM,
-                   "brand": "#2F7A4F", "brand2": "#235F3D", "brand_soft": "#DCEFE2",
-                   "deep": "#2F7A4F"},
+                   "paper": "#EDF4EC", "paper2": "#DDE9DA", "page": "#EDF4EC",
+                   "panel": "#F9FCF6", "ink": "#243329", "ink2": "#687E6D",
+                   "ink3": "#9DB2A0", "line": "#D0DFCE",
+                   "brand": "#2F7A4F", "brand2": "#235F3D", "brand_soft": "#D8EBDD",
+                   "deep": "#2F7A4F", "accent": "#6E9847", "accent_soft": "#E1EBD4",
+                   "butter": "#6E9847", "butter_soft": "#E1EBD4"},
     },
     "anki-champ": {
-        "name": "香檟", "dark": False, "deep": "#A9761C", "page": _CREAM["page"],
+        "name": "香檟", "dark": False, "deep": "#A9761C", "page": "#F7F0DF",
         "tokens": {**_CREAM,
-                   "brand": "#A9761C", "brand2": "#855A12", "brand_soft": "#F3E7CC",
-                   "deep": "#A9761C"},
+                   "paper": "#F7F0DF", "paper2": "#EDE0C2", "page": "#F7F0DF",
+                   "panel": "#FFFAEE", "ink": "#3A2E18", "ink2": "#907A4E",
+                   "ink3": "#BEAB7C", "line": "#E4D5AF",
+                   "brand": "#A9761C", "brand2": "#855A12", "brand_soft": "#F1E2BC",
+                   "deep": "#A9761C", "accent": "#B88425", "accent_soft": "#F3E5C3",
+                   "butter": "#B88425", "butter_soft": "#F3E5C3"},
     },
     "anki-lilac": {
-        "name": "丁香", "dark": False, "deep": "#6B4EA8", "page": _CREAM["page"],
+        "name": "丁香", "dark": False, "deep": "#6B4EA8", "page": "#F2EFF7",
         "tokens": {**_CREAM,
-                   "brand": "#6B4EA8", "brand2": "#543B87", "brand_soft": "#E7DEF3",
-                   "deep": "#6B4EA8"},
+                   "paper": "#F2EFF7", "paper2": "#E4DEEE", "page": "#F2EFF7",
+                   "panel": "#FBF9FD", "ink": "#30283D", "ink2": "#7D718E",
+                   "ink3": "#AFA4BE", "line": "#DCD3E7",
+                   "brand": "#6B4EA8", "brand2": "#543B87", "brand_soft": "#E4DBF0",
+                   "deep": "#6B4EA8", "accent": "#8A68B4", "accent_soft": "#E8DFF2",
+                   "butter": "#8A68B4", "butter_soft": "#E8DFF2"},
     },
     "anki-coral": {
-        "name": "珊瑚", "dark": False, "deep": "#C4562E", "page": _CREAM["page"],
+        "name": "珊瑚", "dark": False, "deep": "#C4562E", "page": "#F9EFE7",
         "tokens": {**_CREAM,
-                   "brand": "#C4562E", "brand2": "#9E4423", "brand_soft": "#F5E1D3",
-                   "deep": "#C4562E"},
+                   "paper": "#F9EFE7", "paper2": "#F0DED1", "page": "#F9EFE7",
+                   "panel": "#FFF9F3", "ink": "#3C2921", "ink2": "#937264",
+                   "ink3": "#C1A092", "line": "#E8D1C2",
+                   "brand": "#C4562E", "brand2": "#9E4423", "brand_soft": "#F3D9CC",
+                   "deep": "#C4562E", "accent": "#C8793C", "accent_soft": "#F3E0CE",
+                   "butter": "#C8793C", "butter_soft": "#F3E0CE"},
     },
     "anki-lagoon": {
-        "name": "潟湖", "dark": False, "deep": "#0F7C86", "page": _CREAM["page"],
+        "name": "潟湖", "dark": False, "deep": "#0F7C86", "page": "#EAF4F2",
         "tokens": {**_CREAM,
-                   "brand": "#0F7C86", "brand2": "#0A5F67", "brand_soft": "#D4EAEC",
-                   "deep": "#0F7C86"},
+                   "paper": "#EAF4F2", "paper2": "#D8E8E5", "page": "#EAF4F2",
+                   "panel": "#F7FCFA", "ink": "#203534", "ink2": "#617F7D",
+                   "ink3": "#9AB3B0", "line": "#CBDDD9",
+                   "brand": "#0F7C86", "brand2": "#0A5F67", "brand_soft": "#D2E9E8",
+                   "deep": "#0F7C86", "accent": "#3A9188", "accent_soft": "#D8EAE6",
+                   "butter": "#3A9188", "butter_soft": "#D8EAE6"},
     },
 }
 

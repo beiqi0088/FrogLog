@@ -77,12 +77,8 @@ class Card(QFrame):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(16, 14, 16, 14)
         self.body.setSpacing(8)
-        # 「池塘纸感」的硬投影：2.5px 偏移、不模糊，配合 1.5px 墨线描边。
-        eff = QGraphicsDropShadowEffect(self)
-        eff.setBlurRadius(0)
-        eff.setOffset(2.5, 3.0)
-        eff.setColor(QColor(33, 27, 28, 32))
-        self.setGraphicsEffect(eff)
+        # 柔和投影：带模糊、向下轻偏移，顶部和左右也能看到，不再是硬色块。
+        shadow(self, radius=22, alpha=34, dy=5)
 
 
 class ClickFrame(QFrame):
@@ -96,6 +92,13 @@ class ClickFrame(QFrame):
         self.setCursor(Qt.PointingHandCursor)
         self._press_pos: QPoint | None = None
         self._press_time: float = 0.0
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        # 列表行、浏览卡片同样使用柔和阴影；只在首次显示时安装一次。
+        if (self.objectName() in {"card", "flatCard", "browseCard"}
+                and self.graphicsEffect() is None):
+            shadow(self, radius=20, alpha=28, dy=4)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
@@ -448,10 +451,10 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        self.setFixedHeight(62)
+        self.setFixedHeight(52)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(18, 8, 18, 6)
-        self.lay.setSpacing(4)
+        self.lay.setContentsMargins(18, 4, 18, 4)
+        self.lay.setSpacing(0)
 
     def paintEvent(self, e):
         # 透明：透出整页奶白背景；顶栏只承担排版，不刷色
@@ -471,18 +474,18 @@ class ThemeCard(ClickFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("QFrame#themeCard{background:transparent;border:none;}")
+        shadow(self, radius=18, alpha=24, dy=4)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect()).adjusted(1, 1, -3, -3)
-        deep, page = self.info["deep"], self.info["page"]
+        pal = self.info["tokens"]
+        deep, page = pal["deep"], pal["page"]
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(42, 37, 25, 26))
-        p.drawRoundedRect(r.adjusted(2, 2.5, 2, 2.5), 14, 14)
-        p.setBrush(QColor(T["panel"]))
+        p.setBrush(QColor(pal["panel"]))
         p.drawRoundedRect(r, 14, 14)
-        p.setPen(QPen(QColor(T["brand"]) if self.selected else QColor(T["line"]),
+        p.setPen(QPen(QColor(deep) if self.selected else QColor(pal["line"]),
                       2.0 if self.selected else 1.0))
         p.setBrush(Qt.NoBrush)
         p.drawRoundedRect(r, 14, 14)
@@ -491,28 +494,28 @@ class ThemeCard(ClickFrame):
         clip.addRoundedRect(r.adjusted(2, 2, -2, -2), 12, 12)
         p.save()
         p.setClipPath(clip)
-        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 24), QColor(T["paper2"]))
+        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 24), QColor(pal["paper2"]))
         p.fillRect(QRectF(r.left() + 2, r.top() + 26, r.width() - 4, r.height() - 46),
                    QColor(page))
-        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(T["paper2"]))
+        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(pal["paper2"]))
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(T["panel"]))
+        p.setBrush(QColor(pal["panel"]))
         p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 33, r.width() - 24, 16), 5, 5)
         p.setBrush(QColor(deep))
         p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 18, 22, 12), 5, 5)
         p.restore()
 
-        p.setPen(QColor(T["ink"]))
+        p.setPen(QColor(pal["ink"]))
         f = QFont(theme.FONT, 9)
         f.setBold(True)
         p.setFont(f)
         p.drawText(QRectF(r.left() + 10, r.top() + 4, r.width() - 40, 22),
                    Qt.AlignLeft | Qt.AlignVCenter, self.info["name"])
         paint_frog(p, r.right() - 29, r.top() + 6, 17,
-                   "#F2C14E", "#FFE9BD", "#FFFDF8", deep, deep)
+                   pal["accent"], pal["accent_soft"], pal["panel"], deep, deep)
         if self.selected:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor("#F2C14E"))
+            p.setBrush(QColor(pal["accent"]))
             p.drawEllipse(QRectF(r.right() - 25, r.top() + 4, 18, 18))
             p.setPen(QColor(T["ink"]))
             f2 = QFont(theme.FONT, 9)
@@ -777,10 +780,10 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(50)
+        self.setFixedHeight(52)
 
     def sizeHint(self):
-        return QSize(80, 54)
+        return QSize(80, 52)
 
     def paintEvent(self, e):
         p = QPainter(self)

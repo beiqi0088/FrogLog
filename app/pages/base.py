@@ -39,7 +39,7 @@ class Page(QWidget):
         # 页面正文（浅纸底 + 20px 边距）
         self.body_host = QWidget()
         self.body = QVBoxLayout(self.body_host)
-        self.body.setContentsMargins(20, 16, 20, 24)
+        self.body.setContentsMargins(20, 8, 20, 16)
         self.body.setSpacing(12)
         self.body.setAlignment(Qt.AlignTop)
         self.content_lay.addWidget(self.body_host, 1)
@@ -70,7 +70,7 @@ class Page(QWidget):
         band = W.BandHeader()
         row = QWidget()
         lay = QHBoxLayout(row)
-        lay.setContentsMargins(0, 4, 0, 0)
+        lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(8)
         if back:
             btn = W.BackButton(30)
@@ -95,7 +95,7 @@ class Page(QWidget):
         band = W.BandHeader()
         row = QWidget()
         lay = QHBoxLayout(row)
-        lay.setContentsMargins(0, 4, 0, 0)
+        lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(8)
         col = QVBoxLayout()
         col.setSpacing(1)

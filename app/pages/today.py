@@ -284,7 +284,7 @@ class TodayPage(Page):
 
         row = QWidget()
         rl = QHBoxLayout(row)
-        rl.setContentsMargins(0, 10, 0, 2)
+        rl.setContentsMargins(0, 0, 0, 0)
         rl.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(3)

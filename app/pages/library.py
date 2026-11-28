@@ -1805,7 +1805,7 @@ class DeckPage(Page):
         band = W.BandHeader()
         bar = QWidget()
         bl = QHBoxLayout(bar)
-        bl.setContentsMargins(0, 4, 0, 0)
+        bl.setContentsMargins(0, 0, 0, 0)
         bl.setSpacing(8)
         back = W.BackButton(30)
         back.set_light(False)
@@ -1822,7 +1822,7 @@ class DeckPage(Page):
         content = QWidget()
         self._head_content = content
         self.body = QVBoxLayout(content)
-        self.body.setContentsMargins(20, 16, 20, 0)
+        self.body.setContentsMargins(20, 8, 20, 0)
         self.body.setSpacing(12)
         self.top_lay.addWidget(content)
 
