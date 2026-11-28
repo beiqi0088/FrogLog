@@ -331,12 +331,8 @@ class OptionPill(QFrame):
                           9, 9)
 
     def _apply(self, restyle: bool = True):
-        suffix = ""
-        if not self.multi and self.state == "right":
-            suffix = "  ✓"
-        elif not self.multi and self.state == "wrong":
-            suffix = "  ×"
-        self.label.setText(f"{self.letter}. {self.raw}{suffix}")
+        # 选项末尾不再加 ✓/✗；对错只用底色、边框和文字色表达
+        self.label.setText(f"{self.letter}. {self.raw}")
 
         bg, border, fg, weight = self.STYLES[self.state]
         if self._hover and self.state in ("idle", "picked"):
