@@ -139,7 +139,7 @@ def build_qss(t: dict) -> str:
         background: {t['brand']};
         border: 1px solid {t['line']};
     }}
-    QWidget#reviewTop {{ background: {t['paper']}; }}
+    QWidget#reviewTop {{ background: {page_bg}; }}
     QWidget#reviewTop QLabel {{ color: {t['ink']}; }}
     QWidget#reviewTop QPushButton {{ color: {t['ink']}; }}
     QWidget#reviewTop QLabel#h2 {{ color: {t['ink']}; }}
