@@ -593,14 +593,23 @@ class Monster(QWidget):
                           (-0.30, 0.60, 0.020), (0.31, 0.58, 0.028)):
             p.drawEllipse(QPointF(cx + dx * s, top + dy * s), r * s, r * s)
 
+        # 腮红：更可爱的关键
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(232, 122, 154, 70))
+        for bx in (-0.30, 0.30):
+            p.drawEllipse(QPointF(cx + bx * s, top + s * 0.55), s * 0.075, s * 0.045)
+
         for ex in (-0.17, 0.17):
             p.setBrush(QColor("#FFFDF8"))
-            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.40), s * 0.105, s * 0.105)
+            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.40), s * 0.120, s * 0.120)
             p.setBrush(QColor("#1E2A36"))
-            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.41), s * 0.052, s * 0.052)
+            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.41), s * 0.062, s * 0.062)
             p.setBrush(QColor("#FFFFFF"))
-            p.drawEllipse(QPointF(cx + ex * s + s * 0.018, top + s * 0.39),
-                          s * 0.017, s * 0.017)
+            p.drawEllipse(QPointF(cx + ex * s + s * 0.022, top + s * 0.38),
+                          s * 0.022, s * 0.022)
+            p.setBrush(QColor(255, 255, 255, 190))
+            p.drawEllipse(QPointF(cx + ex * s - s * 0.018, top + s * 0.44),
+                          s * 0.010, s * 0.010)
 
         mouth = QPainterPath()
         if self.mood == "sleep":

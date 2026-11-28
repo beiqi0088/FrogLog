@@ -61,8 +61,8 @@ class MonstersPage(Page):
         card.body.addWidget(row)
         self.add(card)
 
-        # ---- 6 只怪物 ----
-        for r in range(2):
+        # ---- 怪物图鉴：12 只铺满整页 ----
+        for r in range(4):
             row = QWidget()
             rl = QHBoxLayout(row)
             rl.setContentsMargins(0, 0, 0, 0)
@@ -108,25 +108,4 @@ class MonstersPage(Page):
                 rl.addWidget(box, 1)
             self.add(row)
 
-        # ---- 吃青蛙记录 ----
-        rec = W.Card(flat=True)
-        rec.body.setContentsMargins(14, 10, 14, 10)
-        rec.body.setSpacing(4)
-        rt = QLabel("吃青蛙记录")
-        rt.setStyleSheet(f"font-size:12px;font-weight:700;color:{W.T['ink']};")
-        rec.body.addWidget(rt)
-        checks = [c for c in self.store.checkins if c.get("quest")]
-        checks = sorted(checks, key=lambda c: c.get("at") or 0, reverse=True)[:6]
-        if not checks:
-            empty = QLabel("还没有吃青蛙记录，完成一次今日任务就会记下")
-            empty.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
-            rec.body.addWidget(empty)
-        else:
-            for c in checks:
-                lt = time.localtime((c.get("at") or 0) / 1000)
-                mins = int(c.get("mins") or 45)
-                lb = QLabel(f"{lt.tm_mon}·{lt.tm_mday}  吃掉 1 只 · 学习 {mins} 分钟")
-                lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
-                rec.body.addWidget(lb)
-        self.add(rec)
         self.stretch()
