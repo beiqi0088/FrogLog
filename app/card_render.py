@@ -610,6 +610,18 @@ def build_front(card: dict, pal: dict, revealed=False, picked=None, multi=False,
     """正面卡：问答只放问题；选择题放题干 + 选项。"""
     box = CardBox(pal["front"], pal["shadow"])
     box.setFixedWidth(width)
+    if revealed and card["type"] in ("single", "multi"):
+        answers = set(card.get("answer") or [])
+        picks = _as_set(picked)
+        ok = bool(answers) and picks == answers
+        wm = QLabel("✓" if ok else "✗", box)
+        wm.setStyleSheet(
+            f"color:{'#2E9E67' if ok else '#D9534F'};background:transparent;"
+            "font-size:68px;font-weight:700;"
+        )
+        wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        wm.move(width - 84, -6)
+        wm.raise_()
     box.body.addWidget(Ribbon("问题", pal["label"]))
     box.body.addSpacing(10)
 
@@ -667,26 +679,15 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
     else:
         verdict, color = "答错了", "#A0322E"
 
-    # 结果行：文字 + 绿色/红色小徽章
+    # 结果行：只留「你选了… · 正确答案…」，对错由正面右上角水印表达
     row = QWidget()
     rl = QHBoxLayout(row)
     rl.setContentsMargins(0, 0, 0, 8)
     rl.setSpacing(6)
     head = QLabel(f'<span style="color:{color};font-weight:700;font-size:15px">'
-                  f'你选了 {letters(picks)} · 正确答案 {letters(answers)} · </span>')
+                  f'你选了 {letters(picks)} · 正确答案 {letters(answers)}</span>')
     head.setTextFormat(Qt.RichText)
     rl.addWidget(head)
-    badge = QLabel("✓" if ok else "×")
-    badge.setFixedSize(20, 20)
-    badge.setAlignment(Qt.AlignCenter)
-    badge.setStyleSheet(
-        f"background:{'#2E9E67' if ok else '#D9534F'};color:#fff;border-radius:5px;"
-        f"font-size:12px;font-weight:700;"
-    )
-    rl.addWidget(badge)
-    tail = QLabel(f'<span style="color:{color};font-weight:700;font-size:15px">{verdict}</span>')
-    tail.setTextFormat(Qt.RichText)
-    rl.addWidget(tail)
     rl.addStretch(1)
     box.body.addWidget(row)
 
