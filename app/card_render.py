@@ -214,6 +214,7 @@ class CardBox(QWidget):
         self.body.setSpacing(0)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
         self._shadow_rgb = shadow_rgb
+        self.watermark = None   # (文字, 颜色)，在圆角底之后画
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -222,6 +223,16 @@ class CardBox(QWidget):
         p.setPen(Qt.NoPen)
         p.setBrush(_q(self.bg))
         p.drawRoundedRect(r, self.radius, self.radius)
+        if self.watermark:
+            text, color = self.watermark
+            from PySide6.QtGui import QFont
+            f = QFont("KaiTi")
+            f.setPixelSize(200)
+            f.setWeight(QFont.Normal)
+            p.setFont(f)
+            p.setPen(QColor(color))
+            p.drawText(QRectF(0, 0, self.width(), self.height()),
+                       Qt.AlignCenter, text)
 
 
 class CheckBox(QWidget):
@@ -661,16 +672,9 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
     letters = lambda idx: "、".join("ABCDEFG"[i] for i in idx) or "—"
     ok = bool(answers) and picks == answers
 
-    # 回答卡结果水印：低透明度、压在文字下面
-    wm = QLabel("✓" if ok else "✗", box)
-    wm.setStyleSheet(
-        "background:transparent;font-size:210px;font-weight:400;"
-        + (f"color:rgba(46,158,103,0.30);" if ok else "color:rgba(217,83,79,0.30);")
-    )
-    wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-    # 放大覆盖整块解析文字，压在文字下面
-    wm.move(width // 2 - 150, 18)
-    wm.lower()
+    # 回答卡结果水印：在卡片底层居中绘制，覆盖整块内容
+    box.watermark = ("✓" if ok else "✗",
+                     QColor(46, 158, 103, 78) if ok else QColor(217, 83, 79, 78))
 
     if not picks:
         verdict, color = "（没有作答）", "#A0322E"
