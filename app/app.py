@@ -38,13 +38,13 @@ _FAMILY_CACHE: str | None = None
 _IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能再 move()
 
 
-def _android_edge_to_edge(bg_hex: str | None = None):
-    """安卓：内容铺到系统栏后面，状态栏 / 手势条透出奶白底色 + 深色系统图标。
+def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None):
+    """安卓：内容铺到系统栏后面，状态栏透出奶白底、手势条与底部 dock 同色。
 
     Qt 在窗口首次显示、切换主题（setStyleSheet）时都可能把系统栏重设，
-    所以启动和每次换主题之后都要重放。bg_hex 传页面奶白色，用来给系统栏
-    和 Activity 窗口底色兜底：即使 Qt 表面没铺到系统栏区域，露出来的也是
-    奶白而不是刺眼的白；图标用深色，在奶白底上清晰。
+    所以启动和每次换主题之后都要重放。bg_hex 是页面奶白色，用来给状态栏
+    和 Activity 窗口底色兜底；nav_hex 是 dock 深色，手势条区域即使没被
+    Qt 铺到，系统栏自己也是 dock 同色，视觉上连成一条。
     """
     try:
         from jnius import autoclass
@@ -52,13 +52,17 @@ def _android_edge_to_edge(bg_hex: str | None = None):
     except Exception:
         return
 
-    color = 0                       # Color.TRANSPARENT
-    if bg_hex:
-        c = QColor(bg_hex)
-        if c.isValid():
-            color = (255 << 24) | (c.red() << 16) | (c.green() << 8) | c.blue()
-            if color >= 1 << 31:
-                color -= 1 << 32    # Java 的 int 是有符号的
+    def _argb(hex_str):
+        c = QColor(hex_str) if hex_str else QColor()
+        if not c.isValid():
+            return 0                    # Color.TRANSPARENT
+        v = (255 << 24) | (c.red() << 16) | (c.green() << 8) | c.blue()
+        if v >= 1 << 31:
+            v -= 1 << 32                # Java 的 int 是有符号的
+        return v
+
+    color = _argb(bg_hex)
+    nav_color = _argb(nav_hex) if nav_hex else color
 
     @run_on_ui_thread
     def _apply():
@@ -69,7 +73,7 @@ def _android_edge_to_edge(bg_hex: str | None = None):
             window = activity.getWindow()
             Build = autoclass("android.os.Build$VERSION")
             window.setStatusBarColor(color)
-            window.setNavigationBarColor(color)
+            window.setNavigationBarColor(nav_color)
             if bg_hex:
                 try:
                     ColorDrawable = autoclass("android.graphics.drawable.ColorDrawable")
@@ -83,13 +87,15 @@ def _android_edge_to_edge(bg_hex: str | None = None):
                 window.setDecorFitsSystemWindows(False)
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
-                    # 奶白底：保留 LIGHT 标志，系统时间 / 电量 / 手势条用深色
-                    ctrl.setSystemBarsAppearance(8 | 16, 8 | 16)
+                    # 状态栏奶白 → 深色图标；手势条深色 → 浅色手势条/图标
+                    ctrl.setSystemBarsAppearance(8, 8 | 16)
             else:
                 window.getDecorView().setSystemUiVisibility(
-                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
+                    0x0100 | 0x0200 | 0x0400 | 0x2000)
             try:
-                autoclass("org.kivy.android.FrogLogSystemBars").barColor = color
+                bars = autoclass("org.kivy.android.FrogLogSystemBars")
+                bars.barColor = color
+                bars.navBarColor = nav_color
             except Exception:
                 pass
         except Exception:
@@ -101,9 +107,9 @@ def _android_edge_to_edge(bg_hex: str | None = None):
         pass
 
 
-def _android_edge_to_edge_safe(bg_hex: str | None = None):
+def _android_edge_to_edge_safe(bg_hex: str | None = None, nav_hex: str | None = None):
     try:
-        _android_edge_to_edge(bg_hex)
+        _android_edge_to_edge(bg_hex, nav_hex)
     except Exception:
         pass
 
@@ -314,6 +320,7 @@ class MainWindow(QMainWindow):
             return
         t = theme.theme_tokens(self.theme_id)
         paper = t.get("paper", "#F3EEDF")
+        deep = t.get("deep", paper)
         write_log = getattr(sys, "froglog_log", None)
         if callable(write_log):
             try:
@@ -324,7 +331,7 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
         for ms in (0, 300, 1200, 3000):
-            QTimer.singleShot(ms, lambda c=paper: _android_edge_to_edge_safe(c))
+            QTimer.singleShot(ms, lambda c=paper, d=deep: _android_edge_to_edge_safe(c, d))
 
     def _sync_bg(self):
         # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，

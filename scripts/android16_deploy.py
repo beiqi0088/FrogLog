@@ -378,6 +378,8 @@ public final class FrogLogSystemBars {
     // Python 端按当前主题写入的颜色（ARGB）。默认透明：Qt 界面铺满时由界面
     // 自己铺主题深色；Python 刷色后，这里的重放也用同一个颜色，不会冲回透明。
     public static int barColor = Color.TRANSPARENT;
+    // 手势条单独用 dock 深色：即使内容没铺到系统栏后面，这条也跟底部 dock 连成一片。
+    public static int navBarColor = Color.TRANSPARENT;
 
     // Qt 在窗口首次 show 时会重新设置系统栏（恢复主题色、把内容收回安全区），
     // 只在前台 onCreate 里调用一次会被覆盖。这里在启动后多次重放，最后一次
@@ -424,10 +426,11 @@ public final class FrogLogSystemBars {
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
-                int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                // 状态栏 / 手势条为主题深色：系统图标用白色（清掉 LIGHT 标志）
-                controller.setSystemBarsAppearance(0, light);
+                int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+                // 状态栏奶白 → 保留 LIGHT（深色图标）；手势条深色 → 清掉 LIGHT（白色图标）
+                controller.setSystemBarsAppearance(
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                        light | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         } else {
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -437,7 +440,8 @@ public final class FrogLogSystemBars {
             window.getDecorView().setSystemUiVisibility(flags);
         }
         window.setStatusBarColor(barColor);
-        window.setNavigationBarColor(barColor);
+        window.setNavigationBarColor(
+                navBarColor != Color.TRANSPARENT ? navBarColor : barColor);
         if (Build.VERSION.SDK_INT >= 29) {
             window.setStatusBarContrastEnforced(false);
             window.setNavigationBarContrastEnforced(false);
