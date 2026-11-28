@@ -171,10 +171,18 @@ class BgLayer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._override: str | None = None   # 复习页临时覆盖成卡片模板底色
+
+    def set_override(self, hex_color: str | None):
+        self._override = hex_color
+        self.update()
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
+        if self._override:
+            p.fillRect(self.rect(), QColor(self._override))
+            return
         win = self.window()
         tid = getattr(win, "theme_id", None)
         # 整页奶白：系统栏区域也透出奶白，与参考图一致；不再单独刷深色条。
@@ -278,6 +286,7 @@ class MainWindow(QMainWindow):
         self.bg.setGeometry(root.rect())
         self.bg.lower()
 
+        self._chrome_override: str | None = None   # 复习页临时把系统栏换成卡片模板底色
         self.apply_theme()
         self.show_page("today")
         self.quest_timer.start()
@@ -343,6 +352,10 @@ class MainWindow(QMainWindow):
         if hasattr(self, "bg"):
             self.bg.update()
         self._apply_android_bars()
+        # 换主题时若正处在复习页（系统栏被临时覆盖成模板色），要把覆盖色重新套回去，
+        # 否则 _apply_android_bars 会把它冲回主题 page_bg，上下又出现色差。
+        if getattr(self, "_chrome_override", None):
+            self.set_chrome_bg(self._chrome_override)
 
     def _apply_android_bars(self):
         """状态栏 / 手势条铺和页面完全一致的纯色底 + 深色系统图标（换主题后 Qt 可能重置）。"""
@@ -364,6 +377,29 @@ class MainWindow(QMainWindow):
                 pass
         for ms in (0, 300, 1200, 3000):
             QTimer.singleShot(ms, lambda c=page_bg, d=page_bg: _android_edge_to_edge_safe(c, d))
+
+    def set_chrome_bg(self, hex_color: str | None):
+        """复习页：把窗口 + 系统栏底色临时换成卡片模板色；传 None 恢复主题 page_bg。
+
+        三层必须一起改，否则安卓上某一层优先级更高会盖回来——就是之前「奶白条」老问题：
+          1) BgLayer 自绘（铺满全屏，含状态栏/手势条安全区）
+          2) 控件级 QMainWindow 样式表（优先级高于全局表）
+          3) Java 侧 Activity 窗口底（读 froglog_bar_color.txt，安卓 15+ 的最终决定层）
+        """
+        if hex_color is None:
+            target = theme.page_bg_color(self.theme_id).name()
+            self._chrome_override = None
+            self.bg.set_override(None)
+        else:
+            target = hex_color
+            if getattr(self, "_chrome_override", None) == target:
+                return
+            self._chrome_override = target
+            self.bg.set_override(target)
+        self.setStyleSheet(f"QMainWindow{{background:{target};}}")
+        if _IS_ANDROID:
+            for ms in (0, 300):
+                QTimer.singleShot(ms, lambda c=target: _android_edge_to_edge_safe(c, c))
 
     def _sync_bg(self):
         # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，
@@ -490,6 +526,7 @@ class MainWindow(QMainWindow):
         # 计时只认学习页：离开就自动暂停，进来就接着跑（开关只负责武装任务）
         if prev is not None and prev[0] == "review" and key != "review":
             self.store.quest_pause_clock()
+            self.set_chrome_bg(None)   # 退出复习页：系统栏恢复主题 page_bg
         if key == "review":
             self.store.quest_start_clock()
         if prev is not None and not self._nav_back and prev != (key, dict(kw)):

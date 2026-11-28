@@ -535,7 +535,16 @@ class ReviewPage(QWidget):
             self._resize_timer.start(80)
 
     def _apply_template_bg(self, color: str):
-        """顶栏 + 底部操作条统一铺成卡片模板的底色，整页同色、不再上下割裂。"""
+        """顶栏 + 底部操作条 + 系统栏统一铺成卡片模板的底色，整页同色、不再上下割裂。"""
+        # 系统栏（状态栏/手势条）底色也跟着走：只有复习页真正是当前页时才改，
+        # 预热渲染（page 不在栈里）不能动全局底色。放在缓存判断之前，保证退出再进、
+        # 颜色没变时也能把被恢复过的系统栏重新套回模板色。
+        stack = getattr(self.app, "stack", None)
+        if stack is not None and stack.currentWidget() is self:
+            try:
+                self.app.set_chrome_bg(color)
+            except Exception:
+                pass
         if getattr(self, "_tpl_bg", None) == color:
             return
         self._tpl_bg = color
