@@ -610,18 +610,6 @@ def build_front(card: dict, pal: dict, revealed=False, picked=None, multi=False,
     """正面卡：问答只放问题；选择题放题干 + 选项。"""
     box = CardBox(pal["front"], pal["shadow"])
     box.setFixedWidth(width)
-    if revealed and card["type"] in ("single", "multi"):
-        answers = set(card.get("answer") or [])
-        picks = _as_set(picked)
-        ok = bool(answers) and picks == answers
-        wm = QLabel("✓" if ok else "✗", box)
-        wm.setStyleSheet(
-            f"color:{'#2E9E67' if ok else '#D9534F'};background:transparent;"
-            "font-size:68px;font-weight:700;"
-        )
-        wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        wm.move(width - 84, -6)
-        wm.raise_()
     box.body.addWidget(Ribbon("问题", pal["label"]))
     box.body.addSpacing(10)
 
@@ -672,6 +660,17 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
     picks = sorted(_as_set(picked))
     letters = lambda idx: "、".join("ABCDEFG"[i] for i in idx) or "—"
     ok = bool(answers) and picks == answers
+
+    # 回答卡结果水印：低透明度、压在文字下面
+    wm = QLabel("✓" if ok else "✗", box)
+    wm.setStyleSheet(
+        "background:transparent;font-size:92px;font-weight:700;"
+        + (f"color:rgba(46,158,103,0.13);" if ok else "color:rgba(217,83,79,0.13);")
+    )
+    wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+    wm.move(width - 108, 4)
+    wm.lower()
+
     if not picks:
         verdict, color = "（没有作答）", "#A0322E"
     elif ok:
