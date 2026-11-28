@@ -664,12 +664,12 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
     # 回答卡结果水印：低透明度、压在文字下面
     wm = QLabel("✓" if ok else "✗", box)
     wm.setStyleSheet(
-        "background:transparent;font-size:70px;font-weight:400;"
-        + (f"color:rgba(46,158,103,0.16);" if ok else "color:rgba(217,83,79,0.16);")
+        "background:transparent;font-size:210px;font-weight:400;"
+        + (f"color:rgba(46,158,103,0.30);" if ok else "color:rgba(217,83,79,0.30);")
     )
     wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-    # 压在解析正文区域（箭头所指的位置），作为底层水印
-    wm.move(width // 2 - 55, 96)
+    # 放大覆盖整块解析文字，压在文字下面
+    wm.move(width // 2 - 150, 18)
     wm.lower()
 
     if not picks:
