@@ -541,11 +541,13 @@ class BandHeader(QFrame):
             # 固定种子：同一页每次打开位置一致，但看起来像随手丢在桌上
             rnd = random.Random(20261128)
             # 整体居中，左右留出对称空间
-            total = n * 68
-            x0 = (self.width() - total) / 2 + 18
+            # 铅笔固定在正中间，其余文具围绕它散开
+            offsets = [0, -66, 62, 104, -110, 120]
+            center = self.width() / 2
             for i, kind in enumerate(self.stationery):
-                box = 19 + rnd.randint(0, 19)          # 19~38，整体再放大
-                x = x0 + i * 68 + 16 + rnd.randint(-6, 8) - box / 2
+                box = 19 + rnd.randint(0, 19)          # 19~38，整体放大
+                cx = center + offsets[i] + rnd.randint(-4, 4)
+                x = cx - box / 2
                 y = 22 + rnd.randint(-8, 20)
                 draw_stationery(p, kind, QRectF(x, y, box, box),
                                 T["ink"], T["paper"], rotate=rnd.randint(-30, 24))
