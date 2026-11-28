@@ -804,7 +804,7 @@ class LibraryPage(Page):
             trash.setCursor(Qt.PointingHandCursor)
             trash.setToolTip("回收站" + (f"（{n} 项）" if n else ""))
             trash.setStyleSheet(
-                f"QFrame#trashIcon{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
+                f"QFrame#trashIcon{{background:#FFF3D6;border:none;"
                 f"border-radius:16px;}}")
             tl = QHBoxLayout(trash)
             tl.setContentsMargins(0, 0, 0, 0)
@@ -829,7 +829,7 @@ class LibraryPage(Page):
         btn.setAttribute(Qt.WA_Hover, True)
         btn.setToolTip("新建圆桌 / 卡包，或管理知识域")
         btn.setStyleSheet(
-            f"QFrame#plusIcon{{background:#FFF3D6;border:1.5px solid {W.T['ink']};"
+            f"QFrame#plusIcon{{background:#FFF3D6;border:none;"
             f"border-radius:16px;}}")
         lay = QHBoxLayout(btn)
         lay.setContentsMargins(0, 0, 0, 0)

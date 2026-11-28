@@ -349,12 +349,14 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         self._sys_top = top
         self._sys_bottom = bottom
-        # dock 高度固定，图标在整条底栏里垂直居中；手势条浮在底栏下沿。
+        # dock 固定 64 高、图标在其中垂直居中；下方手势区继续铺 dock 同色，
+        # 所以整条底栏延伸到内容区最底部。
         if hasattr(self, "nav"):
-            self.nav.setFixedHeight(64)
+            pad = min(bottom, 26)
+            self.nav.setFixedHeight(64 + pad)
             outer = self.nav.layout()
             if outer is not None:
-                outer.setContentsMargins(12, 0, 12, 0)
+                outer.setContentsMargins(12, 0, 12, pad)
         # 顶部不再留任何空白：安卓窗口内容本来就从状态栏下方开始，
         # 再叠一次 safeArea 就会多出一条空带。页面顶栏贴住内容区顶部即可。
         if hasattr(self, "root_layout"):

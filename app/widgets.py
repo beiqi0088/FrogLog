@@ -445,8 +445,8 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 只留标题本身的高度：顶部贴住状态栏下沿，不再额外留白。
-        self.setFixedHeight(38)
+        # 高度要容得下右侧同步圆钮，否则会被裁掉下半部分。
+        self.setFixedHeight(46)
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(18, 0, 18, 0)
         self.lay.setSpacing(0)
@@ -625,11 +625,10 @@ class MoreButton(QPushButton):
         p.setRenderHint(QPainter.Antialiasing)
         w, h = self.width(), self.height()
         cx, cy = w / 2, h / 2
-        # 跟「＋」一样的奶油圆底 + 墨线，点击不变色
-        p.setPen(QPen(QColor(T["ink"]), 1.5))
+        # 只保留奶油圆底和三点，不再画黑色圆边。
+        p.setPen(Qt.NoPen)
         p.setBrush(QColor("#FFF3D6"))
         p.drawEllipse(QRectF(1, 1, w - 2, h - 2))
-        p.setPen(Qt.NoPen)
         p.setBrush(QColor(T["ink"]))
         for dx in (-6.6, 0.0, 6.6):
             p.drawEllipse(QPointF(cx + dx, cy), 2.0, 2.0)
