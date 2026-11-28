@@ -349,8 +349,17 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         self._sys_top = top
         self._sys_bottom = bottom
+        # 底部不留系统栏空白：dock 直接铺到屏幕底边，手势条浮在 dock 上。
+        # 手势区高度转成 dock 内部的下边距，图标不会被手势条压住。
+        if hasattr(self, "nav"):
+            pad = min(bottom, 26)
+            self.nav.setFixedHeight(56 + pad)
+            outer = self.nav.layout()
+            if outer is not None:
+                outer.setContentsMargins(12, 0, 12, pad)
+        # 顶部只保留状态栏高度，页面顶栏自身不再叠加大片留白。
         if hasattr(self, "root_layout"):
-            self.root_layout.setContentsMargins(0, top, 0, bottom)
+            self.root_layout.setContentsMargins(0, top, 0, 0)
         if hasattr(self, "bg"):
             self.bg.update()
         if top + bottom > 0 and not getattr(self, "_insets_logged", False):

@@ -77,8 +77,8 @@ class Card(QFrame):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(16, 14, 16, 14)
         self.body.setSpacing(8)
-        # 柔和投影：带模糊、向下轻偏移，顶部和左右也能看到，不再是硬色块。
-        shadow(self, radius=22, alpha=34, dy=5)
+        # 柔和投影：模糊半径小于卡片间距，四周都能完整显示、不被相邻卡片盖住。
+        shadow(self, radius=16, alpha=34, dy=4)
 
 
 class ClickFrame(QFrame):
@@ -98,7 +98,7 @@ class ClickFrame(QFrame):
         # 列表行、浏览卡片同样使用柔和阴影；只在首次显示时安装一次。
         if (self.objectName() in {"card", "flatCard", "browseCard"}
                 and self.graphicsEffect() is None):
-            shadow(self, radius=20, alpha=28, dy=4)
+            shadow(self, radius=16, alpha=30, dy=4)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
@@ -451,9 +451,10 @@ class BandHeader(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        self.setFixedHeight(52)
+        # 只留标题本身的高度：顶部贴住状态栏下沿，不再额外留白。
+        self.setFixedHeight(38)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(18, 4, 18, 4)
+        self.lay.setContentsMargins(18, 0, 18, 0)
         self.lay.setSpacing(0)
 
     def paintEvent(self, e):
@@ -474,7 +475,7 @@ class ThemeCard(ClickFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("QFrame#themeCard{background:transparent;border:none;}")
-        shadow(self, radius=18, alpha=24, dy=4)
+        shadow(self, radius=12, alpha=26, dy=3)
 
     def paintEvent(self, e):
         p = QPainter(self)

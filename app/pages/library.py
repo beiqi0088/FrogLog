@@ -582,7 +582,7 @@ class MoveCardsDialog(QDialog):
 
         self.list = QListWidget()
         self.list.setFocusPolicy(Qt.NoFocus)
-        self.list.setSpacing(6)
+        self.list.setSpacing(12)
         self.list.setStyleSheet(
             f"QListWidget{{background:transparent;border:none;outline:none;}}"
             f"QListWidget::item{{background:{W.T['panel']};border:1px solid {W.T['line']};"
@@ -767,7 +767,7 @@ class LibraryPage(Page):
         self.list_host = QWidget()
         self.list_lay = QVBoxLayout(self.list_host)
         self.list_lay.setContentsMargins(0, 0, 0, 0)
-        self.list_lay.setSpacing(10)
+        self.list_lay.setSpacing(14)
         self.add(self.list_host)
         self._render_list()
         self.stretch()
@@ -1822,8 +1822,8 @@ class DeckPage(Page):
         content = QWidget()
         self._head_content = content
         self.body = QVBoxLayout(content)
-        self.body.setContentsMargins(20, 8, 20, 0)
-        self.body.setSpacing(12)
+        self.body.setContentsMargins(20, 4, 20, 0)
+        self.body.setSpacing(14)
         self.top_lay.addWidget(content)
 
         # 三档
@@ -1957,7 +1957,7 @@ class DeckPage(Page):
         self.list_content.setStyleSheet("QWidget#listBody{background:transparent;}")
         self.list_lay = QVBoxLayout(self.list_content)
         self.list_lay.setContentsMargins(0, 8, 6, 0)
-        self.list_lay.setSpacing(10)
+        self.list_lay.setSpacing(14)
         self.list_lay.setAlignment(Qt.AlignTop)
 
         self.list_scroll = QScrollArea()

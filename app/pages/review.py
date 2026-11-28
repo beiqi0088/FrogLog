@@ -432,10 +432,10 @@ class ReviewPage(QWidget):
         self.top = QWidget()
         self.top.setObjectName("reviewTop")
         self.top.setAttribute(Qt.WA_StyledBackground, True)
-        self.top.setFixedHeight(44)
+        self.top.setFixedHeight(40)
         self.top_v = QVBoxLayout(self.top)
         self.top_v.setContentsMargins(16, 0, 16, 0)
-        self.top_v.setSpacing(6)
+        self.top_v.setSpacing(0)
         self.top_lay = QHBoxLayout()
         self.top_lay.setSpacing(8)
         self.top_v.addLayout(self.top_lay)
@@ -458,7 +458,8 @@ class ReviewPage(QWidget):
         # 底部操作条
         self.bottom = QWidget()
         self.bottom_lay = QVBoxLayout(self.bottom)
-        self.bottom_lay.setContentsMargins(20, 10, 20, 14)
+        # 底部只留手势条高度：纸面铺到底，提示文字不被手势条压住。
+        self.bottom_lay.setContentsMargins(20, 10, 20, 26)
         self.bottom_lay.setSpacing(8)
         outer.addWidget(self.bottom)
 
