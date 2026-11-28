@@ -1188,20 +1188,32 @@ class RatingButton(ClickFrame):
     clicked_rating = Signal(int)
 
     def __init__(self, idx: int, label: str, hint: str, color: str,
-                 bg: str | None = None, fg: str | None = None,
+                 fg: str | None = None,
                  edge: str | None = None, parent=None):
         super().__init__(parent)
         self.idx = idx
         self.setObjectName("rateBtn")
-        bg = bg or T["panel"]
         fg = fg or T["ink"]
         edge = edge or T["line"]
-        # 无边框的纯色块；按下时同色加深一点，作为唯一反馈
+        # 白底卡片 + 发丝描边：四档不再铺彩色块，只留颜色做点缀
         self.setStyleSheet(
-            f"QFrame#rateBtn{{background:{bg};border:none;border-radius:16px;}}")
+            f"QFrame#rateBtn{{background:#FFFFFF;border:1px solid {edge};"
+            f"border-radius:16px;}}")
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(4, 11, 4, 11)
-        lay.setSpacing(6)
+        lay.setContentsMargins(4, 8, 4, 8)
+        lay.setSpacing(5)
+        # 装饰：白底顶部一小段主题色短条，一眼看出档位又不占地方
+        tick = QFrame()
+        tick.setFixedSize(20, 3)
+        tick.setStyleSheet(
+            f"background:{color};border:none;border-radius:2px;")
+        tw = QHBoxLayout()
+        tw.setContentsMargins(0, 0, 0, 0)
+        tw.setSpacing(0)
+        tw.addStretch(1)
+        tw.addWidget(tick)
+        tw.addStretch(1)
+        lay.addLayout(tw)
         t = QLabel(label)
         t.setAlignment(Qt.AlignCenter)
         t.setStyleSheet(f"font-size:15px;font-weight:800;letter-spacing:0.4px;color:{fg};")
@@ -1221,6 +1233,8 @@ class RatingButton(ClickFrame):
         lay.addWidget(t)
         lay.addLayout(hw)
         self._hint = h
+        # 白卡片浮在纸面上：一层极轻的阴影，避免纯白块显得贴上去
+        shadow(self, radius=16, alpha=20, dy=3)
         self.clicked.connect(lambda: self.clicked_rating.emit(self.idx))
 
     def set_hint(self, text: str):
