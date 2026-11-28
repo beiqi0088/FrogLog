@@ -291,8 +291,8 @@ class PlusButton(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setFixedSize(size, size)
         self.setStyleSheet("QPushButton{background:transparent;border:none;}")
-        self._stroke = max(2.0, size * 0.085)
-        self._span = size * 0.30
+        self._stroke = max(2.0, size * 0.075)
+        self._span = size * 0.22               # 32px → 笔画总宽约 14px，比之前小一号
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -830,14 +830,16 @@ class NavButton(QPushButton):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         active = self.isChecked()
-        # dock 是主题深色，未选中用奶油图标；选中用奶油胶囊 + 深色图标
-        col = QColor(T["deep"]) if active else QColor(255, 253, 248, 210)
+        # 底栏不再铺深色，直接落在页面上：未选中墨灰，选中主题色 + 浅色胶囊
+        col = QColor(T["brand"]) if active else QColor(T["ink2"])
         w, h = self.width(), self.height()
 
         if active:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(T["paper"]))
-            p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 14, 14)
+            p.setBrush(QColor(T["brand_soft"]))
+            # 紧凑胶囊，只包住图标，不占满整个 tab 槽位
+            pw = min(62.0, w - 12.0)
+            p.drawRoundedRect(QRectF((w - pw) / 2, (h - 32) / 2, pw, 32), 12, 12)
 
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)

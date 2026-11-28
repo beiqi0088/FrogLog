@@ -39,12 +39,11 @@ _IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能
 
 
 def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None):
-    """安卓：内容铺到系统栏后面，状态栏透出奶白底、手势条与底部 dock 同色。
+    """安卓：内容铺到系统栏后面，状态栏与手势条都透出页面底色。
 
     Qt 在窗口首次显示、切换主题（setStyleSheet）时都可能把系统栏重设，
     所以启动和每次换主题之后都要重放。bg_hex 是页面奶白色，用来给状态栏
-    和 Activity 窗口底色兜底；nav_hex 是 dock 深色，手势条区域即使没被
-    Qt 铺到，系统栏自己也是 dock 同色，视觉上连成一条。
+    和 Activity 窗口底色兜底；nav_hex 是手势条颜色（默认与页面同色）。
     """
     try:
         from jnius import autoclass
@@ -87,11 +86,11 @@ def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None)
                 window.setDecorFitsSystemWindows(False)
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
-                    # 状态栏奶白 → 深色图标；手势条深色 → 浅色手势条/图标
-                    ctrl.setSystemBarsAppearance(8, 8 | 16)
+                    # 状态栏 / 手势条都是浅色纸底 → 都用深色系统图标与手势条
+                    ctrl.setSystemBarsAppearance(8 | 16, 8 | 16)
             else:
                 window.getDecorView().setSystemUiVisibility(
-                    0x0100 | 0x0200 | 0x0400 | 0x2000)
+                    0x0100 | 0x0200 | 0x0400 | 0x0010 | 0x2000)
             try:
                 bars = autoclass("org.kivy.android.FrogLogSystemBars")
                 bars.barColor = color
@@ -303,9 +302,9 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper']};}}")
-        # 底部 dock：用主题深色和整页浅底撞色；选中项奶油胶囊 + 深色图标
+        # 底部 dock 不再铺深色：和页面同底，选中项用浅色胶囊 + 主题色图标
         self.nav.setStyleSheet(
-            f"QFrame#navFrame{{background:{t['deep']};border:none;}}"
+            "QFrame#navFrame{background:transparent;border:none;}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
@@ -320,7 +319,8 @@ class MainWindow(QMainWindow):
             return
         t = theme.theme_tokens(self.theme_id)
         paper = t.get("paper", "#F3EEDF")
-        deep = t.get("deep", paper)
+        # 底栏已与页面同色：手势条也跟着铺页面纸色，不再单独铺深色
+        deep = paper
         write_log = getattr(sys, "froglog_log", None)
         if callable(write_log):
             try:
@@ -356,13 +356,13 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         self._sys_top = top
         self._sys_bottom = bottom
-        # dock 只有 44 高、图标垂直居中；下方手势区继续铺 dock 同色，
+        # dock 只有 44 高、图标垂直居中；下方手势区与页面同色，
         # 所以整条底栏延伸到内容区最底部。
         if hasattr(self, "nav"):
             pad = min(bottom, 26)
             if _IS_ANDROID and pad <= 0:
                 # 部分机型边到边后 safeArea 返回 0，但手势条其实压着内容，
-                # 这里兜底 24dp，保证 dock 深色一直铺到屏幕最底部。
+                # 这里兜底 24dp，保证底栏一直铺到屏幕最底部。
                 pad = 24
             self.nav.setFixedHeight(44 + pad)
             outer = self.nav.layout()

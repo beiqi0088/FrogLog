@@ -281,11 +281,7 @@ class TodayPage(Page):
         left_n = len(due_all)
         band = W.BandHeader()
         dirty = self._dirty()
-        # 底部 dock 是深色，顶栏若完全透明会显得头轻脚重：
-        # 给顶栏一块略深于页面的底色 + 底部细线，再补一行日期副标题，压住视觉重心。
-        band.setStyleSheet(
-            f"QFrame#bandHeader{{background:{W.T['paper2']};border:none;"
-            f"border-bottom:1px solid {W.T['line']};}}")
+        # 顶栏不再铺底色，和整页保持同一块纸色；只保留日期副标题。
         band.setFixedHeight(62)
 
         row = QWidget()
