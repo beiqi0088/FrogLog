@@ -338,7 +338,12 @@ def _mix(a: str, b: str, t: float) -> QColor:
     )
 
 
+def page_bg_color(tid: str | None = None) -> QColor:
+    """页面纯色底：主题纸色掺一点主色。界面绘制和系统栏取色都用它，保证同色。"""
+    pal = theme_info(tid or DEFAULT_THEME)["tokens"]
+    return _mix(pal["brand"], pal["page"], 0.92)
+
+
 def paint_page_bg(p: QPainter, rect, tid: str | None):
     """页面底色：纯色，主题纸色里掺一点主色，整页统一，不用渐变。"""
-    pal = theme_info(tid or DEFAULT_THEME)["tokens"]
-    p.fillRect(QRectF(rect), _mix(pal["brand"], pal["page"], 0.92))
+    p.fillRect(QRectF(rect), page_bg_color(tid))

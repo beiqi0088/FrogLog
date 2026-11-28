@@ -71,6 +71,8 @@ def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None)
                 return
             window = activity.getWindow()
             Build = autoclass("android.os.Build$VERSION")
+            # 状态栏和手势条都必须露出来（时间/电量/手势条），不能被全屏标志藏掉
+            window.clearFlags(1024)          # FLAG_FULLSCREEN
             window.setStatusBarColor(color)
             window.setNavigationBarColor(nav_color)
             if bg_hex:
@@ -88,6 +90,11 @@ def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None)
                 if ctrl is not None:
                     # 状态栏 / 手势条都是浅色纸底 → 都用深色系统图标与手势条
                     ctrl.setSystemBarsAppearance(8 | 16, 8 | 16)
+                    try:
+                        # 确保时间、电量、手势条都显示（透明栏也不隐藏）
+                        ctrl.show(autoclass("android.view.WindowInsets$Type").systemBars())
+                    except Exception:
+                        pass
             else:
                 window.getDecorView().setSystemUiVisibility(
                     0x0100 | 0x0200 | 0x0400 | 0x0010 | 0x2000)
@@ -314,24 +321,25 @@ class MainWindow(QMainWindow):
         self._apply_android_bars()
 
     def _apply_android_bars(self):
-        """状态栏 / 手势条透出奶白底色 + 深色系统图标（换主题后 Qt 可能重置）。"""
+        """状态栏 / 手势条铺和页面完全一致的纯色底 + 深色系统图标（换主题后 Qt 可能重置）。"""
         if not _IS_ANDROID:
             return
-        t = theme.theme_tokens(self.theme_id)
-        paper = t.get("paper", "#F3EEDF")
-        # 底栏已与页面同色：手势条也跟着铺页面纸色，不再单独铺深色
-        deep = paper
+        paper = theme.theme_tokens(self.theme_id).get("paper", "#F3EEDF")
+        # 页面现在是纯色底：状态栏、Activity 窗口底、手势条统一取这块底色，
+        # 顶部就不会再出现一条比页面浅/深、还把时间电量藏起来的色差条。
+        page_bg = theme.page_bg_color(self.theme_id).name()
         write_log = getattr(sys, "froglog_log", None)
         if callable(write_log):
             try:
                 scr = self.screen().geometry() if self.screen() else None
-                write_log(f"系统栏底色 paper={paper} 窗口={self.width()}x{self.height()} "
+                write_log(f"系统栏底色 page={page_bg} paper={paper} "
+                          f"窗口={self.width()}x{self.height()} "
                           f"屏幕={scr.width() if scr else 0}x{scr.height() if scr else 0} "
                           f"insets={getattr(self, '_sys_top', 0)}/{getattr(self, '_sys_bottom', 0)}")
             except Exception:
                 pass
         for ms in (0, 300, 1200, 3000):
-            QTimer.singleShot(ms, lambda c=paper, d=deep: _android_edge_to_edge_safe(c, d))
+            QTimer.singleShot(ms, lambda c=page_bg, d=page_bg: _android_edge_to_edge_safe(c, d))
 
     def _sync_bg(self):
         # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，

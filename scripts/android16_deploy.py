@@ -422,6 +422,8 @@ public final class FrogLogSystemBars {
     private static void applyNow(Activity activity) {
         if (activity == null || activity.isFinishing()) return;
         Window window = activity.getWindow();
+        // 状态栏必须可见：状态栏藏着的话时间、电量都看不到
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= 30) {
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
@@ -432,6 +434,11 @@ public final class FrogLogSystemBars {
                                 | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                                 | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                // 确保时间、电量、手势条都显示
+                try {
+                    controller.show(android.view.WindowInsets.Type.systemBars());
+                } catch (Throwable ignored) {
+                }
             }
         } else {
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE

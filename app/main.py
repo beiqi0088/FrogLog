@@ -51,20 +51,20 @@ def main():
     if ANDROID:
         # 先把窗口切到全屏铺满（decor 不再为系统栏预留空间），再显示，
         # 否则首帧会按「避让系统栏」的尺寸排版，随后才跳变成正确布局。
-        paper, deep = "#F3EEDF", "#6B2C3B"
+        paper, page_bg = "#F3EEDF", "#F3EEDF"
         try:
             import theme as _theme
-            t = _theme.theme_tokens(getattr(win, "theme_id", None) or _theme.DEFAULT_THEME)
-            paper = t.get("paper", paper)
-            # 底栏与页面同色，手势条也铺页面纸色
-            deep = paper
+            tid = getattr(win, "theme_id", None) or _theme.DEFAULT_THEME
+            paper = _theme.theme_tokens(tid).get("paper", paper)
+            # 页面是纯色底：状态栏 / 窗口底 / 手势条统一用这块底色，顶部不再有色差条
+            page_bg = _theme.page_bg_color(tid).name()
             from app import _android_edge_to_edge
-            _android_edge_to_edge(paper, deep)
+            _android_edge_to_edge(page_bg, page_bg)
         except Exception:
             pass
         win.showMaximized()          # 手机上铺满屏幕
 
-        def _fixup(_p=paper, _d=deep):
+        def _fixup(_p=page_bg, _d=page_bg):
             """Qt 首次 show / 尺寸变化会重置系统栏，显示后再补几次。"""
             try:
                 from app import _android_edge_to_edge
