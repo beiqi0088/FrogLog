@@ -10,7 +10,7 @@ import sys
 import threading
 
 from PySide6.QtCore import QEvent, QTimer, Qt
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPen
+from PySide6.QtGui import (QColor, QFont, QFontDatabase, QPainter, QPalette, QPen)
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
                                QButtonGroup, QDialog, QSizePolicy)
@@ -239,8 +239,10 @@ class MainWindow(QMainWindow):
             self.setMinimumSize(380, 700)
             self.resize(430, 880)
             self.setMaximumWidth(560)
-        _default = theme.theme_tokens(theme.DEFAULT_THEME)
-        self.setStyleSheet(f"QMainWindow{{background:{_default['paper']};}}")
+        # 窗口底色 = 安全区那一条（安卓窗口内容从状态栏下方开始，这条由窗口底填）：
+        # 必须是主题深色，和顶部色带 / 底部 dock 连成一片；写死纸色就会露「奶白条」。
+        _tid = self.store.settings.get("theme") or theme.DEFAULT_THEME
+        self.setStyleSheet(f"QMainWindow{{background:{theme.chrome_bg_color(_tid).name()};}}")
         # 安卓系统返回键会作为 Qt.Key_Back 送到应用里，这里全局接住
         QApplication.instance().installEventFilter(self)
 
@@ -355,10 +357,18 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         app.setFont(QFont(theme.FONT, 11))
         app.setStyleSheet(theme.build_qss(t))
-        # 窗口自身底色就是状态栏安全区那一条的颜色：必须用页面纯色底。
-        # 这行是控件级样式，优先级高于全局表，之前写死 paper 就是顶部色差的根源。
+        # 窗口自身底色 = 状态栏安全区那一条：必须是主题深色（和顶栏色带同色），
+        # 之前写页面浅色底/纸色，深色顶栏上方就会露出一条浅色带（「奶白条」）。
+        # 这行是控件级样式，优先级高于全局 QSS 的 QMainWindow 规则。
         page_bg = theme.page_bg_color(self.theme_id).name()
-        self.setStyleSheet(f"QMainWindow{{background:{page_bg};}}")
+        chrome = theme.chrome_bg_color(self.theme_id).name()
+        self.setStyleSheet(f"QMainWindow{{background:{chrome};}}")
+        # QPA 在安卓上还会用窗口 palette 的 Window 色填安全区，两处保持一致
+        pal = self.palette()
+        pal.setColor(QPalette.Window, QColor(chrome))
+        self.setPalette(pal)
+        if hasattr(self, "bg"):
+            self.bg.update()
         # 底部 dock 铺主题深色：和顶部色带呼应，形成手帐封皮感
         self.nav.setStyleSheet(
             f"QFrame#navFrame{{background:{t['deep']};border:none;}}"
@@ -406,7 +416,7 @@ class MainWindow(QMainWindow):
         """
         if hex_color is None:
             chrome = theme.chrome_bg_color(self.theme_id).name()
-            target = theme.page_bg_color(self.theme_id).name()
+            target = chrome
             self._chrome_override = None
             self.bg.set_override(None)
         else:
@@ -415,7 +425,11 @@ class MainWindow(QMainWindow):
                 return
             self._chrome_override = target
             self.bg.set_override(target)
+        # 窗口底（安全区那条）跟着一起换，否则 Activity/窗口底会把深色顶栏盖出一条浅带
         self.setStyleSheet(f"QMainWindow{{background:{target};}}")
+        pal = self.palette()
+        pal.setColor(QPalette.Window, QColor(target))
+        self.setPalette(pal)
         if _IS_ANDROID:
             for ms in (0, 300):
                 QTimer.singleShot(ms, lambda c=chrome: _android_edge_to_edge_safe(c, c))
