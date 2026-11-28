@@ -162,7 +162,7 @@ def resolve_family() -> str:
 
 MAIN_TABS = [("today", "今日"), ("library", "记忆"), ("plan", "征途"),
              ("insights", "战果")]
-NO_NAV = {"review", "settings", "appearance", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash"}
+NO_NAV = {"review", "settings", "appearance", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash", "monsters"}
 
 
 class BgLayer(QWidget):
@@ -653,6 +653,12 @@ class MainWindow(QMainWindow):
             return TodayPage(self)
         if key == "library":
             return LibraryPage(self, kw.get("domain"), kw.get("round_id"))
+        if key == "monsters":
+            from pages.monsters import MonstersPage
+            page = MonstersPage(self)
+            self.stack.addWidget(page)
+            self.stack.setCurrentWidget(page)
+            return page
         if key == "trash":
             from pages.trash import TrashPage
             return TrashPage(self)

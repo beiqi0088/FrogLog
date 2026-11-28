@@ -21,6 +21,28 @@ from pages.journey_widgets import (BADGES, CheckBtn, FROG_MEDAL_COLORS,
                                    ToggleSwitch, WeekBars, fmt_mmss,
                                    frog_medal)
 
+# ---------------------------------------------------------------- 怪物吃青蛙
+# 吃掉一只青蛙 = 累计学习 45 分钟；等级按累计吃掉数量解锁。
+MONSTERS = [
+    ("青泡泡", 0, "#6FAE7A"),
+    ("蓝泡泡", 5, "#5B8FD4"),
+    ("紫泡泡", 15, "#8A6BC0"),
+    ("赤泡泡", 30, "#C4562E"),
+    ("金泡泡", 50, "#C9A227"),
+    ("蛙群之王", 80, "#B23A5B"),
+]
+
+
+def monster_level(total: int):
+    idx = 0
+    for k, (_name, need, _color) in enumerate(MONSTERS):
+        if total >= need:
+            idx = k
+    cur = MONSTERS[idx]
+    nxt = MONSTERS[idx + 1] if idx + 1 < len(MONSTERS) else None
+    return idx, cur, nxt
+
+
 TITLES = ((20, "星辉旅人"), (10, "远征者"), (5, "行路人"), (1, "见习旅人"))
 DIFF_NAME = {"easy": "简单", "medium": "中等", "hard": "困难"}
 
@@ -276,69 +298,66 @@ class OverviewPanel(Panel):
     # ---- 青蛙勋章 ----
     def _medals(self):
         total = self.store.frogs_eaten()
-        cur, nxt = frog_medal(total)
-        unlocked = sum(1 for m in FROG_MEDALS[1:] if total >= m[2])
+        idx, cur, nxt = monster_level(total)
 
         card = W.Card()
         card.body.setContentsMargins(16, 13, 16, 15)
-        card.body.setSpacing(9)
+        card.body.setSpacing(8)
 
         head = QWidget()
         hl = QHBoxLayout(head)
         hl.setContentsMargins(0, 0, 0, 0)
-        hl.addWidget(h3("青蛙勋章"))
+        hl.setSpacing(8)
+        name = QLabel(cur[0])
+        name.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
+        hl.addWidget(name)
+        lv = QLabel(f"Lv.{idx + 1}")
+        lv.setStyleSheet(f"background:{cur[2]};color:#FFFDF8;border-radius:9px;"
+                         "font-size:10px;font-weight:700;padding:2px 8px;")
+        hl.addWidget(lv)
         hl.addStretch(1)
-        link = QPushButton(f"已解锁 {unlocked} / {len(FROG_MEDALS) - 1} ›")
+        link = QPushButton("等级 ›")
         link.setCursor(Qt.PointingHandCursor)
-        link.setToolTip("看看每枚勋章是怎么拿到的")
+        link.setToolTip("打开怪物图鉴：6 只怪物、吃青蛙数与学习时长")
         link.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;color:{W.T['ink3']};"
-            f"font-size:10.5px;padding:0;}}"
-            f"QPushButton:hover{{color:{W.T['brand']};}}")
-        link.clicked.connect(lambda: self.app.show_page("medals"))
+            f"QPushButton{{background:{W.T['brand_soft']};border:none;color:{W.T['deep']};"
+            f"border-radius:11px;font-size:11px;font-weight:700;padding:3px 10px;}}")
+        link.clicked.connect(lambda: self.app.show_page("monsters"))
         hl.addWidget(link, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
 
-        # 12 枚勋章拆成两排（每排 6 个），单排最小宽度减半，窄屏不再被裁
-        medals = FROG_MEDALS[1:]
-        for r in range(2):
-            mrow = QWidget()
-            ml = QHBoxLayout(mrow)
-            ml.setContentsMargins(2, 0, 2, 0)
-            ml.setSpacing(0)
-            for j in range(6):
-                i = r * 6 + j
-                if i >= len(medals):
-                    break
-                _key, name, need, _emoji = medals[i]
-                dot = MedalDot(total >= need, FROG_MEDAL_COLORS[i + 1],
-                               shape=i, size=32)
-                tip = f"{name} · 累计吃掉 {need} 只青蛙"
-                dot.setToolTip(tip if total >= need else f"{tip}（还差 {need - total} 只）")
-                if j:
-                    ml.addStretch(1)
-                ml.addWidget(dot, 0, Qt.AlignHCenter)
-            card.body.addWidget(mrow)
+        mon = W.Monster(118, cur[2])
+        card.body.addWidget(mon, 0, Qt.AlignHCenter)
 
         if nxt:
-            span = max(1, nxt[2] - cur[2])
-            pct = max(0.0, min(100.0, 100.0 * (total - cur[2]) / span))
-            card.body.addWidget(ThinBar(pct, W.T["brand"], W.T["paper2"], 8))
-            foot = QWidget()
-            fl = QHBoxLayout(foot)
-            fl.setContentsMargins(2, 0, 2, 0)
-            cur_lb = _ElideLabel(f"当前「{cur[1]}」")
-            cur_lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
-            nxt_lb = _ElideLabel(f"下一枚「{nxt[1]}」还差 {nxt[2] - total} 只")
-            nxt_lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
-            fl.addWidget(cur_lb, 1)
-            fl.addStretch(1)
-            fl.addWidget(nxt_lb, 1)
-            card.body.addWidget(foot)
+            span = max(1, nxt[1] - cur[1])
+            pct = max(0.0, min(100.0, 100.0 * (total - cur[1]) / span))
+            card.body.addWidget(ThinBar(pct, W.T["red"], W.T["paper2"], 8))
+            hint = QLabel(f"已吃 {total} / {nxt[1]} 只 · 再吃 {nxt[1] - total} 只升级为「{nxt[0]}」")
         else:
-            card.body.addWidget(ThinBar(100, W.T["brand"], W.T["paper2"], 8))
-            card.body.addWidget(small("已集齐全部青蛙勋章 🐸", 10.5, W.T["green"]))
+            card.body.addWidget(ThinBar(100, W.T["red"], W.T["paper2"], 8))
+            hint = QLabel("已吃到最高级「蛙群之王」")
+        hint.setAlignment(Qt.AlignCenter)
+        hint.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
+        card.body.addWidget(hint)
 
+        stats = QHBoxLayout()
+        stats.setSpacing(0)
+        for k, v in (("已吃青蛙", f"{total} 只"),
+                     ("累计学习", f"{total * 45} 分钟"),
+                     ("下一级", f"{nxt[1] - total if nxt else 0} 只")):
+            box = QWidget()
+            bx = QVBoxLayout(box)
+            bx.setContentsMargins(0, 0, 0, 0)
+            bx.setSpacing(0)
+            vv = QLabel(v)
+            vv.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
+            bx.addWidget(vv)
+            kk = QLabel(k)
+            kk.setStyleSheet(f"font-size:9.5px;color:{W.T['ink3']};")
+            bx.addWidget(kk)
+            stats.addWidget(box, 1)
+        card.body.addLayout(stats)
         self.body.addWidget(card)
 
     def pick(self, mins: int):

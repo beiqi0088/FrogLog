@@ -10,7 +10,7 @@ import math
 from PySide6.QtCore import (Qt, QRectF, QPointF, Signal, QEvent, QTimer,
                             QPropertyAnimation, Property, QEasingCurve, QSize)
 from PySide6.QtGui import (QGuiApplication, QColor, QPainter, QPen, QBrush, QFont,
-                           QPainterPath, QLinearGradient, QFontMetrics, QPixmap)
+                           QPainterPath, QLinearGradient, QFontMetrics, QPixmap, QPolygonF)
 from PySide6.QtWidgets import (QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
                                QProgressBar, QScrollArea, QScroller, QScrollerProperties)
@@ -530,6 +530,99 @@ class BandHeader(QFrame):
         for i in range(0, 84, 8):
             p.drawLine(QPointF(i, 0), QPointF(i + 3, 13))
         p.restore()
+
+
+class Monster(QWidget):
+    """怪物：双角、竖瞳、獠牙、舌头、斑点、肚皮、地面阴影。"""
+
+    def __init__(self, size: int = 120, color: str = "#5B8FD4",
+                 mood: str = "happy", parent=None):
+        super().__init__(parent)
+        self.setFixedSize(size, size + 14)
+        self.s = size
+        self.color = color
+        self.mood = mood
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        s = self.s
+        cx, top = s / 2, 16
+        dark = QColor(self.color).darker(118).name()
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(0, 0, 0, 26))
+        p.drawEllipse(QRectF(s * 0.18, top + s * 0.80, s * 0.64, s * 0.12))
+
+        body = QPainterPath()
+        body.moveTo(cx, top + s * 0.05)
+        body.cubicTo(cx + s * 0.42, top + s * 0.02, cx + s * 0.50, top + s * 0.36,
+                     cx + s * 0.46, top + s * 0.58)
+        body.cubicTo(cx + s * 0.42, top + s * 0.80, cx + s * 0.20, top + s * 0.86,
+                     cx, top + s * 0.86)
+        body.cubicTo(cx - s * 0.20, top + s * 0.86, cx - s * 0.42, top + s * 0.80,
+                     cx - s * 0.46, top + s * 0.58)
+        body.cubicTo(cx - s * 0.50, top + s * 0.36, cx - s * 0.42, top + s * 0.02,
+                     cx, top + s * 0.05)
+
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(dark))
+        p.drawPolygon(QPolygonF([QPointF(cx - s * 0.30, top + s * 0.18),
+                                 QPointF(cx - s * 0.46, top - s * 0.06),
+                                 QPointF(cx - s * 0.12, top + s * 0.10)]))
+        p.drawPolygon(QPolygonF([QPointF(cx + s * 0.30, top + s * 0.18),
+                                 QPointF(cx + s * 0.46, top - s * 0.06),
+                                 QPointF(cx + s * 0.12, top + s * 0.10)]))
+
+        g = QLinearGradient(0, top, 0, top + s)
+        g.setColorAt(0, QColor(self.color).lighter(118))
+        g.setColorAt(1, QColor(self.color))
+        p.setBrush(QBrush(g))
+        p.drawPath(body)
+
+        belly = QPainterPath()
+        belly.moveTo(cx - s * 0.24, top + s * 0.62)
+        belly.cubicTo(cx - s * 0.20, top + s * 0.40, cx + s * 0.20, top + s * 0.40,
+                      cx + s * 0.24, top + s * 0.62)
+        belly.cubicTo(cx + s * 0.16, top + s * 0.78, cx - s * 0.16, top + s * 0.78,
+                      cx - s * 0.24, top + s * 0.62)
+        p.setBrush(QColor(255, 255, 255, 40))
+        p.drawPath(belly)
+
+        p.setBrush(QColor(dark))
+        for dx, dy, r in ((-0.34, 0.42, 0.030), (0.35, 0.38, 0.024),
+                          (-0.30, 0.60, 0.020), (0.31, 0.58, 0.028)):
+            p.drawEllipse(QPointF(cx + dx * s, top + dy * s), r * s, r * s)
+
+        for ex in (-0.17, 0.17):
+            p.setBrush(QColor("#FFFDF8"))
+            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.40), s * 0.105, s * 0.105)
+            p.setBrush(QColor("#1E2A36"))
+            p.drawEllipse(QPointF(cx + ex * s, top + s * 0.41), s * 0.052, s * 0.052)
+            p.setBrush(QColor("#FFFFFF"))
+            p.drawEllipse(QPointF(cx + ex * s + s * 0.018, top + s * 0.39),
+                          s * 0.017, s * 0.017)
+
+        mouth = QPainterPath()
+        if self.mood == "sleep":
+            mouth.moveTo(cx - s * 0.12, top + s * 0.64)
+            mouth.quadTo(cx, top + s * 0.70, cx + s * 0.12, top + s * 0.64)
+        else:
+            mouth.moveTo(cx - s * 0.20, top + s * 0.60)
+            mouth.quadTo(cx, top + s * 0.74, cx + s * 0.20, top + s * 0.60)
+        p.setPen(QPen(QColor("#1E2A36"), s * 0.022, Qt.SolidLine, Qt.RoundCap))
+        p.setBrush(QColor("#7A2E33") if self.mood != "sleep" else Qt.NoBrush)
+        p.drawPath(mouth)
+        if self.mood != "sleep":
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor("#FFFDF8"))
+            p.drawPolygon(QPolygonF([QPointF(cx - s * 0.10, top + s * 0.63),
+                                     QPointF(cx - s * 0.055, top + s * 0.72),
+                                     QPointF(cx - s * 0.015, top + s * 0.64)]))
+            p.drawPolygon(QPolygonF([QPointF(cx + s * 0.10, top + s * 0.63),
+                                     QPointF(cx + s * 0.055, top + s * 0.72),
+                                     QPointF(cx + s * 0.015, top + s * 0.64)]))
+            p.setBrush(QColor("#E4665E"))
+            p.drawEllipse(QPointF(cx, top + s * 0.705), s * 0.055, s * 0.030)
 
 
 class ThemeCard(ClickFrame):
