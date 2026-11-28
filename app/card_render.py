@@ -618,11 +618,11 @@ def build_front(card: dict, pal: dict, revealed=False, picked=None, multi=False,
                          mask_color=pal["label"])
 
     if card["type"] == "qa":
-        box.body.addWidget(_body(card["q"], pal, width - 32, "front", 18, False, 1.65,
+        box.body.addWidget(_body(card["q"], pal, width - 32, "front", 16, False, 1.6,
                                  on_mask, mask_shown))
         return box
 
-    q = _body(card["q"], pal, width - 32, "front", 18, True, 1.55, on_mask, mask_shown)
+    q = _body(card["q"], pal, width - 32, "front", 16, True, 1.55, on_mask, mask_shown)
     box.body.addWidget(q)
     box.body.addSpacing(10)
 
@@ -653,7 +653,7 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
 
     if card["type"] == "qa":
         box.body.addWidget(_body(card["a"] or "（无答案）", pal, width - 32, "back",
-                                 18, False, 1.65, on_mask, mask_shown))
+                                 16, False, 1.6, on_mask, mask_shown))
         return box
 
     answers = sorted(set(card.get("answer") or []))

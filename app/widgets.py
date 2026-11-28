@@ -1100,9 +1100,9 @@ class RatingButton(ClickFrame):
         bg = bg or T["panel"]
         fg = fg or T["ink"]
         edge = edge or T["line"]
+        # 无边框的纯色块；按下时同色加深一点，作为唯一反馈
         self.setStyleSheet(
-            f"QFrame#rateBtn{{background:{bg};border:1px solid {edge};border-radius:16px;}}"
-            f"QFrame#rateBtn:hover{{border-color:{color};}}")
+            f"QFrame#rateBtn{{background:{bg};border:none;border-radius:16px;}}")
         lay = QVBoxLayout(self)
         lay.setContentsMargins(4, 11, 4, 11)
         lay.setSpacing(6)
@@ -1111,10 +1111,10 @@ class RatingButton(ClickFrame):
         t.setStyleSheet(f"font-size:15px;font-weight:800;letter-spacing:0.4px;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
-        # 间隔预览：浅底上的白色胶囊 + 彩色字，轻巧但仍有层次
+        # 间隔预览：跟按钮同底色，只靠彩色字区分，整块更干净
         h.setStyleSheet(
-            "background:rgba(255,255,255,0.78);border-radius:9px;"
-            "padding:2px 8px;font-size:10.5px;font-weight:600;"
+            "background:transparent;border:none;"
+            "padding:0px;font-size:10.5px;font-weight:600;"
             f"color:{fg};")
         hw = QHBoxLayout()
         hw.setContentsMargins(0, 0, 0, 0)
