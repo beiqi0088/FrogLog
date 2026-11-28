@@ -32,3 +32,6 @@ bin/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 临时预览图
+preview/

@@ -10,7 +10,7 @@ import math
 from PySide6.QtCore import (Qt, QRectF, QPointF, Signal, QEvent, QTimer,
                             QPropertyAnimation, Property, QEasingCurve, QSize)
 from PySide6.QtGui import (QGuiApplication, QColor, QPainter, QPen, QBrush, QFont,
-                           QPainterPath, QLinearGradient, QFontMetrics)
+                           QPainterPath, QLinearGradient, QFontMetrics, QPixmap)
 from PySide6.QtWidgets import (QFrame, QLabel, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
                                QProgressBar, QScrollArea, QScroller, QScrollerProperties)
@@ -59,10 +59,8 @@ def enable_touch_scroll(area: QScrollArea) -> None:
     # 拖动滚动时清掉悬停高亮：手指划过按钮不会再闪一下深色底。
     def _on_state(state):
         if state in (QScroller.State.Scrolling, QScroller.State.ScrollerDragging):
-            win = area.window()
-            if win is None:
-                return
-            for w in win.findChildren(QWidget):
+            # 只扫当前滚动区里的控件：原先扫整个窗口，控件多时切换滚动状态会卡一下
+            for w in area.findChildren(QWidget):
                 if w.underMouse():
                     w.setAttribute(Qt.WA_UnderMouse, False)
                     w.update()
@@ -291,8 +289,8 @@ class PlusButton(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setFixedSize(size, size)
         self.setStyleSheet("QPushButton{background:transparent;border:none;}")
-        self._stroke = max(2.0, size * 0.085)
-        self._span = size * 0.30
+        self._stroke = max(2.0, size * 0.075)
+        self._span = size * 0.22               # 32px → 笔画总宽约 14px，比之前小一号
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -505,66 +503,118 @@ class BandHeader(QFrame):
 
 
 class ThemeCard(ClickFrame):
-    """设置里的平涂主题卡：迷你色带 + 纸底 + 迷你 dock，选中描墨线 + 奶油勾。"""
+    """设置里的主题卡：不画青蛙，用「迷你页面」展示纸底 / 卡片 / 底栏和三个色点。
+
+    渲染结果缓存成 QPixmap，滚动时只做一次贴图，避免每帧重画圆角、文字与裁剪。
+    """
 
     def __init__(self, tid: str, info: dict, selected: bool = False, parent=None):
         super().__init__(parent)
         self.tid = tid
         self.info = info
+        self.pal = info["tokens"]
         self.selected = selected
         self.setObjectName("themeCard")
         self.setFixedHeight(78)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("QFrame#themeCard{background:transparent;border:none;}")
+        self._pm = None
+
+    def set_selected(self, v: bool):
+        self.selected = bool(v)
+        self._pm = None
+        self.update()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._pm = None
+
+    def _build_pm(self):
+        dpr = self.devicePixelRatioF()
+        pm = QPixmap(max(1, int(self.width() * dpr)),
+                     max(1, int(self.height() * dpr)))
+        pm.setDevicePixelRatio(dpr)
+        pm.fill(Qt.transparent)
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        self._paint(p)
+        p.end()
+        self._pm = pm
 
     def paintEvent(self, e):
+        if self._pm is None:
+            self._build_pm()
         p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+        p.drawPixmap(0, 0, self._pm)
+
+    def _paint(self, p: QPainter):
+        pal = self.pal
         r = QRectF(self.rect()).adjusted(1, 1, -3, -3)
-        pal = self.info["tokens"]
-        deep, page = pal["deep"], pal["page"]
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(pal["panel"]))
-        p.drawRoundedRect(r, 14, 14)
-        p.setPen(QPen(QColor(deep) if self.selected else QColor(pal["line"]),
-                      2.0 if self.selected else 1.0))
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(r, 14, 14)
+        p.setBrush(QColor(pal["page"]))
+        p.drawRoundedRect(r, 13, 13)
 
-        clip = QPainterPath()
-        clip.addRoundedRect(r.adjusted(2, 2, -2, -2), 12, 12)
-        p.save()
-        p.setClipPath(clip)
-        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 24), QColor(pal["paper2"]))
-        p.fillRect(QRectF(r.left() + 2, r.top() + 26, r.width() - 4, r.height() - 46),
-                   QColor(page))
-        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(deep))
+        # 迷你卡片：一块白卡 + 主题色标题条 + 灰色副标题线
+        card = QRectF(r.left() + 9, r.top() + 27, r.width() - 18, 22)
+        p.setPen(QPen(QColor(pal["line"]), 1))
+        p.setBrush(QColor(pal["panel"]))
+        p.drawRoundedRect(card, 6, 6)
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(pal["panel"]))
-        p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 33, r.width() - 24, 16), 5, 5)
-        p.setBrush(QColor(pal["paper"]))
-        p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 18, 22, 12), 5, 5)
-        p.restore()
+        p.setBrush(QColor(pal["brand"]))
+        p.drawRoundedRect(QRectF(card.left() + 7, card.top() + 6, 28, 5), 2.5, 2.5)
+        p.setBrush(QColor(pal["ink3"]))
+        p.drawRoundedRect(QRectF(card.left() + 7, card.top() + 14, 44, 3), 1.5, 1.5)
 
-        p.setPen(QColor(pal["ink"]))
+        # 迷你底栏：四个点，第一个是主题色胶囊（选中态）
+        dock = QRectF(r.left() + 9, r.bottom() - 17, r.width() - 18, 11)
+        p.setBrush(QColor(pal["paper2"]))
+        p.drawRoundedRect(dock, 5.5, 5.5)
+        slot = dock.width() / 4
+        for i in range(4):
+            cx = dock.left() + slot * i + slot / 2
+            if i == 0:
+                p.setBrush(QColor(pal["brand_soft"]))
+                p.drawRoundedRect(QRectF(cx - 6.5, dock.top() + 2.5, 13, 6), 3, 3)
+            else:
+                p.setBrush(QColor(pal["ink3"]))
+                p.drawEllipse(QPointF(cx, dock.center().y()), 1.5, 1.5)
+
+        # 右上：三个色点（主题色 / 强调色 / 绿色），选中时换成勾选圆点
+        top_y = r.top() + 11
+        if self.selected:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(pal["brand"]))
+            p.drawEllipse(QPointF(r.right() - 11, top_y), 7.5, 7.5)
+            pen = QPen(QColor("#FFFDF8"), 1.7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            p.setPen(pen)
+            p.setBrush(Qt.NoBrush)
+            path = QPainterPath()
+            path.moveTo(r.right() - 14.2, top_y + 0.2)
+            path.lineTo(r.right() - 12.0, top_y + 2.6)
+            path.lineTo(r.right() - 7.8, top_y - 2.4)
+            p.drawPath(path)
+        else:
+            p.setPen(Qt.NoPen)
+            dx = r.right() - 11
+            for c in (pal["green"], pal["accent"], pal["brand"]):
+                p.setBrush(QColor(c))
+                p.drawEllipse(QPointF(dx, top_y), 3.2, 3.2)
+                dx -= 10.0
+
+        # 名称
         f = QFont(theme.FONT, 9)
         f.setBold(True)
         p.setFont(f)
-        p.drawText(QRectF(r.left() + 10, r.top() + 4, r.width() - 40, 22),
+        p.setPen(QColor(pal["brand"] if self.selected else pal["ink"]))
+        p.drawText(QRectF(r.left() + 11, r.top() + 2, r.width() - 56, 22),
                    Qt.AlignLeft | Qt.AlignVCenter, self.info["name"])
-        paint_frog(p, r.right() - 29, r.top() + 6, 17,
-                   pal["accent"], pal["accent_soft"], pal["panel"], deep, deep)
-        if self.selected:
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(pal["accent"]))
-            p.drawEllipse(QRectF(r.right() - 25, r.top() + 4, 18, 18))
-            p.setPen(QColor(T["ink"]))
-            f2 = QFont(theme.FONT, 9)
-            f2.setBold(True)
-            p.setFont(f2)
-            p.drawText(QRectF(r.right() - 25, r.top() + 4, 18, 18),
-                       Qt.AlignCenter, "✓")
+
+        # 外框：选中描主题色 2px，否则细线
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(pal["brand"] if self.selected else pal["line"]),
+                      2.0 if self.selected else 1.0))
+        p.drawRoundedRect(r, 13, 13)
 
 
 class ProgressRing(QWidget):
@@ -830,14 +880,16 @@ class NavButton(QPushButton):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         active = self.isChecked()
-        # dock 是主题深色，未选中用奶油图标；选中用奶油胶囊 + 深色图标
-        col = QColor(T["deep"]) if active else QColor(255, 253, 248, 210)
+        # 底栏不再铺深色，直接落在页面上：未选中墨灰，选中主题色 + 浅色胶囊
+        col = QColor(T["brand"]) if active else QColor(T["ink2"])
         w, h = self.width(), self.height()
 
         if active:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(T["paper"]))
-            p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 14, 14)
+            p.setBrush(QColor(T["brand_soft"]))
+            # 紧凑胶囊，只包住图标，不占满整个 tab 槽位
+            pw = min(62.0, w - 12.0)
+            p.drawRoundedRect(QRectF((w - pw) / 2, (h - 32) / 2, pw, 32), 12, 12)
 
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)

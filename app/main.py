@@ -56,7 +56,8 @@ def main():
             import theme as _theme
             t = _theme.theme_tokens(getattr(win, "theme_id", None) or _theme.DEFAULT_THEME)
             paper = t.get("paper", paper)
-            deep = t.get("deep", deep)
+            # 底栏与页面同色，手势条也铺页面纸色
+            deep = paper
             from app import _android_edge_to_edge
             _android_edge_to_edge(paper, deep)
         except Exception:

@@ -426,17 +426,20 @@ public final class FrogLogSystemBars {
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
-                int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-                // 状态栏奶白 → 保留 LIGHT（深色图标）；手势条深色 → 清掉 LIGHT（白色图标）
+                // 状态栏 / 手势条都是浅色纸底 → 都保留 LIGHT（深色图标与深色手势条）
                 controller.setSystemBarsAppearance(
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                        light | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         } else {
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-            // 不加 LIGHT_STATUS_BAR / LIGHT_NAVIGATION_BAR：深色底上用白色系统图标
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            // 浅色纸底 → 系统图标与手势条都用深色
             window.getDecorView().setSystemUiVisibility(flags);
         }
         window.setStatusBarColor(barColor);
