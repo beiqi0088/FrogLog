@@ -279,7 +279,7 @@ class TodayPage(Page):
         # ---------- 顶栏色带 ----------
         today = time.localtime()
         left_n = len(due_all)
-        band = W.BandHeader()
+        band = W.BandHeader("pencil")
         dirty = self._dirty()
         # 手帐色带：主题深色 + 胶带，标题/日期用奶油色
         band.setFixedHeight(86)

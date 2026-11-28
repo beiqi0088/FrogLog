@@ -502,11 +502,12 @@ class FrogMascot(QWidget):
 
 
 class BandHeader(QFrame):
-    """页面顶部：主题深色色带 + 一小段和纸胶带；内容放在 self.lay。"""
+    """页面顶部：主题深色色带 + 和纸胶带 + 右侧文具；内容放在 self.lay。"""
 
-    def __init__(self, parent=None):
+    def __init__(self, stationery: str = "pencil", parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
+        self.stationery = stationery
         self.setFixedHeight(86)
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(18, 6, 18, 8)
@@ -530,6 +531,14 @@ class BandHeader(QFrame):
         for i in range(0, 84, 8):
             p.drawLine(QPointF(i, 0), QPointF(i + 3, 13))
         p.restore()
+        # 右侧文具：每页不同
+        try:
+            from stationery import draw_stationery
+            draw_stationery(p, self.stationery,
+                            QRectF(self.width() - 112, 20, 34, 34),
+                            T["ink"], T["paper"])
+        except Exception:
+            pass
 
 
 class Monster(QWidget):

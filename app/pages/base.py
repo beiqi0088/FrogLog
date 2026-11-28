@@ -14,9 +14,25 @@ import widgets as W
 class Page(QWidget):
     """可滚动页面基类：内容放在 self.body 里。"""
 
+    # 每页右侧色带上的文具，互不相同
+    STATIONERY = {
+        "TodayPage": "pencil",
+        "LibraryPage": "book",
+        "DeckPage": "book",
+        "PlanPage": "ruler",
+        "InsightsPage": "scissors",
+        "SettingsPage": "eraser",
+        "TrashPage": "clip",
+        "CardsPage": "clip",
+        "AllGroupsPage": "book",
+        "SyncPage": "clip",
+        "MedalsPage": "star",
+    }
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
+        self.stationery = self.STATIONERY.get(self.__class__.__name__, "pencil")
         self.store = app.store
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -76,7 +92,7 @@ class Page(QWidget):
     # ---------- 通用排版 ----------
     def appbar(self, title: str, eyebrow: str | None = None,
                back=None, right: QWidget | None = None):
-        band = W.BandHeader()
+        band = W.BandHeader(self.stationery)
         row = QWidget()
         lay = QHBoxLayout(row)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -101,7 +117,7 @@ class Page(QWidget):
     def hero(self, title: str, sub: str | None = None,
              right: QWidget | None = None):
         """大标题 + 下方副标题（放在深色色带里）。"""
-        band = W.BandHeader()
+        band = W.BandHeader(self.stationery)
         row = QWidget()
         lay = QHBoxLayout(row)
         lay.setContentsMargins(0, 0, 0, 0)
