@@ -410,7 +410,7 @@ class StatsChip(QWidget):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        p.setPen(QPen(QColor(W.T["ink"]), 1.5))
+        p.setPen(Qt.NoPen)
         p.setBrush(QColor(W.T["panel"]))
         r = QRectF(0.5, 0.5, self.width() - 1, self.height() - 1)
         p.drawRoundedRect(r, min(13.0, r.height() / 2), min(13.0, r.height() / 2))

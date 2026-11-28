@@ -1270,7 +1270,7 @@ class RateBar(QFrame):
         super().__init__(parent)
         self.setObjectName("rateBar")
         self.setStyleSheet(
-            f"QFrame#rateBar{{background:{T['panel']};border:1.5px solid {T['ink']};"
+            f"QFrame#rateBar{{background:{T['panel']};border:none;"
             f"border-radius:18px;}}")
         lay = QHBoxLayout(self)
         lay.setContentsMargins(6, 6, 6, 6)
