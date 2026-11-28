@@ -1111,11 +1111,11 @@ class RatingButton(ClickFrame):
         t.setStyleSheet(f"font-size:15px;font-weight:800;letter-spacing:0.4px;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
-        # 间隔预览做成半透明胶囊，层次更清楚，也更容易扫读
+        # 间隔预览：浅底上的白色胶囊 + 彩色字，轻巧但仍有层次
         h.setStyleSheet(
-            "background:rgba(255,253,248,0.20);border-radius:9px;"
+            "background:rgba(255,255,255,0.78);border-radius:9px;"
             "padding:2px 8px;font-size:10.5px;font-weight:600;"
-            "color:rgba(255,253,248,0.96);")
+            f"color:{fg};")
         hw = QHBoxLayout()
         hw.setContentsMargins(0, 0, 0, 0)
         hw.setSpacing(0)

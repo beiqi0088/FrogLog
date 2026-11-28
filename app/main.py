@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
@@ -49,7 +49,19 @@ def main():
     win = MainWindow()
     _mark("主窗口创建完成，准备显示")
     if ANDROID:
+        # 先把窗口切到全屏铺满（decor 不再为系统栏预留空间），再显示，
+        # 否则首帧会按「避让系统栏」的尺寸排版，随后才跳变成正确布局。
+        try:
+            import theme as _theme
+            t = _theme.theme_tokens(getattr(win, "theme_id", None) or _theme.DEFAULT_THEME)
+            from app import _android_edge_to_edge
+            _android_edge_to_edge(t.get("paper", "#F3EEDF"))
+        except Exception:
+            pass
         win.showMaximized()          # 手机上铺满屏幕
+        # 显示后系统栏尺寸可能还晚一拍才稳定，补几次同步，避免首帧排错位置
+        for _ms in (0, 120, 400):
+            QTimer.singleShot(_ms, win._sync_system_insets)
     else:
         win.show()
     _mark("已显示，进入事件循环")

@@ -17,12 +17,12 @@ from core import now_ms
 from pages.library import OneLineLabel
 
 RATE_DEFS = [
-    # idx, 名称, 主色, 实心底色, 描边, 文字色（深底白字，识别度更高）
-    # 四档颜色按「红 → 橙 → 绿 → 青绿」递进，相邻两档不会看混
-    (0, "重来", "#C0392B", "#C0392B", "#C0392B", "#FFFDF8"),
-    (1, "困难", "#C77E1B", "#C77E1B", "#C77E1B", "#FFFDF8"),
-    (2, "记住", "#2F7A4F", "#2F7A4F", "#2F7A4F", "#FFFDF8"),
-    (3, "轻松", "#0F9D6E", "#0F9D6E", "#0F9D6E", "#FFFDF8"),
+    # idx, 名称, 主色, 浅底, 描边, 文字色
+    # 四档走「红 → 橙 → 绿 → 青绿」递进，浅色底保持小清新、不压视线
+    (0, "重来", "#C0392B", "#FBE9E6", "#F2C7C0", "#B23A2C"),
+    (1, "困难", "#C77E1B", "#FBF0DC", "#F0D9B4", "#A96B10"),
+    (2, "记住", "#2F7A4F", "#E7F2EA", "#C6DFCE", "#2A6C46"),
+    (3, "轻松", "#0F9D6E", "#E2F4EC", "#BCE4D5", "#0B8A61"),
 ]
 
 
@@ -1061,20 +1061,6 @@ class ReviewPage(QWidget):
         sl.addWidget(hint2)
         self.bottom_lay.addWidget(self._submit_box)
 
-        # 4 个评分按钮：上面加一行极简说明，颜色 + 文字 + 间隔胶囊，一眼能选
-        cap = QWidget()
-        capl = QHBoxLayout(cap)
-        capl.setContentsMargins(2, 0, 2, 0)
-        capl.setSpacing(8)
-        title = QLabel("记得怎么样？")
-        title.setStyleSheet(
-            f"font-size:12.5px;font-weight:700;color:{W.T['ink2']};")
-        capl.addWidget(title)
-        capl.addStretch(1)
-        sub = QLabel("间隔按 FSRS 自动计算")
-        sub.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
-        capl.addWidget(sub)
-
         grid = QWidget()
         gl = QHBoxLayout(grid)
         gl.setContentsMargins(0, 0, 0, 0)
@@ -1085,12 +1071,11 @@ class ReviewPage(QWidget):
             b.clicked_rating.connect(self._rate)
             gl.addWidget(b, 1)
             self._rate_btns.append(b)
-        # 说明行跟评分按钮同显同隐（未翻面时不出现）
+        # 4 个评分按钮：浅色底 + 彩色字，跟页面底色融在一起又不失辨识度
         group = QWidget()
         rgl = QVBoxLayout(group)
         rgl.setContentsMargins(0, 0, 0, 0)
         rgl.setSpacing(8)
-        rgl.addWidget(cap)
         rgl.addWidget(grid)
         self._rate_box = group
         self.bottom_lay.addWidget(group)
