@@ -535,15 +535,20 @@ class BandHeader(QFrame):
         p.restore()
         # 右侧文具：每页不同
         try:
+            import random
             from stationery import draw_stationery
             n = len(self.stationery)
-            box, gap = 30, 4
-            total = n * box + (n - 1) * gap
-            x0 = self.width() - 104 - total
+            # 固定种子：同一页每次打开位置一致，但看起来像随手丢在桌上
+            rnd = random.Random(20261128)
+            x0 = self.width() - 218
             for i, kind in enumerate(self.stationery):
+                box = 25 + rnd.randint(0, 9)
+                x = x0 + i * 38 + rnd.randint(-7, 10)
+                y = 14 + rnd.randint(-6, 20)
+                pad = rnd.randint(20, 36)
                 draw_stationery(p, kind,
-                                QRectF(x0 + i * (box + gap), 22, box, box),
-                                T["ink"], T["paper"])
+                                QRectF(x - pad, y - pad, box + pad * 2, box + pad * 2),
+                                T["ink"], T["paper"], rotate=rnd.randint(-28, 22))
         except Exception:
             pass
 

@@ -8,14 +8,14 @@ from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QPolygonF
 
 
-def draw_stationery(p: QPainter, kind: str, rect: QRectF, ink: str, cream: str):
+def draw_stationery(p: QPainter, kind: str, rect: QRectF, ink: str, cream: str, rotate: float = -8):
     """在 rect 内画一件文具；ink = 深色描边，cream = 奶油/纸色。"""
     p.save()
     p.setRenderHint(QPainter.Antialiasing)
     x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
     # 统一轻微倾斜，像随手放在桌上
     p.translate(x + w / 2, y + h / 2)
-    p.rotate(-8)
+    p.rotate(rotate)
     p.translate(-(x + w / 2), -(y + h / 2))
     pen = QPen(QColor(ink), max(1.4, w * 0.045), Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
     p.setPen(pen)
