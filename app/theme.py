@@ -139,6 +139,10 @@ def build_qss(t: dict) -> str:
         background: {t['brand']};
         border: 1px solid {t['line']};
     }}
+
+    QWidget#bandHeader QLabel {{ color: #FFFDF8; }}
+    QWidget#bandHeader QLabel#h1 {{ color: #FFFDF8; }}
+    QWidget#bandHeader QPushButton {{ color: #FFFDF8; }}
     QWidget#reviewTop {{ background: {page_bg}; }}
     QWidget#reviewTop QLabel {{ color: {t['ink']}; }}
     QWidget#reviewTop QPushButton {{ color: {t['ink']}; }}
@@ -159,8 +163,8 @@ def build_qss(t: dict) -> str:
     QFrame#navBar {{ background: transparent; border: none; }}
 
     QLabel {{ background: transparent; }}
-    QLabel#h1 {{ font-size: 27px; font-weight: 700; color: {t['ink']}; }}
-    QLabel#h2 {{ font-size: 16px; font-weight: 700; color: {t['ink']}; }}
+    QLabel#h1 {{ font-family: "KaiTi"; font-size: 27px; font-weight: 700; color: {t['ink']}; }}
+    QLabel#h2 {{ font-family: "KaiTi"; font-size: 16px; font-weight: 700; color: {t['ink']}; }}
     QLabel#h3 {{ font-size: 13px; font-weight: 600; color: {t['ink']}; }}
     QLabel#sub {{ color: {t['ink2']}; font-size: 11px; }}
     QLabel#eyebrow {{ color: {t['ink2']}; font-size: 11px; font-weight: 600; letter-spacing: 1px; }}

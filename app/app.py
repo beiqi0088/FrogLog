@@ -10,7 +10,7 @@ import sys
 import threading
 
 from PySide6.QtCore import QEvent, QTimer, Qt
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter, QPen
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
                                QButtonGroup, QDialog, QSizePolicy)
@@ -187,6 +187,13 @@ class BgLayer(QWidget):
         tid = getattr(win, "theme_id", None)
         # 整页奶白：系统栏区域也透出奶白，与参考图一致；不再单独刷深色条。
         theme.paint_page_bg(p, self.rect(), tid)
+        # 手帐纸面点阵：用当前主题的浅线色，密度和纸张一致
+        t = theme.theme_tokens(tid or theme.DEFAULT_THEME)
+        p.setPen(QPen(QColor(t["line"]), 1))
+        step = 20
+        for y in range(step, self.height(), step):
+            for x in range(step, self.width(), step):
+                p.drawPoint(x, y)
 
 
 class MainWindow(QMainWindow):
@@ -342,9 +349,9 @@ class MainWindow(QMainWindow):
         # 这行是控件级样式，优先级高于全局表，之前写死 paper 就是顶部色差的根源。
         page_bg = theme.page_bg_color(self.theme_id).name()
         self.setStyleSheet(f"QMainWindow{{background:{page_bg};}}")
-        # 底部 dock 不再铺深色：和页面同底，选中项用浅色胶囊 + 主题色图标
+        # 底部 dock 铺主题深色：和顶部色带呼应，形成手帐封皮感
         self.nav.setStyleSheet(
-            "QFrame#navFrame{background:transparent;border:none;}"
+            f"QFrame#navFrame{{background:{t['deep']};border:none;}}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():

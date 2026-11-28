@@ -502,20 +502,34 @@ class FrogMascot(QWidget):
 
 
 class BandHeader(QFrame):
-    """页面顶部：奶白底 + 标题/操作，无深色色带、无波浪。内容放在 self.lay。"""
+    """页面顶部：主题深色色带 + 一小段和纸胶带；内容放在 self.lay。"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 高度要容得下右侧同步圆钮，否则会被裁掉下半部分。
-        self.setFixedHeight(46)
+        self.setFixedHeight(86)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(18, 0, 18, 0)
+        self.lay.setContentsMargins(18, 6, 18, 8)
         self.lay.setSpacing(0)
 
     def paintEvent(self, e):
-        # 透明：透出整页奶白背景；顶栏只承担排版，不刷色
-        pass
+        from PySide6.QtGui import QColor, QPainter, QPen
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.fillRect(self.rect(), QColor(T["deep"]))
+        # 手帐胶带：左上斜贴一小段
+        p.save()
+        p.translate(22, 7)
+        p.rotate(-4)
+        c = QColor(T["accent_soft"])
+        c.setAlpha(205)
+        p.setPen(Qt.NoPen)
+        p.setBrush(c)
+        p.drawRect(QRectF(0, 0, 84, 13))
+        p.setPen(QPen(QColor(255, 255, 255, 60), 1))
+        for i in range(0, 84, 8):
+            p.drawLine(QPointF(i, 0), QPointF(i + 3, 13))
+        p.restore()
 
 
 class ThemeCard(ClickFrame):

@@ -281,8 +281,8 @@ class TodayPage(Page):
         left_n = len(due_all)
         band = W.BandHeader()
         dirty = self._dirty()
-        # 顶栏不再铺底色，和整页保持同一块纸色；只保留日期副标题。
-        band.setFixedHeight(62)
+        # 手帐色带：主题深色 + 胶带，标题/日期用奶油色
+        band.setFixedHeight(86)
 
         row = QWidget()
         rl = QHBoxLayout(row)
@@ -290,13 +290,13 @@ class TodayPage(Page):
         rl.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(1)
-        title = QLabel(f"<span style='color:{W.T['ink']};'>今日</span>")
+        title = QLabel("<span style='color:#FFFDF8;'>今日</span>")
         title.setTextFormat(Qt.RichText)
-        title.setStyleSheet("font-size:23px;font-weight:700;")
+        title.setStyleSheet("font-size:24px;font-weight:700;")
         col.addWidget(title)
         wd = "一二三四五六日"[today.tm_wday]
         sub = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 星期{wd}")
-        sub.setStyleSheet(f"font-size:11px;color:{W.T['ink2']};font-weight:500;")
+        sub.setStyleSheet("font-size:11px;color:rgba(255,253,248,0.78);font-weight:500;")
         col.addWidget(sub)
         rl.addLayout(col, 1)
         right = QVBoxLayout()
