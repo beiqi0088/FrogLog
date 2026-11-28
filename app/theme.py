@@ -351,6 +351,25 @@ def page_bg_color(tid: str | None = None) -> QColor:
     return _mix(pal["brand"], pal["page"], 0.92)
 
 
+def chrome_bg_color(tid: str | None = None) -> QColor:
+    """系统栏（状态栏 / 手势条）底色：取主题深色，和顶栏色带、底部 dock 连成一片。
+
+    安卓上这两条安全区由 Activity 窗口背景填（Qt 窗口本身不覆盖），所以颜色必须
+    和顶栏/底栏同色；用页面浅色底会在深色顶栏上方露出浅一截的色带（「奶白条」）。
+    """
+    pal = theme_info(tid or DEFAULT_THEME)["tokens"]
+    return QColor(pal["deep"])
+
+
+def chrome_is_light(hex_str: str | None) -> bool:
+    """系统栏底色是否偏浅：决定状态栏/手势条用深色图标还是白色图标。"""
+    c = QColor(hex_str) if hex_str else QColor()
+    if not c.isValid():
+        return False
+    lum = (0.299 * c.red() + 0.587 * c.green() + 0.114 * c.blue()) / 255.0
+    return lum > 0.58
+
+
 def paint_page_bg(p: QPainter, rect, tid: str | None):
     """页面底色：纯色，主题纸色里掺一点主色，整页统一，不用渐变。"""
     p.fillRect(QRectF(rect), page_bg_color(tid))

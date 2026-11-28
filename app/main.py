@@ -51,24 +51,25 @@ def main():
     if ANDROID:
         # 先把窗口切到全屏铺满（decor 不再为系统栏预留空间），再显示，
         # 否则首帧会按「避让系统栏」的尺寸排版，随后才跳变成正确布局。
-        paper, page_bg = "#F3EEDF", "#F3EEDF"
+        paper, chrome = "#F3EEDF", "#2E5E8C"
         try:
             import theme as _theme
             tid = getattr(win, "theme_id", None) or _theme.DEFAULT_THEME
             paper = _theme.theme_tokens(tid).get("paper", paper)
-            # 页面是纯色底：状态栏 / 窗口底 / 手势条统一用这块底色，顶部不再有色差条
-            page_bg = _theme.page_bg_color(tid).name()
+            # 状态栏 / 手势条与顶部色带同色（deep）：安全区那一条由 Activity 窗口底填，
+            # 用页面浅色底会在深色顶栏上方露出浅一截 —— 就是「奶白条」。
+            chrome = _theme.chrome_bg_color(tid).name()
             from app import _android_edge_to_edge
-            _android_edge_to_edge(page_bg, page_bg)
+            _android_edge_to_edge(chrome, chrome)
         except Exception:
             pass
         win.showMaximized()          # 手机上铺满屏幕
 
-        def _fixup(_p=page_bg, _d=page_bg):
+        def _fixup(_c=chrome):
             """Qt 首次 show / 尺寸变化会重置系统栏，显示后再补几次。"""
             try:
                 from app import _android_edge_to_edge
-                _android_edge_to_edge(_p, _d)
+                _android_edge_to_edge(_c, _c)
                 win._sync_system_insets()
                 win._sync_bg()
             except Exception:

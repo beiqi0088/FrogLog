@@ -48,14 +48,18 @@ def _write_bar_color_file(hex_str: str | None):
     """
     if not hex_str:
         return
-    try:
-        d = os.environ.get("ANDROID_PRIVATE") or os.environ.get("ANDROID_APP_PATH")
-        if not d:
-            return
-        with open(os.path.join(d, "froglog_bar_color.txt"), "w") as f:
-            f.write(hex_str)
-    except Exception:
-        pass
+    # 两个环境变量在不同打包方式下指向不同目录，能写就都写一份，Java 侧两个都找
+    dirs = []
+    for key in ("ANDROID_PRIVATE", "ANDROID_APP_PATH"):
+        d = os.environ.get(key)
+        if d and d not in dirs:
+            dirs.append(d)
+    for d in dirs:
+        try:
+            with open(os.path.join(d, "froglog_bar_color.txt"), "w") as f:
+                f.write(hex_str)
+        except Exception:
+            pass
 
 
 def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None):
@@ -109,16 +113,20 @@ def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None)
                 window.setDecorFitsSystemWindows(False)
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
-                    # 状态栏 / 手势条都是浅色纸底 → 都用深色系统图标与手势条
-                    ctrl.setSystemBarsAppearance(8 | 16, 8 | 16)
+                    # 底色深（主题 deep）→ 白色图标；浅底（复习页模板色）→ 深色图标
+                    light_bg = theme.chrome_is_light(bg_hex)
+                    appearance = (8 | 16) if light_bg else 0
+                    ctrl.setSystemBarsAppearance(appearance, 8 | 16)
                     try:
                         # 确保时间、电量、手势条都显示（透明栏也不隐藏）
                         ctrl.show(autoclass("android.view.WindowInsets$Type").systemBars())
                     except Exception:
                         pass
             else:
-                window.getDecorView().setSystemUiVisibility(
-                    0x0100 | 0x0200 | 0x0400 | 0x0010 | 0x2000)
+                flags = 0x0100 | 0x0200 | 0x0400
+                if theme.chrome_is_light(bg_hex):
+                    flags |= 0x0010 | 0x2000
+                window.getDecorView().setSystemUiVisibility(flags)
             try:
                 bars = autoclass("org.kivy.android.FrogLogSystemBars")
                 bars.barColor = color
@@ -365,40 +373,42 @@ class MainWindow(QMainWindow):
             self.set_chrome_bg(self._chrome_override)
 
     def _apply_android_bars(self):
-        """状态栏 / 手势条铺和页面完全一致的纯色底 + 深色系统图标（换主题后 Qt 可能重置）。"""
+        """状态栏 / 手势条铺主题深色 + 白色系统图标（换主题后 Qt 可能重置）。"""
         if not _IS_ANDROID:
             return
-        paper = theme.theme_tokens(self.theme_id).get("paper", "#F3EEDF")
-        # 页面现在是纯色底：状态栏、Activity 窗口底、手势条统一取这块底色，
-        # 顶部就不会再出现一条比页面浅/深、还把时间电量藏起来的色差条。
+        # 安全区那一条由 Activity 窗口背景填：必须和顶部色带、底部 dock 同色（deep），
+        # 用页面浅色底就会在深色顶栏上方露出一条浅色带 —— 就是反复出现的「奶白条」。
+        chrome = self._chrome_override or theme.chrome_bg_color(self.theme_id).name()
         page_bg = theme.page_bg_color(self.theme_id).name()
         write_log = getattr(sys, "froglog_log", None)
         if callable(write_log):
             try:
                 scr = self.screen().geometry() if self.screen() else None
-                write_log(f"系统栏底色 page={page_bg} paper={paper} "
+                write_log(f"系统栏底色 chrome={chrome} page={page_bg} "
+                          f"override={getattr(self, '_chrome_override', None)} "
                           f"窗口={self.width()}x{self.height()} "
                           f"屏幕={scr.width() if scr else 0}x{scr.height() if scr else 0} "
                           f"insets={getattr(self, '_sys_top', 0)}/{getattr(self, '_sys_bottom', 0)}")
             except Exception:
                 pass
         for ms in (0, 300, 1200, 3000):
-            QTimer.singleShot(ms, lambda c=page_bg, d=page_bg: _android_edge_to_edge_safe(c, d))
+            QTimer.singleShot(ms, lambda c=chrome: _android_edge_to_edge_safe(c, c))
 
     def set_chrome_bg(self, hex_color: str | None):
-        """复习页：把窗口 + 系统栏底色临时换成卡片模板色；传 None 恢复主题 page_bg。
+        """复习页：把系统栏临时换成卡片模板色；传 None 恢复主题深色。
 
-        三层必须一起改，否则安卓上某一层优先级更高会盖回来——就是之前「奶白条」老问题：
-          1) BgLayer 自绘（铺满全屏，含状态栏/手势条安全区）
+        三层必须一起改，否则安卓上某一层优先级更高会盖回来——就是「奶白条」老问题：
+          1) BgLayer 自绘（Qt 窗口若铺满，安全区由它兜底）
           2) 控件级 QMainWindow 样式表（优先级高于全局表）
-          3) Java 侧 Activity 窗口底（读 froglog_bar_color.txt，安卓 15+ 的最终决定层）
+          3) Java 侧 Activity 窗口底（读 froglog_bar_color.txt，安卓 15+ 的实际决定层）
         """
         if hex_color is None:
+            chrome = theme.chrome_bg_color(self.theme_id).name()
             target = theme.page_bg_color(self.theme_id).name()
             self._chrome_override = None
             self.bg.set_override(None)
         else:
-            target = hex_color
+            chrome = target = hex_color
             if getattr(self, "_chrome_override", None) == target:
                 return
             self._chrome_override = target
@@ -406,7 +416,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(f"QMainWindow{{background:{target};}}")
         if _IS_ANDROID:
             for ms in (0, 300):
-                QTimer.singleShot(ms, lambda c=target: _android_edge_to_edge_safe(c, c))
+                QTimer.singleShot(ms, lambda c=chrome: _android_edge_to_edge_safe(c, c))
 
     def _sync_bg(self):
         # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，
@@ -533,7 +543,7 @@ class MainWindow(QMainWindow):
         # 计时只认学习页：离开就自动暂停，进来就接着跑（开关只负责武装任务）
         if prev is not None and prev[0] == "review" and key != "review":
             self.store.quest_pause_clock()
-            self.set_chrome_bg(None)   # 退出复习页：系统栏恢复主题 page_bg
+            self.set_chrome_bg(None)   # 退出复习页：系统栏恢复主题深色
         if key == "review":
             self.store.quest_start_clock()
         if prev is not None and not self._nav_back and prev != (key, dict(kw)):

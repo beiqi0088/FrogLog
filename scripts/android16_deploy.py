@@ -389,6 +389,7 @@ public final class FrogLogSystemBars {
     public static void apply(final Activity activity) {
         if (activity == null) return;
         applyNow(activity);
+        watchColorChanges(activity);
         final View decor = activity.getWindow().getDecorView();
         for (long delay : REPLAY_DELAYS) {
             decor.postDelayed(new Runnable() {
@@ -422,25 +423,79 @@ public final class FrogLogSystemBars {
     private static long fileStamp = -1L;
 
     // 页面底色由 Python 写进私有目录；Java 侧自己读，不依赖 jnius 调用是否成功。
-    private static void syncColorFromFile(Activity activity) {
+    // 多个候选路径都试一遍：不同打包方式下 Python 的 ANDROID_PRIVATE 与
+    // Java 的 getFilesDir() 偶尔不指向同一个目录，读不到就会退回主题默认色（奶白条）。
+    // 返回 true 表示颜色变了，需要重新铺一次系统栏。
+    private static boolean syncColorFromFile(Activity activity) {
         try {
-            java.io.File f = new java.io.File(activity.getFilesDir(),
-                    "froglog_bar_color.txt");
+            java.io.File base = activity.getFilesDir();
+            java.io.File f = new java.io.File(base, "froglog_bar_color.txt");
+            if (!f.exists()) {
+                java.io.File alt = new java.io.File(new java.io.File(base, "app"),
+                        "froglog_bar_color.txt");
+                if (alt.exists()) f = alt;
+            }
             long stamp = f.exists() ? f.lastModified() + f.length() : -1L;
-            if (stamp == fileStamp) return;
+            if (stamp == fileStamp) return false;
             fileStamp = stamp;
-            if (!f.exists()) return;
+            if (!f.exists()) {
+                // 文件还没写出来（Python 刚启动）→ 先用手上一次的颜色，避免露出主题默认的浅色条
+                if (Color.alpha(barColor) == 0) {
+                    int saved = activity.getPreferences(Activity.MODE_PRIVATE)
+                            .getInt("froglog_bar_color", 0);
+                    if (Color.alpha(saved) != 0) {
+                        barColor = saved;
+                        navBarColor = saved;
+                        return true;
+                    }
+                }
+                return false;
+            }
             java.io.FileInputStream in = new java.io.FileInputStream(f);
             byte[] buf = new byte[(int) f.length()];
             int n = in.read(buf);
             in.close();
             String s = new String(buf, 0, Math.max(0, n)).trim();
             if (s.startsWith("#") && (s.length() == 7 || s.length() == 9)) {
-                barColor = Color.parseColor(s);
-                navBarColor = barColor;
+                int c = Color.parseColor(s);
+                if (c == barColor) return false;
+                barColor = c;
+                navBarColor = c;
+                try {
+                    activity.getPreferences(Activity.MODE_PRIVATE).edit()
+                            .putInt("froglog_bar_color", barColor).apply();
+                } catch (Throwable ignored) {
+                }
+                return true;
             }
         } catch (Throwable ignored) {
         }
+        return false;
+    }
+
+    // 底色偏浅 → 用深色系统图标；偏深（主题 deep）→ 用白色图标
+    private static boolean isLight(int color) {
+        int r = (color >> 16) & 0xFF, g = (color >> 8) & 0xFF, b = color & 0xFF;
+        return (0.299 * r + 0.587 * g + 0.114 * b) / 255.0 > 0.58;
+    }
+
+    // 换主题、进出复习页都会改颜色：开着时轮询文件时间戳（只是 stat，开销可以忽略），
+    // 有变化才重新铺系统栏。之前只在启动后 20 秒内重放，之后颜色就改不动了。
+    private static void watchColorChanges(final Activity activity) {
+        final android.os.Handler handler =
+                new android.os.Handler(android.os.Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+                if (syncColorFromFile(activity)) {
+                    applyNow(activity);
+                }
+                handler.postDelayed(this, 400L);
+            }
+        }, 400L);
     }
 
     private static void applyNow(Activity activity) {
@@ -451,7 +506,7 @@ public final class FrogLogSystemBars {
         syncColorFromFile(activity);
         if (Color.alpha(barColor) != 0) {
             // 安卓 15+ 系统栏颜色已失效，安全区那条只能靠窗口背景填；
-            // 用和页面完全相同的纯色，顶部/底部才不会露出浅一截的色带。
+            // 用和顶部色带 / 底部 dock 完全相同的深色，上下才不会露出浅一截的色带。
             try {
                 window.setBackgroundDrawable(
                         new android.graphics.drawable.ColorDrawable(barColor));
@@ -462,12 +517,10 @@ public final class FrogLogSystemBars {
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
-                // 状态栏 / 手势条都是浅色纸底 → 都保留 LIGHT（深色图标与深色手势条）
-                controller.setSystemBarsAppearance(
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                                | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                                | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                // 深色底 → 白色图标；浅色底（复习页模板色）→ 深色图标
+                int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(isLight(barColor) ? mask : 0, mask);
                 // 确保时间、电量、手势条都显示
                 try {
                     controller.show(android.view.WindowInsets.Type.systemBars());
@@ -477,10 +530,12 @@ public final class FrogLogSystemBars {
         } else {
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-            // 浅色纸底 → 系统图标与手势条都用深色
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+            if (isLight(barColor)) {
+                // 浅色底 → 深色系统图标与手势条
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                        | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
             window.getDecorView().setSystemUiVisibility(flags);
         }
         window.setStatusBarColor(barColor);
