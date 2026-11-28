@@ -90,13 +90,16 @@ def tokens(dark: bool) -> dict:
 def build_qss(t: dict) -> str:
     cream = "#FFFDF8"
     band_sub = "#FFE9BD"
+    # 窗口自身底色：Qt 在状态栏安全区那一条会用它填（页面内容从安全区下方开始）。
+    # 必须和页面纯色底一致，否则顶部永远留一条比页面浅的色差带。
+    page_bg = _mix(t["brand"], t["page"], 0.92).name()
     return f"""
     QWidget {{
         font-family: "{FONT}", "Microsoft YaHei UI", "Microsoft YaHei", "SimHei", sans-serif;
         font-size: 13px;
         color: {t['ink']};
     }}
-    QMainWindow, #root {{ background: {t['paper']}; }}
+    QMainWindow, #root {{ background: {page_bg}; }}
     #phoneColumn {{ background: transparent; }}
 
     QScrollArea {{ border: none; background: transparent; }}
