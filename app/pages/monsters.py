@@ -27,16 +27,16 @@ class MonstersPage(Page):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.setSpacing(8)
         name = QLabel(cur[0])
-        name.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+        name.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
         hl.addWidget(name)
         lv = QLabel(f"Lv.{idx + 1}")
         lv.setStyleSheet(f"background:{cur[2]};color:#FFFDF8;border-radius:9px;"
-                         "font-size:10px;font-weight:700;padding:2px 8px;")
+                         "font-size:11.5px;font-weight:700;padding:2px 8px;")
         hl.addWidget(lv)
         hl.addStretch(1)
         now = QLabel("出战中")
         now.setStyleSheet(f"background:{W.T['deep']};color:#FFFDF8;border-radius:9px;"
-                          "font-size:9px;font-weight:700;padding:2px 8px;")
+                          "font-size:10.5px;font-weight:700;padding:2px 8px;")
         hl.addWidget(now)
         card.body.addWidget(head)
 
@@ -54,7 +54,7 @@ class MonstersPage(Page):
                      ("还差", f"{nxt[1] - total} 只 / 约 {(nxt[1] - total) * 45} 分钟")]
         for k, v in rows:
             lb = QLabel(f"{k}  {v}")
-            lb.setStyleSheet(f"font-size:11px;color:{W.T['ink2']};")
+            lb.setStyleSheet(f"font-size:12.5px;color:{W.T['ink2']};")
             info.addWidget(lb)
         info.addStretch(1)
         rl.addLayout(info, 1)
@@ -80,7 +80,7 @@ class MonstersPage(Page):
                 tl.setContentsMargins(0, 0, 0, 0)
                 tl.setSpacing(4)
                 nm = QLabel(mname)
-                nm.setStyleSheet(f"font-size:11px;font-weight:700;"
+                nm.setStyleSheet(f"font-size:12.5px;font-weight:700;"
                                  f"color:{W.T['ink'] if k <= idx else W.T['ink3']};")
                 tl.addWidget(nm)
                 tl.addStretch(1)
@@ -96,14 +96,14 @@ class MonstersPage(Page):
                 tag_fg = "#FFFDF8" if k <= idx else W.T["ink3"]
                 tg = QLabel(tag)
                 tg.setStyleSheet(f"background:{tag_color};color:{tag_fg};border-radius:8px;"
-                                 "font-size:8px;font-weight:700;padding:1px 5px;")
+                                 "font-size:10px;font-weight:700;padding:1px 5px;")
                 tl.addWidget(tg)
                 box.body.addWidget(top)
                 box.body.addWidget(W.Monster(40, color, "sleep" if k > idx else "happy"),
                                    0, Qt.AlignHCenter)
                 cost = QLabel(f"需要 {need} 只 · 约 {need * 45 // 60} 小时")
                 cost.setAlignment(Qt.AlignCenter)
-                cost.setStyleSheet(f"font-size:8.5px;color:{W.T['ink3']};")
+                cost.setStyleSheet(f"font-size:10px;color:{W.T['ink3']};")
                 box.body.addWidget(cost)
                 rl.addWidget(box, 1)
             self.add(row)

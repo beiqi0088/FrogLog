@@ -22,7 +22,7 @@ def _dlg(owner, title: str, width: int = 380):
 
 def _title(lay, text: str):
     t = QLabel(text)
-    t.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
+    t.setStyleSheet(f"font-size:19px;font-weight:700;color:{W.T['ink']};")
     lay.addWidget(t)
 
 
@@ -31,9 +31,9 @@ def _row(lay, k: str, v: str, color: str | None = None):
     rl = QHBoxLayout(row)
     rl.setContentsMargins(0, 0, 0, 0)
     a = QLabel(k)
-    a.setStyleSheet(f"font-size:12.5px;color:{W.T['ink2']};")
+    a.setStyleSheet(f"font-size:13.5px;color:{W.T['ink2']};")
     b = QLabel(v)
-    b.setStyleSheet(f"font-size:12.5px;font-weight:700;color:{color or W.T['ink']};")
+    b.setStyleSheet(f"font-size:13.5px;font-weight:700;color:{color or W.T['ink']};")
     rl.addWidget(a, 1)
     rl.addWidget(b, 0, Qt.AlignRight)
     lay.addWidget(row)
@@ -54,12 +54,12 @@ class SettleDialog(QDialog):
 
         icon = QLabel("🌙")
         icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet("font-size:30px;")
+        icon.setStyleSheet("font-size:31px;")
         lay.addWidget(icon)
 
         t = QLabel("今日结算")
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:20px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:21px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(t)
 
         sub = QLabel(f"{info.get('date', '')} · 24:00 自动结算")
@@ -86,7 +86,7 @@ class SettleDialog(QDialog):
                      + ("  ·  倒下：金币 −10%、连击清零" if info.get("down")
                         else "  ·  明早自动回 1 点"))
         tip.setAlignment(Qt.AlignCenter)
-        tip.setStyleSheet(f"font-size:11.5px;color:{W.T['red'] if info.get('down') else W.T['ink3']};")
+        tip.setStyleSheet(f"font-size:13px;color:{W.T['red'] if info.get('down') else W.T['ink3']};")
         lay.addWidget(tip)
 
         btn = W.PrimaryButton("明天继续")
@@ -111,17 +111,17 @@ class LevelUpDialog(QDialog):
 
         icon = QLabel("🏆")
         icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet("font-size:30px;")
+        icon.setStyleSheet("font-size:31px;")
         lay.addWidget(icon)
 
         t = QLabel("升级！")
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:21px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:22px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(t)
 
         sub = QLabel(f"Lv.{lv - 1} → Lv.{lv}")
         sub.setAlignment(Qt.AlignCenter)
-        sub.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['brand']};")
+        sub.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['brand']};")
         lay.addWidget(sub)
 
         card = W.Card(flat=True)
@@ -185,7 +185,7 @@ class AddRewardDialog(QDialog):
         pl = QHBoxLayout(price_row)
         pl.setContentsMargins(0, 0, 0, 0)
         cap = QLabel("需要金币")
-        cap.setStyleSheet(f"color:{W.T['ink2']};font-size:12.5px;")
+        cap.setStyleSheet(f"color:{W.T['ink2']};font-size:13.5px;")
         self.price = QSpinBox()
         self.price.setRange(1, 9999)
         self.price.setValue(30)

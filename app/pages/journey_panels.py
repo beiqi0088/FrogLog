@@ -70,7 +70,7 @@ def small(text: str, size: float = 10.5, color: str | None = None, bold: bool = 
 
 def h3(text: str):
     lb = QLabel(text)
-    lb.setStyleSheet(f"font-size:13px;font-weight:700;color:{W.T['ink']};")
+    lb.setStyleSheet(f"font-size:14px;font-weight:700;color:{W.T['ink']};")
     return lb
 
 
@@ -100,7 +100,7 @@ class _ElideLabel(QLabel):
 def hline_msg(text: str):
     lb = QLabel(text)
     lb.setWordWrap(True)
-    lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+    lb.setStyleSheet(f"font-size:12px;color:{W.T['ink3']};")
     return lb
 
 
@@ -173,7 +173,7 @@ class OverviewPanel(Panel):
         self.q_reset.setToolTip("把这次任务清零：计时和这次学的时间都不算，回 15:00")
         self.q_reset.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};border:none;color:{W.T['ink']};"
-            f"border-radius:12px;font-size:10.5px;font-weight:700;padding:0 10px;}}"
+            f"border-radius:12px;font-size:12px;font-weight:700;padding:0 10px;}}"
             f"QPushButton:disabled{{color:{W.T['ink3']};}}")
         self.q_reset.clicked.connect(self.page.reset_quest)
         hl.addWidget(self.q_reset, 0, Qt.AlignVCenter)
@@ -186,7 +186,7 @@ class OverviewPanel(Panel):
         self.q_hint = QLabel("")
         self.q_hint.setAlignment(Qt.AlignCenter)
         self.q_hint.setWordWrap(True)
-        self.q_hint.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+        self.q_hint.setStyleSheet(f"font-size:12px;color:{W.T['ink3']};")
         card.body.addWidget(self.q_hint)
 
         # 今日吃掉青蛙数量：放进今日任务卡，不再单独用「吃掉那只青蛙」卡
@@ -203,11 +203,11 @@ class OverviewPanel(Panel):
         fr.setSpacing(10)
         fr.addWidget(W.FrogMascot(34, "green"), 0, Qt.AlignVCenter)
         cap = QLabel("今日已吃")
-        cap.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
+        cap.setStyleSheet(f"font-size:12.5px;color:{W.T['ink3']};")
         fr.addWidget(cap)
-        num = QLabel(f"{today_frogs}<span style='font-size:12px;color:{W.T['ink3']};'> 只</span>")
+        num = QLabel(f"{today_frogs}<span style='font-size:13px;color:{W.T['ink3']};'> 只</span>")
         num.setTextFormat(Qt.RichText)
-        num.setStyleSheet(f"font-size:24px;font-weight:700;color:{W.T['brand']};")
+        num.setStyleSheet(f"font-size:25px;font-weight:700;color:{W.T['brand']};")
         fr.addWidget(num, 1)
         card.body.addWidget(frog_row)
 
@@ -230,7 +230,7 @@ class OverviewPanel(Panel):
         if status == "active":
             self.q_time.setText(fmt_mmss(self.store.quest_left_ms()))
             self.q_time.setStyleSheet(
-                f"font-size:42px;font-weight:700;color:{W.T['brand']};letter-spacing:1px;")
+                f"font-size:44px;font-weight:700;color:{W.T['brand']};letter-spacing:1px;")
             running = self.store.quest_running()
             started = running or int(q.get("acc_ms") or 0) > 0
             if running:
@@ -242,20 +242,20 @@ class OverviewPanel(Panel):
         elif status == "done":
             self.q_time.setText("00:00")
             self.q_time.setStyleSheet(
-                f"font-size:42px;font-weight:700;color:{W.T['green']};letter-spacing:1px;")
+                f"font-size:44px;font-weight:700;color:{W.T['green']};letter-spacing:1px;")
             self.q_hint.setText(
                 f"已完成 · 经验 +{reward.get('xp', 0)} · 金币 +{reward.get('gold', 0)}")
         elif self.store.quest_has_progress():
             # 暂停中：显示剩余时间，已用进度保留
             self.q_time.setText(fmt_mmss(self.store.quest_left_ms()))
             self.q_time.setStyleSheet(
-                f"font-size:42px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
+                f"font-size:44px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
             used = fmt_mmss(self.store.quest_elapsed())
             self.q_hint.setText(f"已暂停 · 已用 {used} / {mins} 分钟 · 进度保留")
         else:
             self.q_time.setText(f"{mins:02d}:00")
             self.q_time.setStyleSheet(
-                f"font-size:42px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
+                f"font-size:44px;font-weight:700;color:{W.T['ink']};letter-spacing:1px;")
             self.q_hint.setText("打开开关后，进学习页才开始计时")
 
         if hasattr(self, "q_reset"):
@@ -295,10 +295,10 @@ class OverviewPanel(Panel):
         nl.setContentsMargins(0, 0, 0, 0)
         nl.setSpacing(0)
         cap = QLabel("今日已吃")
-        cap.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
-        num = QLabel(f"{today_frogs}<span style='font-size:13px;color:{W.T['ink3']};'> 只</span>")
+        cap.setStyleSheet(f"font-size:12.5px;color:{W.T['ink3']};")
+        num = QLabel(f"{today_frogs}<span style='font-size:14px;color:{W.T['ink3']};'> 只</span>")
         num.setTextFormat(Qt.RichText)
-        num.setStyleSheet(f"font-size:30px;font-weight:700;color:{W.T['brand']};")
+        num.setStyleSheet(f"font-size:31px;font-weight:700;color:{W.T['brand']};")
         nl.addWidget(cap)
         nl.addWidget(num)
         rl.addWidget(num_box, 1)
@@ -320,11 +320,11 @@ class OverviewPanel(Panel):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.setSpacing(8)
         name = QLabel(cur[0])
-        name.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
+        name.setStyleSheet(f"font-size:19px;font-weight:700;color:{W.T['ink']};")
         hl.addWidget(name)
         lv = QLabel(f"Lv.{idx + 1}")
         lv.setStyleSheet(f"background:{cur[2]};color:#FFFDF8;border-radius:9px;"
-                         "font-size:10px;font-weight:700;padding:2px 8px;")
+                         "font-size:11.5px;font-weight:700;padding:2px 8px;")
         hl.addWidget(lv)
         hl.addStretch(1)
         rec = QPushButton("吃蛙记录 ›")
@@ -332,7 +332,7 @@ class OverviewPanel(Panel):
         rec.setToolTip("查看每次吃青蛙的详细记录")
         rec.setStyleSheet(
             f"QPushButton{{background:transparent;border:none;color:{W.T['ink3']};"
-            f"font-size:10.5px;padding:0;}}"
+            f"font-size:12px;padding:0;}}"
             f"QPushButton:hover{{color:{W.T['brand']};}}")
         rec.clicked.connect(lambda: self.app.show_page("frog_records"))
         hl.addWidget(rec, 0, Qt.AlignVCenter)
@@ -341,7 +341,7 @@ class OverviewPanel(Panel):
         link.setToolTip("打开怪物图鉴：6 只怪物、吃青蛙数与学习时长")
         link.setStyleSheet(
             f"QPushButton{{background:{W.T['brand_soft']};border:none;color:{W.T['deep']};"
-            f"border-radius:11px;font-size:11px;font-weight:700;padding:3px 10px;}}")
+            f"border-radius:11px;font-size:12.5px;font-weight:700;padding:3px 10px;}}")
         link.clicked.connect(lambda: self.app.show_page("monsters"))
         hl.addWidget(link, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
@@ -358,7 +358,7 @@ class OverviewPanel(Panel):
             card.body.addWidget(ThinBar(100, W.T["red"], W.T["paper2"], 8))
             hint = QLabel("已吃到最高级「蛙群之王」")
         hint.setAlignment(Qt.AlignCenter)
-        hint.setStyleSheet(f"font-size:10.5px;color:{W.T['ink2']};")
+        hint.setStyleSheet(f"font-size:12px;color:{W.T['ink2']};")
         card.body.addWidget(hint)
 
         stats = QHBoxLayout()
@@ -371,10 +371,10 @@ class OverviewPanel(Panel):
             bx.setContentsMargins(0, 0, 0, 0)
             bx.setSpacing(0)
             vv = QLabel(v)
-            vv.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
+            vv.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
             bx.addWidget(vv)
             kk = QLabel(k)
-            kk.setStyleSheet(f"font-size:9.5px;color:{W.T['ink3']};")
+            kk.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
             bx.addWidget(kk)
             stats.addWidget(box, 1)
         card.body.addLayout(stats)
@@ -467,12 +467,12 @@ class FrogTimelinePanel(Panel):
             card.body.setSpacing(8)
             t = QLabel("还没有吃掉青蛙")
             t.setAlignment(Qt.AlignCenter)
-            t.setStyleSheet(f"font-size:14px;font-weight:700;color:{W.T['ink']};")
+            t.setStyleSheet(f"font-size:15px;font-weight:700;color:{W.T['ink']};")
             card.body.addWidget(t)
             tip = QLabel("去总览领一个任务：每专注 15 分钟，就会吃掉一只")
             tip.setAlignment(Qt.AlignCenter)
             tip.setWordWrap(True)
-            tip.setStyleSheet(f"font-size:11.5px;color:{W.T['ink3']};")
+            tip.setStyleSheet(f"font-size:13px;color:{W.T['ink3']};")
             card.body.addWidget(tip)
             self.body.addWidget(card)
             self.body.addStretch(1)
@@ -492,7 +492,7 @@ class FrogTimelinePanel(Panel):
         left = self.store.frog_left_minutes()
         tip = QLabel(f"当前这只青蛙还差 {left} 分钟")
         tip.setAlignment(Qt.AlignCenter)
-        tip.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+        tip.setStyleSheet(f"font-size:12px;color:{W.T['ink3']};")
         self.body.addWidget(tip)
         self.body.addStretch(1)
 
@@ -533,19 +533,19 @@ class FrogTimelinePanel(Panel):
 
         when = QLabel(time.strftime("%H:%M", time.localtime((ev.get("at") or 0) / 1000)))
         when.setFixedWidth(38)
-        when.setStyleSheet(f"font-size:10px;color:{W.T['ink3']};")
+        when.setStyleSheet(f"font-size:11.5px;color:{W.T['ink3']};")
         when.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         rl.addWidget(when, 0, Qt.AlignTop)
 
         frog = QLabel("🐸")
         frog.setFixedWidth(20)
-        frog.setStyleSheet("font-size:13px;")
+        frog.setStyleSheet("font-size:14px;")
         rl.addWidget(frog, 0, Qt.AlignTop)
 
         col = QVBoxLayout()
         col.setSpacing(2)
         title = QLabel(f"吃掉第 {int(ev.get('idx') or 0)} 只青蛙")
-        title.setStyleSheet(f"font-size:12.5px;font-weight:700;color:{W.T['ink']};")
+        title.setStyleSheet(f"font-size:13.5px;font-weight:700;color:{W.T['ink']};")
         title.setWordWrap(True)
         col.addWidget(title)
 
@@ -553,7 +553,7 @@ class FrogTimelinePanel(Panel):
                 f"累计 {_fmt_total(int(ev.get('total_min') or 0))}",
                 "+40 金币", "+1 宝石"]
         sub = QLabel(" · ".join(bits))
-        sub.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+        sub.setStyleSheet(f"font-size:12px;color:{W.T['ink3']};")
         sub.setWordWrap(True)
         col.addWidget(sub)
         rl.addLayout(col, 1)
@@ -577,7 +577,7 @@ class PartyPanel(Panel):
 
         name = QLabel("吃掉那只青蛙")
         name.setAlignment(Qt.AlignCenter)
-        name.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
+        name.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
         card.body.addWidget(name)
         card.body.addWidget(small(f"Lv.{b.get('lv', 1)} · 已损失 "
                                  f"{100 - int(int(b.get('hp') or 0) / max(1, int(b.get('hp_max') or 100)) * 100)}% 生命", 10.5))
@@ -616,7 +616,7 @@ class PartyPanel(Panel):
         av.setFixedSize(30, 30)
         av.setStyleSheet(
             f"background:{W.T['brand']};color:#FFFFFF;border-radius:10px;"
-            f"font-size:12px;font-weight:700;")
+            f"font-size:13px;font-weight:700;")
         ml.addWidget(av)
         col = QVBoxLayout()
         col.setSpacing(4)
@@ -683,7 +683,7 @@ class RewardsPanel(Panel):
         cap = small("连击", 10, hi, True)
         cap.setAlignment(Qt.AlignRight)
         val = QLabel(f"{int(g.get('streak') or 0)} 天")
-        val.setStyleSheet(f"font-size:15px;font-weight:700;color:{hi};")
+        val.setStyleSheet(f"font-size:16px;font-weight:700;color:{hi};")
         val.setAlignment(Qt.AlignRight)
         right.addWidget(cap)
         right.addWidget(val)
@@ -710,18 +710,18 @@ class RewardsPanel(Panel):
             rl.setSpacing(8)
             rl.addWidget(W.Pill(str(r.get("tag") or "自定义"), "plain"))
             t = QLabel(str(r.get("title") or ""))
-            t.setStyleSheet(f"font-size:13px;font-weight:700;color:{W.T['ink']};")
+            t.setStyleSheet(f"font-size:14px;font-weight:700;color:{W.T['ink']};")
             rl.addWidget(t, 1)
             price = QLabel(f"◉ {int(r.get('price') or 0)}")
             price.setStyleSheet(
-                f"font-size:12px;font-weight:700;color:{W.T['accent']};")
+                f"font-size:13px;font-weight:700;color:{W.T['accent']};")
             rl.addWidget(price)
             buy = QPushButton("兑换")
             buy.setFixedHeight(28)
             buy.setCursor(Qt.PointingHandCursor)
             buy.setStyleSheet(
                 f"QPushButton{{background:{W.T['brand_soft']};color:{W.T['brand']};"
-                f"border:none;border-radius:9px;padding:0 10px;font-size:11px;"
+                f"border:none;border-radius:9px;padding:0 10px;font-size:12.5px;"
                 f"font-weight:700;}}")
             buy.clicked.connect(lambda _, rid=r["id"]: self.page.redeem(rid))
             rl.addWidget(buy)
@@ -758,9 +758,9 @@ class RewardsPanel(Panel):
             icon.setAlignment(Qt.AlignCenter)
             icon.setFixedHeight(36)
             icon.setStyleSheet(
-                (f"background:{W.T['accent_soft']};border-radius:11px;font-size:16px;")
+                (f"background:{W.T['accent_soft']};border-radius:11px;font-size:17px;")
                 if on else
-                (f"background:{W.T['paper2']};border-radius:11px;font-size:16px;"
+                (f"background:{W.T['paper2']};border-radius:11px;font-size:17px;"
                  f"color:{W.T['ink3']};"))
             if not on:
                 eff = QGraphicsOpacityEffect(icon)
@@ -769,7 +769,7 @@ class RewardsPanel(Panel):
             cell.addWidget(icon)
             lb = QLabel(name)
             lb.setAlignment(Qt.AlignCenter)
-            lb.setStyleSheet(f"font-size:9px;color:{W.T['ink3']};")
+            lb.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
             cell.addWidget(lb)
             gl.addLayout(cell, 1)
         bcard.body.addWidget(grid)

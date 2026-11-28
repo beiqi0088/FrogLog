@@ -99,7 +99,7 @@ class MenuRow(QWidget):
         lay.setSpacing(10)
         lay.addWidget(MenuGlyph(kind, 16), 0, Qt.AlignVCenter)
         lb = QLabel(text)
-        lb.setStyleSheet(f"font-size:12.5px;color:{W.T['ink']};")
+        lb.setStyleSheet(f"font-size:13.5px;color:{W.T['ink']};")
         lay.addWidget(lb, 1)
 
     def mouseReleaseEvent(self, e):
@@ -372,7 +372,7 @@ class QuestPill(QPushButton):
         fg = W.T["brand"] if running else W.T["ink2"]
         self.setStyleSheet(
             f"QPushButton{{background:{bg};color:{fg};border:none;border-radius:15px;"
-            f"padding:0 12px;font-size:12.5px;font-weight:700;letter-spacing:0.6px;}}")
+            f"padding:0 12px;font-size:13.5px;font-weight:700;letter-spacing:0.6px;}}")
         self.setToolTip("倒计时中 · 离开学习页会暂停" if running else "已暂停 · 回到学习页继续")
 
 
@@ -744,7 +744,7 @@ class ReviewPage(QWidget):
         big.setStyleSheet(f"color:{pal['fg']};font-size:28px;font-weight:700;")
         col.addWidget(big)
         sub = QLabel("这一轮复习完成")
-        sub.setStyleSheet(f"color:{pal['fg']};font-size:12px;opacity:0.7;")
+        sub.setStyleSheet(f"color:{pal['fg']};font-size:13px;opacity:0.7;")
         col.addWidget(sub)
         hl.addLayout(col, 1)
         hl.addWidget(W.Ring(pct, 56, 6), 0, Qt.AlignVCenter)
@@ -771,10 +771,10 @@ class ReviewPage(QWidget):
             cl.setSpacing(1)
             v = QLabel(val)
             v.setAlignment(Qt.AlignCenter)
-            v.setStyleSheet(f"color:{color};font-size:18px;font-weight:700;")
+            v.setStyleSheet(f"color:{color};font-size:19px;font-weight:700;")
             n = QLabel(name)
             n.setAlignment(Qt.AlignCenter)
-            n.setStyleSheet(f"color:{pal['fg']};font-size:10.5px;")
+            n.setStyleSheet(f"color:{pal['fg']};font-size:12px;")
             cl.addWidget(v)
             cl.addWidget(n)
             sl.addWidget(cell, 1)
@@ -787,7 +787,7 @@ class ReviewPage(QWidget):
 
         hint = QLabel("间隔已按 FSRS 自动调整，下次会正好卡在遗忘前")
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color:{pal['fg']};font-size:11px;")
+        hint.setStyleSheet(f"color:{pal['fg']};font-size:12.5px;")
         box.body.addWidget(hint)
 
         self.area_lay.addWidget(box)
@@ -805,7 +805,7 @@ class ReviewPage(QWidget):
         back.setCursor(Qt.PointingHandCursor)
         back.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};"
-            f"border:none;border-radius:14px;font-size:14px;font-weight:600;}}")
+            f"border:none;border-radius:14px;font-size:15px;font-weight:600;}}")
         back.clicked.connect(self.app.exit_review)
         rl.addWidget(back, 1)
 
@@ -814,7 +814,7 @@ class ReviewPage(QWidget):
         nxt.setCursor(Qt.PointingHandCursor)
         nxt.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:14px;font-size:14px;font-weight:700;}}")
+            f"border-radius:14px;font-size:15px;font-weight:700;}}")
         nxt.clicked.connect(self._go_next_group)
         rl.addWidget(nxt, 1)
         self.bottom_lay.addWidget(row)
@@ -980,7 +980,7 @@ class ReviewPage(QWidget):
 
             self._grp_label = OneLineLabel("")
             self._grp_label.setStyleSheet(
-                f"color:{W.T['ink']};font-size:15px;font-weight:700;letter-spacing:0.2px;")
+                f"color:{W.T['ink']};font-size:16px;font-weight:700;letter-spacing:0.2px;")
             self.top_lay.addWidget(self._grp_label, 1)
 
             # 任务计时胶囊：就在「卡组名」和右侧挖空按钮之间那块空位
@@ -1030,10 +1030,10 @@ class ReviewPage(QWidget):
 
         big = QLabel(f"{secs} 秒后继续")
         big.setAlignment(Qt.AlignCenter)
-        big.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink2']};")
+        big.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink2']};")
         sub = QLabel("这张卡刚点过「重来」，等它到点会再出现")
         sub.setAlignment(Qt.AlignCenter)
-        sub.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
+        sub.setStyleSheet(f"font-size:12.5px;color:{W.T['ink3']};")
 
         self.area_lay.addStretch(1)
         self.area_lay.addWidget(big, 0, Qt.AlignHCenter)
@@ -1080,7 +1080,7 @@ class ReviewPage(QWidget):
 
             lb = QLabel(f"{name} {counts[key]}")
             lb.setStyleSheet(
-                f"font-size:12px;font-weight:700;letter-spacing:0.2px;"
+                f"font-size:13px;font-weight:700;letter-spacing:0.2px;"
                 f"color:{W.T['brand'] if active else W.T['ink3']};")
             hl.addWidget(lb, 0, Qt.AlignVCenter)
         return wrap
@@ -1108,7 +1108,7 @@ class ReviewPage(QWidget):
                 sep.setStyleSheet(f"background:{W.T['line']};")
                 cl.addWidget(sep, 0, Qt.AlignVCenter)
             lb = QLabel(f"{name} 0")
-            lb.setStyleSheet(f"font-size:12px;font-weight:700;letter-spacing:0.2px;"
+            lb.setStyleSheet(f"font-size:13px;font-weight:700;letter-spacing:0.2px;"
                              f"color:{W.T['ink3']};")
             cl.addWidget(lb, 0, Qt.AlignVCenter)
             self._stat_lbs[key] = (name, lb)
@@ -1187,7 +1187,7 @@ class ReviewPage(QWidget):
         for key, (name, lb) in self._stat_lbs.items():
             lb.setText(f"{name} {counts[key]}")
             lb.setStyleSheet(
-                f"font-size:12px;font-weight:700;letter-spacing:0.2px;"
+                f"font-size:13px;font-weight:700;letter-spacing:0.2px;"
                 f"color:{W.T['brand'] if key == cur else W.T['ink3']};")
 
         previews = FS.preview(card, now_ms(),

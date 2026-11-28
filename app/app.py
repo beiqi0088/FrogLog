@@ -283,7 +283,7 @@ class MainWindow(QMainWindow):
         self.toast_label.hide()
         self.toast_label.setStyleSheet(
             "background:rgba(36,39,33,0.92);color:#FBF8F1;border-radius:14px;"
-            "padding:9px 16px;font-size:12px;")
+            "padding:9px 16px;font-size:13px;")
         self._toast_timer = QTimer(self)
         self._toast_timer.setSingleShot(True)
         self._toast_timer.timeout.connect(self.toast_label.hide)
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
         theme.set_font(resolve_family())
         W.set_tokens(t)
         app = QApplication.instance()
-        app.setFont(QFont(theme.FONT, 9))
+        app.setFont(QFont(theme.FONT, 11))
         app.setStyleSheet(theme.build_qss(t))
         # 窗口自身底色就是状态栏安全区那一条的颜色：必须用页面纯色底。
         # 这行是控件级样式，优先级高于全局表，之前写死 paper 就是顶部色差的根源。

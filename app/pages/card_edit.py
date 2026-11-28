@@ -213,7 +213,7 @@ class CardEditPage(Page):
         self.text.document().clearUndoRedoStacks()
         self.text.setMinimumHeight(240)
         self.text.setStyleSheet(
-            f"QTextEdit{{font-size:16px;line-height:170%;padding:8px 4px;"
+            f"QTextEdit{{font-size:17px;line-height:170%;padding:8px 4px;"
             f"background:{W.T['panel']};border:none;border-radius:12px;}}")
         self.text.textChanged.connect(lambda: self._preview_timer.start(250))
 
@@ -289,7 +289,7 @@ class CardEditPage(Page):
         self.tpl_btn.setToolTip("换一套卡片皮肤（应用到当前卡包）")
         self.tpl_btn.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};border:none;"
-            f"border-radius:14px;font-size:12px;padding:0 12px;}}"
+            f"border-radius:14px;font-size:13px;padding:0 12px;}}"
             f"QPushButton:hover{{background:{W.T['brand_soft']};color:{W.T['brand']};}}")
         self.tpl_btn.clicked.connect(self._open_templates)
         lay.addWidget(self.tpl_btn)
@@ -301,7 +301,7 @@ class CardEditPage(Page):
         sibling.setToolTip("复制成同一笔记的另一张卡（独立调度，可开「bury 兄弟」避免同天出现）")
         sibling.setStyleSheet(
             f"QPushButton{{background:transparent;border:none;color:{W.T['ink2']};"
-            f"font-size:12.5px;font-weight:600;padding:0 6px;}}"
+            f"font-size:13.5px;font-weight:600;padding:0 6px;}}"
             f"QPushButton:hover{{color:{W.T['brand']};}}")
         sibling.clicked.connect(self._add_sibling)
         lay.addWidget(sibling)
@@ -310,7 +310,7 @@ class CardEditPage(Page):
         save.setCursor(Qt.PointingHandCursor)
         save.setStyleSheet(
             f"QPushButton{{background:transparent;border:none;color:{W.T['brand']};"
-            f"font-size:13.5px;font-weight:700;padding:0 4px;}}"
+            f"font-size:14.5px;font-weight:700;padding:0 4px;}}"
             f"QPushButton:hover{{color:{W.T['brand2']};}}")
         save.clicked.connect(self._save_clicked)
         lay.addWidget(save)
@@ -432,7 +432,7 @@ class CardEditPage(Page):
         seg.setStyleSheet(
             f"QWidget#segMode{{background:{W.T['paper2']};border-radius:15px;}}"
             f"QPushButton#chip{{background:transparent;color:{W.T['ink2']};border:none;"
-            f"font-size:12px;border-radius:12px;padding:0 14px;}}"
+            f"font-size:13px;border-radius:12px;padding:0 14px;}}"
             f"QPushButton#chip:hover{{color:{W.T['brand']};}}"
             f"QPushButton#chip[on=\"true\"]{{background:{W.T['panel']};"
             f"color:{W.T['brand']};font-weight:700;}}")
@@ -727,7 +727,7 @@ class CardEditPage(Page):
         change.setToolTip("换一套卡片皮肤（应用到当前卡包）")
         change.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};border:none;"
-            f"border-radius:14px;font-size:12px;padding:0 14px;}}"
+            f"border-radius:14px;font-size:13px;padding:0 14px;}}"
             f"QPushButton:hover{{background:{W.T['brand_soft']};color:{W.T['brand']};}}")
         change.clicked.connect(self._open_templates)
         lay.addWidget(change)
@@ -811,7 +811,7 @@ class CardEditPage(Page):
             b.setToolTip(tip)
             b.setStyleSheet(
                 f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink2']};border:none;"
-                f"border-radius:8px;font-size:11.5px;padding:0 9px;}}"
+                f"border-radius:8px;font-size:13px;padding:0 9px;}}"
                 f"QPushButton:hover{{background:{W.T['brand_soft']};color:{W.T['brand']};}}")
             b.clicked.connect(lambda _=False, f=fn: self._sel_bar_action(f))
             lay.addWidget(b)
@@ -884,7 +884,7 @@ class CardEditPage(Page):
         m.setStyleSheet(
             f"QMenu{{background:{W.T['panel']};border:1px solid {W.T['line']};"
             f"border-radius:10px;padding:4px;}}"
-            f"QMenu::item{{padding:7px 22px;border-radius:7px;font-size:12.5px;}}"
+            f"QMenu::item{{padding:7px 22px;border-radius:7px;font-size:13.5px;}}"
             f"QMenu::item:selected{{background:{W.T['brand_soft']};color:{W.T['brand']};}}")
         for label, pt in (("小", 10.0), ("标准", F.FONT_BASE_PT),
                           ("大", 16.0), ("特大", 20.0)):

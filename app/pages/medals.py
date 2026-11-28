@@ -51,7 +51,7 @@ class MedalsPage(Page):
         col.setSpacing(2)
         t = QLabel(name)
         color = W.T["ink"] if got else W.T["ink3"]
-        t.setStyleSheet(f"font-size:13px;font-weight:700;color:{color};")
+        t.setStyleSheet(f"font-size:14px;font-weight:700;color:{color};")
         col.addWidget(t)
 
         if got and at:
@@ -69,7 +69,7 @@ class MedalsPage(Page):
 
         tag = QLabel("已解锁" if got else f"{total} / {need}")
         tag.setStyleSheet(
-            f"font-size:11px;font-weight:700;"
+            f"font-size:12.5px;font-weight:700;"
             f"color:{W.T['brand'] if got else W.T['ink3']};")
         rl.addWidget(tag, 0, Qt.AlignVCenter)
         return row

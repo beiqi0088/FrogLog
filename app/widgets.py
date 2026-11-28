@@ -164,7 +164,7 @@ class ListRow(ClickFrame):
         col.addWidget(s)
         lay.addLayout(col, 1)
         chev = QLabel("›")
-        chev.setStyleSheet(f"color:{T['ink3']};font-size:18px;")
+        chev.setStyleSheet(f"color:{T['ink3']};font-size:19px;")
         lay.addWidget(chev)
 
 
@@ -192,7 +192,7 @@ class TypeBadge(QLabel):
         soft = {"qa": "green_soft", "single": "blue_soft", "multi": "accent_soft"}.get(kind, "paper2")
         self.setStyleSheet(
             f"background:{T[soft]};color:{T[key]};border-radius:7px;"
-            f"font-size:10px;font-weight:700;"
+            f"font-size:11.5px;font-weight:700;"
         )
 
 
@@ -216,7 +216,7 @@ class Pill(QLabel):
         }.get(kind, (T["ink2"], T["paper2"]))
         self.setStyleSheet(
             f"background:{bg};color:{fg};border-radius:9px;padding:3px 8px;"
-            f"font-size:10.5px;font-weight:600;"
+            f"font-size:12px;font-weight:600;"
         )
 
 
@@ -433,7 +433,7 @@ class ThemeChip(ClickFrame if "ClickFrame" in globals() else QWidget):
                       0, Qt.AlignVCenter)
         lb = ElideLabel(name)
         lb.setStyleSheet(
-            f"font-size:12.5px;font-weight:600;color:"
+            f"font-size:13.5px;font-weight:600;color:"
             f"{(tokens.get('brand') if selected else tokens.get('ink'))};")
         lay.addWidget(lb, 1)
         border = tokens.get("brand") if selected else tokens.get("line")
@@ -1288,7 +1288,7 @@ class OptionRow(ClickFrame):
         lay.addWidget(self.key)
         self.label = QLabel(text)
         self.label.setWordWrap(True)
-        self.label.setStyleSheet("font-size:13px;")
+        self.label.setStyleSheet("font-size:14px;")
         self.label.setMinimumHeight(wrap_height(text, 13, 286))
         lay.addWidget(self.label, 1)
         self._apply()
@@ -1318,9 +1318,9 @@ class OptionRow(ClickFrame):
         if self.multi:
             self.key.setText("✓" if self.state in ("picked", "correct") else ("✕" if self.state == "wrong" else ""))
         self.key.setStyleSheet(
-            f"background:{key_bg};color:{key_fg};border-radius:6px;font-size:10px;font-weight:700;"
+            f"background:{key_bg};color:{key_fg};border-radius:6px;font-size:11.5px;font-weight:700;"
         )
-        self.label.setStyleSheet(f"font-size:13px;color:{fg};")
+        self.label.setStyleSheet(f"font-size:14px;color:{fg};")
 
 
 class RatingButton(ClickFrame):
@@ -1341,13 +1341,13 @@ class RatingButton(ClickFrame):
         lay.setSpacing(5)
         t = QLabel(label)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:14.5px;font-weight:800;letter-spacing:0.5px;color:{fg};")
+        t.setStyleSheet(f"font-size:15.5px;font-weight:800;letter-spacing:0.5px;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
         # 间隔预览：同色小字，和白卡一起保持干净
         h.setStyleSheet(
             "background:transparent;border:none;"
-            "padding:0px;font-size:10.5px;font-weight:600;"
+            "padding:0px;font-size:12px;font-weight:600;"
             f"color:{fg};")
         hw = QHBoxLayout()
         hw.setContentsMargins(0, 0, 0, 0)
@@ -1384,14 +1384,14 @@ class RateSegment(ClickFrame):
         t = QLabel(name)
         t.setAlignment(Qt.AlignCenter)
         t.setStyleSheet(
-            f"background:transparent;font-size:14.5px;font-weight:700;color:{color};")
+            f"background:transparent;font-size:15.5px;font-weight:700;color:{color};")
         lay.addWidget(t)
         h = QLabel("")
         h.setFixedHeight(19)
         h.setAlignment(Qt.AlignCenter)
         h.setStyleSheet(
             f"background:{pale};border-radius:9px;color:{color};"
-            "font-size:10px;font-weight:700;padding:0 8px;")
+            "font-size:11.5px;font-weight:700;padding:0 8px;")
         lay.addWidget(h, 0, Qt.AlignHCenter)
         self._hint = h
         self.clicked.connect(lambda: self.rated.emit(self.idx))
@@ -1514,7 +1514,7 @@ class SwipeRow(QWidget):
             b.setCursor(Qt.PointingHandCursor)
             b.setStyleSheet(
                 f"QPushButton{{background:{color};color:#FFFFFF;border:none;"
-                f"border-radius:12px;font-size:12px;font-weight:600;}}"
+                f"border-radius:12px;font-size:13px;font-weight:600;}}"
             )
             b.clicked.connect(lambda _, k=key: self.action.emit(k))
             pl.addWidget(b, 0, Qt.AlignVCenter)

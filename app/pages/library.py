@@ -85,7 +85,7 @@ class EntityRow(W.ClickFrame):
         col.setSpacing(4)
         # 单行截断：文案再长也不会把右侧 ⋯ 挤出屏幕
         t = OneLineLabel(title)
-        t.setStyleSheet("font-size:14.5px;font-weight:700;")
+        t.setStyleSheet("font-size:15.5px;font-weight:700;")
         s = OneLineLabel(sub)
         s.setObjectName("sub")
         col.addWidget(t)
@@ -93,7 +93,7 @@ class EntityRow(W.ClickFrame):
         lay.addLayout(col, 1)
 
         more = W.MoreButton(32)
-        more.setStyleSheet("background:transparent;border:none;color:#B5B0A4;font-size:16px;")
+        more.setStyleSheet("background:transparent;border:none;color:#B5B0A4;font-size:17px;")
         more.setCursor(Qt.PointingHandCursor)
         more.clicked.connect(lambda: on_more(more))
         lay.addWidget(more, 0, Qt.AlignVCenter)
@@ -206,20 +206,20 @@ class DomainDialog(QDialog):
             rl.setContentsMargins(10, 6, 6, 6)
             rl.setSpacing(8)
             name = QLabel(d["name"])
-            name.setStyleSheet("font-size:13px;font-weight:600;")
+            name.setStyleSheet("font-size:14px;font-weight:600;")
             rl.addWidget(name, 1)
             cnt = sum(1 for x in self.store.decks if x["domain"] == d["id"])
             info = QLabel(f"{cnt} 个卡包")
             info.setObjectName("sub")
             rl.addWidget(info)
             rb = QPushButton("重命名")
-            rb.setStyleSheet(f"color:{W.T['ink2']};font-size:12px;")
+            rb.setStyleSheet(f"color:{W.T['ink2']};font-size:13px;")
             rb.setCursor(Qt.PointingHandCursor)
             rb.clicked.connect(lambda _, did=d["id"]: self._rename(did))
             rl.addWidget(rb)
             if len(self.store.domains) > 1:
                 b = QPushButton("删除")
-                b.setStyleSheet("color:#D9534F;font-size:12px;")
+                b.setStyleSheet("color:#D9534F;font-size:13px;")
                 b.setCursor(Qt.PointingHandCursor)
                 b.clicked.connect(lambda _, did=d["id"]: self._del(did))
                 rl.addWidget(b)
@@ -524,7 +524,7 @@ class MoveDialog(QDialog):
         self.list.setCurrentRow(0)
         self.list.setStyleSheet(
             f"QListWidget{{background:{W.T['panel']};border:1px solid {W.T['line']};"
-            f"border-radius:10px;padding:4px;font-size:12.5px;}}"
+            f"border-radius:10px;padding:4px;font-size:13.5px;}}"
             f"QListWidget::item{{padding:7px 8px;border-radius:7px;}}"
             f"QListWidget::item:selected{{background:{W.T['brand_soft']};"
             f"color:{W.T['brand']};}}")
@@ -539,7 +539,7 @@ class MoveDialog(QDialog):
         cancel.setCursor(Qt.PointingHandCursor)
         cancel.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};border:none;"
-            f"border-radius:12px;font-size:13px;font-weight:600;}}")
+            f"border-radius:12px;font-size:14px;font-weight:600;}}")
         cancel.clicked.connect(self.reject)
         bl.addWidget(cancel, 1)
         ok = QPushButton("移动到这里")
@@ -547,7 +547,7 @@ class MoveDialog(QDialog):
         ok.setCursor(Qt.PointingHandCursor)
         ok.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:12px;font-size:13px;font-weight:600;}}")
+            f"border-radius:12px;font-size:14px;font-weight:600;}}")
         ok.clicked.connect(self.accept)
         bl.addWidget(ok, 1)
         lay.addWidget(btns)
@@ -574,7 +574,7 @@ class MoveCardsDialog(QDialog):
         lay.setSpacing(12)
 
         title = QLabel("移动卡片")
-        title.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
+        title.setStyleSheet(f"font-size:19px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(title)
         sub = QLabel(f"已选 {count} 张卡片 · 点选目标卡组")
         sub.setObjectName("sub")
@@ -586,7 +586,7 @@ class MoveCardsDialog(QDialog):
         self.list.setStyleSheet(
             f"QListWidget{{background:transparent;border:none;outline:none;}}"
             f"QListWidget::item{{background:{W.T['panel']};border:1px solid {W.T['line']};"
-            f"border-radius:12px;padding:12px 14px;color:{W.T['ink']};font-size:13.5px;}}"
+            f"border-radius:12px;padding:12px 14px;color:{W.T['ink']};font-size:14.5px;}}"
             f"QListWidget::item:selected{{background:{W.T['brand_soft']};"
             f"border:1px solid {W.T['brand']};color:{W.T['brand']};font-weight:600;}}")
         for row in rows:
@@ -607,7 +607,7 @@ class MoveCardsDialog(QDialog):
         cancel.setCursor(Qt.PointingHandCursor)
         cancel.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};border:none;"
-            f"border-radius:13px;font-size:13px;font-weight:600;}}")
+            f"border-radius:13px;font-size:14px;font-weight:600;}}")
         cancel.clicked.connect(self.reject)
         bl.addWidget(cancel, 1)
         ok = QPushButton("移动到这里")
@@ -615,7 +615,7 @@ class MoveCardsDialog(QDialog):
         ok.setCursor(Qt.PointingHandCursor)
         ok.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:13px;font-size:13px;font-weight:600;}}")
+            f"border-radius:13px;font-size:14px;font-weight:600;}}")
         ok.clicked.connect(self.accept)
         bl.addWidget(ok, 1)
         lay.addWidget(btns)
@@ -642,7 +642,7 @@ class NewGroupDialog(QDialog):
         lay.setSpacing(8)
 
         title = QLabel("新建卡组")
-        title.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+        title.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(title)
 
         sub = QLabel(f"在「{deck_name}」里新建一个空卡组" if deck_name else "新建一个空卡组")
@@ -657,7 +657,7 @@ class NewGroupDialog(QDialog):
         self.input.setStyleSheet(
             f"QLineEdit{{background:{W.T['paper2']};color:{W.T['ink']};"
             f"border:1px solid {W.T['line']};border-radius:12px;"
-            f"padding:10px 12px;font-size:14px;}}"
+            f"padding:10px 12px;font-size:15px;}}"
             f"QLineEdit:focus{{border:1px solid {W.T['brand']};"
             f"background:{W.T['panel']};}}")
         self.input.textChanged.connect(self._validate)
@@ -665,7 +665,7 @@ class NewGroupDialog(QDialog):
         lay.addWidget(self.input)
 
         self.hint = QLabel("")
-        self.hint.setStyleSheet(f"color:{W.T['red']};font-size:11.5px;padding-left:2px;")
+        self.hint.setStyleSheet(f"color:{W.T['red']};font-size:13px;padding-left:2px;")
         self.hint.hide()
         lay.addWidget(self.hint)
         lay.addSpacing(8)
@@ -680,7 +680,7 @@ class NewGroupDialog(QDialog):
         cancel.setFixedHeight(40)
         cancel.setStyleSheet(
             f"QPushButton{{background:transparent;border:none;color:{W.T['ink2']};"
-            f"font-size:13px;padding:0 14px;}}")
+            f"font-size:14px;padding:0 14px;}}")
         cancel.clicked.connect(self.reject)
         bl.addWidget(cancel)
         self.ok_btn = W.PrimaryButton("创建")
@@ -688,7 +688,7 @@ class NewGroupDialog(QDialog):
         self.ok_btn.setMinimumWidth(96)
         self.ok_btn.setStyleSheet(
             f"QPushButton#primary{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:12px;font-size:13.5px;font-weight:700;padding:0 18px;}}"
+            f"border-radius:12px;font-size:14.5px;font-weight:700;padding:0 18px;}}"
             f"QPushButton#primary:hover{{background:{W.T['brand2']};}}"
             f"QPushButton#primary:disabled{{background:{W.T['paper2']};"
             f"color:{W.T['ink3']};}}")
@@ -817,7 +817,7 @@ class LibraryPage(Page):
                 badge.setAlignment(Qt.AlignCenter)
                 badge.setStyleSheet(
                     f"background:{W.T['red']};color:#FFFDF8;border-radius:8px;"
-                    "font-size:8px;font-weight:700;")
+                    "font-size:10px;font-weight:700;")
                 badge.move(21, -3)
                 badge.raise_()
             trash.clicked.connect(lambda: self.app.show_page("trash"))
@@ -989,7 +989,7 @@ class LibraryPage(Page):
             box.body.setContentsMargins(18, 26, 18, 26)
             t = QLabel("这里还是空的" if not q else "没有匹配项")
             t.setAlignment(Qt.AlignCenter)
-            t.setStyleSheet("font-size:13px;font-weight:600;")
+            t.setStyleSheet("font-size:14px;font-weight:600;")
             tip = QLabel("点右上角 ＋ 新建圆桌或卡包" if not q else "换个关键词试试")
             tip.setObjectName("sub")
             tip.setAlignment(Qt.AlignCenter)
@@ -1312,7 +1312,7 @@ class CardEditDialog(QDialog):
         cancel.setCursor(Qt.PointingHandCursor)
         cancel.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['ink']};border:none;"
-            f"border-radius:12px;font-size:13px;font-weight:600;}}")
+            f"border-radius:12px;font-size:14px;font-weight:600;}}")
         cancel.clicked.connect(self.reject)
         bl.addWidget(cancel, 1)
         save = QPushButton("保存")
@@ -1320,7 +1320,7 @@ class CardEditDialog(QDialog):
         save.setCursor(Qt.PointingHandCursor)
         save.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:12px;font-size:13px;font-weight:700;}}")
+            f"border-radius:12px;font-size:14px;font-weight:700;}}")
         save.clicked.connect(self.accept)
         bl.addWidget(save, 1)
         lay.addWidget(btns)
@@ -1409,7 +1409,7 @@ class BrowseCard(W.ClickFrame):
         fl.addStretch(1)
         self.mark = PracticeMark(False, 15)
         self.tag = QLabel("练习")
-        self.tag.setStyleSheet(f"color:{W.T['brand']};font-size:10px;font-weight:600;")
+        self.tag.setStyleSheet(f"color:{W.T['brand']};font-size:11.5px;font-weight:600;")
         fl.addWidget(self.mark)
         fl.addWidget(self.tag)
         self._lay.addWidget(foot)
@@ -1518,7 +1518,7 @@ class BrowseListRow(W.ClickFrame):
         fl.addWidget(self.mark, 0, Qt.AlignVCenter)
         self.tag = QLabel("练习")
         self.tag.setStyleSheet(
-            f"color:{W.T['brand']};font-size:10px;font-weight:600;")
+            f"color:{W.T['brand']};font-size:11.5px;font-weight:600;")
         self.tag.setVisible(False)
         fl.addWidget(self.tag, 0, Qt.AlignVCenter)
         fl.addStretch(1)
@@ -1853,7 +1853,7 @@ class DeckPage(Page):
         meta = QLabel(f"{len(cards)} 张 · {len(order)} 个卡组")
         meta.setStyleSheet(
             f"background:{W.T['paper2']};color:{W.T['ink2']};border-radius:9px;"
-            f"font-size:10.5px;font-weight:600;padding:3px 9px;")
+            f"font-size:12px;font-weight:600;padding:3px 9px;")
         meta.setFixedHeight(20)
         erow = QWidget()
         el = QHBoxLayout(erow)
@@ -1872,12 +1872,12 @@ class DeckPage(Page):
                         if not c.get("suspended") and int(c.get("reps") or 0) == 0)
             dot = f'<span style="color:{W.T["line"]};">&nbsp;&nbsp;·&nbsp;&nbsp;</span>'
             strip = QLabel(
-                f'<span style="color:{W.T["ink"]};font-size:16px;font-weight:700;">{len(sel_cards)}</span>'
-                f'<span style="color:{W.T["ink3"]};font-size:11px;"> 卡片</span>' + dot +
-                f'<span style="color:{W.T["brand"]};font-size:16px;font-weight:700;">{n_rev}</span>'
-                f'<span style="color:{W.T["ink3"]};font-size:11px;"> 待复习</span>' + dot +
-                f'<span style="color:#B8792A;font-size:16px;font-weight:700;">{n_new}</span>'
-                f'<span style="color:{W.T["ink3"]};font-size:11px;"> 待新学</span>')
+                f'<span style="color:{W.T["ink"]};font-size:17px;font-weight:700;">{len(sel_cards)}</span>'
+                f'<span style="color:{W.T["ink3"]};font-size:12.5px;"> 卡片</span>' + dot +
+                f'<span style="color:{W.T["brand"]};font-size:17px;font-weight:700;">{n_rev}</span>'
+                f'<span style="color:{W.T["ink3"]};font-size:12.5px;"> 待复习</span>' + dot +
+                f'<span style="color:#B8792A;font-size:17px;font-weight:700;">{n_new}</span>'
+                f'<span style="color:{W.T["ink3"]};font-size:12.5px;"> 待新学</span>')
             strip.setTextFormat(Qt.RichText)
             strip.setFixedHeight(20)
             col.addSpacing(4)
@@ -1892,7 +1892,7 @@ class DeckPage(Page):
             chip = QLabel(f"{n_prac} 张在练")
             chip.setStyleSheet(
                 f"background:{W.T['brand_soft']};color:{W.T['brand']};border-radius:11px;"
-                f"font-size:11px;font-weight:700;padding:4px 10px;")
+                f"font-size:12.5px;font-weight:700;padding:4px 10px;")
             chip.setFixedHeight(22)
             tl.addWidget(chip, 0, Qt.AlignVCenter)
         card.body.addWidget(top)
@@ -1919,7 +1919,7 @@ class DeckPage(Page):
                 c2.setSpacing(1)
                 n2 = QLabel(str(num))
                 n2.setAlignment(Qt.AlignCenter)
-                n2.setStyleSheet(f"font-size:20px;font-weight:700;color:{W.T['brand']};")
+                n2.setStyleSheet(f"font-size:21px;font-weight:700;color:{W.T['brand']};")
                 l2 = QLabel(cap)
                 l2.setObjectName("sub")
                 l2.setAlignment(Qt.AlignCenter)
@@ -2044,7 +2044,7 @@ class DeckPage(Page):
             wl.addWidget(icon, 0, Qt.AlignHCenter)
             t = QLabel("还没有加入练习的卡片")
             t.setAlignment(Qt.AlignCenter)
-            t.setStyleSheet("font-size:14px;font-weight:700;")
+            t.setStyleSheet("font-size:15px;font-weight:700;")
             tip = QLabel("在「学习记忆」复习时点顶部的「加入练习」，"
                          "或在「浏览卡片」里选中卡片后加入。")
             tip.setObjectName("sub")
@@ -2074,7 +2074,7 @@ class DeckPage(Page):
             col = QVBoxLayout()
             col.setSpacing(4)
             t = OneLineLabel(gname)
-            t.setStyleSheet(f"font-size:15px;font-weight:700;color:{W.T['ink']};")
+            t.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
             sub = QLabel(f"{len(items)} 张卡片 · 不计入复习")
             sub.setObjectName("sub")
             col.addWidget(t)
@@ -2086,7 +2086,7 @@ class DeckPage(Page):
             go.setFixedHeight(34)
             go.setStyleSheet(
                 "QPushButton{background:%s;color:#FFFFFF;border:none;"
-                "border-radius:17px;font-size:12.5px;font-weight:600;padding:0 16px;}"
+                "border-radius:17px;font-size:13.5px;font-weight:600;padding:0 16px;}"
                 % W.T["brand"])
             go.clicked.connect(lambda _, g=gname: self.app.start_review(
                 self.deck_id, group=g, practice=True))
@@ -2284,7 +2284,7 @@ class DeckPage(Page):
         left = QVBoxLayout()
         left.setSpacing(4)
         t = OneLineLabel(gname)
-        t.setStyleSheet(f"font-size:13.5px;font-weight:600;"
+        t.setStyleSheet(f"font-size:14.5px;font-weight:600;"
                         f"color:{W.T['ink3'] if archived else W.T['ink']};")
         types = sorted({ {"qa": "问答", "single": "单选", "multi": "多选"}[c["type"]] for c in items })
         sub = QLabel(f"{len(items)} 张 · " + " / ".join(types) if types else "0 张 · 还没有卡片")
@@ -2422,7 +2422,7 @@ class DeckPage(Page):
         box.body.setContentsMargins(18, 22, 18, 22)
         t = QLabel(title)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet("font-size:13px;font-weight:600;")
+        t.setStyleSheet("font-size:14px;font-weight:600;")
         s2 = QLabel(sub)
         s2.setObjectName("sub")
         s2.setAlignment(Qt.AlignCenter)

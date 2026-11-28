@@ -60,7 +60,7 @@ class ArchivePage(Page):
             dom = s.domain(d.get("domain")) or {}
             dtag = QLabel(dom.get("name", "未分组"))
             dtag.setStyleSheet(
-                f"font-size:11px;font-weight:700;color:{W.T['brand']};"
+                f"font-size:12.5px;font-weight:700;color:{W.T['brand']};"
                 f"background:{W.T['brand_soft']};border-radius:8px;padding:3px 9px;")
             top = QWidget()
             tl = QHBoxLayout(top)
@@ -71,7 +71,7 @@ class ArchivePage(Page):
             box.body.addWidget(top)
 
         t = OneLineLabel(d["name"])
-        t.setStyleSheet(f"font-size:15.5px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:16.5px;font-weight:700;color:{W.T['ink']};")
         box.body.addWidget(t)
 
         sep = QFrame()
@@ -81,7 +81,7 @@ class ArchivePage(Page):
 
         meta = QLabel(f"{len(s.cards_of(d['id']))} 张卡片 · 完成于 "
                       f"{_date_text(d.get('archived_at'))}")
-        meta.setStyleSheet(f"font-size:11px;color:{W.T['ink2']};")
+        meta.setStyleSheet(f"font-size:12.5px;color:{W.T['ink2']};")
         box.body.addWidget(meta)
 
         acts = QWidget()
@@ -94,7 +94,7 @@ class ArchivePage(Page):
         back.setCursor(Qt.PointingHandCursor)
         back.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:11px;font-size:12.5px;font-weight:600;}}")
+            f"border-radius:11px;font-size:13.5px;font-weight:600;}}")
         back.clicked.connect(lambda: self._unarchive(d))
         al.addWidget(back, 1)
 
@@ -103,7 +103,7 @@ class ArchivePage(Page):
         dele.setCursor(Qt.PointingHandCursor)
         dele.setStyleSheet(
             f"QPushButton{{background:{W.T['paper2']};color:{W.T['red']};border:none;"
-            f"border-radius:11px;font-size:12.5px;font-weight:600;}}")
+            f"border-radius:11px;font-size:13.5px;font-weight:600;}}")
         dele.clicked.connect(lambda: self._delete(d))
         al.addWidget(dele, 1)
         box.body.addWidget(acts)
@@ -114,7 +114,7 @@ class ArchivePage(Page):
         box.body.setContentsMargins(18, 30, 18, 30)
         t = QLabel("还没有完成的卡包")
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet("font-size:13px;font-weight:600;")
+        t.setStyleSheet("font-size:14px;font-weight:600;")
         s2 = QLabel("在「记忆」里对卡包点 ⋯ → 完成")
         s2.setObjectName("sub")
         s2.setAlignment(Qt.AlignCenter)

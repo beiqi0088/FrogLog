@@ -163,7 +163,7 @@ class CardsPage(Page):
         box.body.setContentsMargins(18, 30, 18, 30)
         t = QLabel("这里没有卡片")
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet("font-size:13px;font-weight:600;")
+        t.setStyleSheet("font-size:14px;font-weight:600;")
         s2 = QLabel("换个指标看看，或先去「记忆」里加卡片")
         s2.setObjectName("sub")
         s2.setAlignment(Qt.AlignCenter)

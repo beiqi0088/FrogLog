@@ -41,7 +41,7 @@ class TrashPage(Page):
             card.body.setContentsMargins(18, 26, 18, 26)
             t = QLabel("回收站是空的")
             t.setAlignment(Qt.AlignCenter)
-            t.setStyleSheet(f"font-size:14px;font-weight:700;color:{W.T['ink']};")
+            t.setStyleSheet(f"font-size:15px;font-weight:700;color:{W.T['ink']};")
             card.body.addWidget(t)
             hint = QLabel("在「记忆」里删除卡片、卡组或卡包，都会先到这里")
             hint.setAlignment(Qt.AlignCenter)
@@ -66,7 +66,7 @@ class TrashPage(Page):
         clear.setFixedHeight(40)
         clear.setStyleSheet(
             f"QPushButton{{background:transparent;border:1px solid {W.T['line']};"
-            f"border-radius:12px;font-size:12.5px;font-weight:600;color:{W.T['red']};}}"
+            f"border-radius:12px;font-size:13.5px;font-weight:600;color:{W.T['red']};}}"
             f"QPushButton:hover{{background:{W.T['panel']};}}")
         clear.clicked.connect(self._clear)
         self.body.addSpacing(6)
@@ -83,7 +83,7 @@ class TrashPage(Page):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.setSpacing(8)
         t = QLabel(e.get("title") or "—")
-        t.setStyleSheet(f"font-size:13.5px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:14.5px;font-weight:700;color:{W.T['ink']};")
         hl.addWidget(t, 1)
         stamp = QLabel(_when(int(e.get("at") or 0)))
         stamp.setObjectName("sub")
@@ -105,7 +105,7 @@ class TrashPage(Page):
         back.setFixedHeight(30)
         back.setStyleSheet(
             f"QPushButton{{background:{W.T['brand_soft']};border:none;border-radius:9px;"
-            f"padding:0 14px;font-size:12px;font-weight:700;color:{W.T['brand']};}}"
+            f"padding:0 14px;font-size:13px;font-weight:700;color:{W.T['brand']};}}"
             f"QPushButton:hover{{background:{W.T['brand']};color:#FFFFFF;}}")
         back.clicked.connect(lambda _, tid=e["id"]: self._restore(tid))
         al.addWidget(back)
@@ -114,7 +114,7 @@ class TrashPage(Page):
         gone.setFixedHeight(30)
         gone.setStyleSheet(
             f"QPushButton{{background:transparent;border:none;padding:0 8px;"
-            f"font-size:11.5px;font-weight:600;color:{W.T['ink3']};}}"
+            f"font-size:13px;font-weight:600;color:{W.T['ink3']};}}"
             f"QPushButton:hover{{color:{W.T['red']};}}")
         gone.clicked.connect(lambda _, tid=e["id"], ti=e.get("title"): self._purge(tid, ti))
         al.addWidget(gone)

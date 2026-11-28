@@ -44,7 +44,7 @@ class BackupDetailDialog(QDialog):
         lay.setSpacing(10)
 
         title = QLabel(backup.KIND_LABEL.get(it["kind"], "备份"))
-        title.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+        title.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(title)
 
         sub = QLabel(os.path.basename(it["path"]))
@@ -66,7 +66,7 @@ class BackupDetailDialog(QDialog):
             kl = QLabel(k)
             kl.setObjectName("sub")
             vl = QLabel(v)
-            vl.setStyleSheet(f"font-size:12.5px;font-weight:600;color:{W.T['ink']};")
+            vl.setStyleSheet(f"font-size:13.5px;font-weight:600;color:{W.T['ink']};")
             rl.addWidget(kl)
             rl.addStretch(1)
             rl.addWidget(vl)
@@ -77,7 +77,7 @@ class BackupDetailDialog(QDialog):
                       "恢复前会自动存一份「回滚前快照」，可以再退回来。")
         warn.setWordWrap(True)
         warn.setStyleSheet(
-            f"font-size:11.5px;color:{W.T['ink2']};background:{W.T['paper2']};"
+            f"font-size:13px;color:{W.T['ink2']};background:{W.T['paper2']};"
             f"border-radius:10px;padding:10px 12px;")
         lay.addWidget(warn)
         lay.addStretch(1)
@@ -115,7 +115,7 @@ class BackupPage(Page):
         card = W.Card()
         card.body.addWidget(label("当前数据", "sub"))
         big = QLabel(f"{len(self.store.cards)} 张卡片")
-        big.setStyleSheet(f"font-size:22px;font-weight:700;color:{W.T['ink']};")
+        big.setStyleSheet(f"font-size:23px;font-weight:700;color:{W.T['ink']};")
         card.body.addWidget(big)
         card.body.addWidget(label(
             f"{len(self.store.decks)} 个卡包 · 最后修改 "
@@ -132,7 +132,7 @@ class BackupPage(Page):
                         "恢复前会自动留一份「回滚前快照」。同步的账号与密钥属于本机配置，不会被覆盖。")
         tip = QLabel(tip_text)
         tip.setWordWrap(True)
-        tip.setStyleSheet(f"font-size:11.5px;color:{W.T['ink2']};padding:0 4px;")
+        tip.setStyleSheet(f"font-size:13px;color:{W.T['ink2']};padding:0 4px;")
         self.add(tip)
 
         # ---------------- 列表 ----------------
@@ -193,7 +193,7 @@ class BackupPage(Page):
             if picked:
                 mark.setStyleSheet(
                     f"background:{W.T['brand']};color:#FFFFFF;border-radius:11px;"
-                    f"font-size:12px;font-weight:700;border:none;")
+                    f"font-size:13px;font-weight:700;border:none;")
             else:
                 mark.setStyleSheet(
                     f"background:transparent;border:1.5px solid {W.T['ink3']};"
@@ -225,7 +225,7 @@ class BackupPage(Page):
 
         if not select:
             chev = QLabel("›")
-            chev.setStyleSheet(f"color:{W.T['ink3']};font-size:18px;")
+            chev.setStyleSheet(f"color:{W.T['ink3']};font-size:19px;")
             lay.addWidget(chev)
         frame.setToolTip(os.path.basename(it["path"]))
 
@@ -257,7 +257,7 @@ class BackupPage(Page):
         rm.setEnabled(bool(n))
         rm.setStyleSheet(
             f"QPushButton{{background:{W.T['red_soft']};color:{W.T['red']};border:none;"
-            f"border-radius:10px;font-size:12px;font-weight:700;padding:0 14px;}}"
+            f"border-radius:10px;font-size:13px;font-weight:700;padding:0 14px;}}"
             f"QPushButton:disabled{{background:{W.T['paper2']};color:{W.T['ink3']};}}")
         rm.clicked.connect(self._delete_selected)
         bl.addWidget(rm, 0)

@@ -168,7 +168,7 @@ class InsightsPage(Page):
             box.body.setContentsMargins(18, 22, 18, 22)
             t = QLabel("还没有完成的卡包")
             t.setAlignment(Qt.AlignCenter)
-            t.setStyleSheet("font-size:13px;font-weight:600;")
+            t.setStyleSheet("font-size:14px;font-weight:600;")
             s2 = QLabel("在「记忆」里对卡包点 ⋯ → 完成，表示这一包已经学完")
             s2.setObjectName("sub")
             s2.setAlignment(Qt.AlignCenter)
@@ -192,7 +192,7 @@ class InsightsPage(Page):
             col = QVBoxLayout()
             col.setSpacing(3)
             t = QLabel(dom.get("name", "未分组"))
-            t.setStyleSheet(f"font-size:14.5px;font-weight:700;color:{W.T['ink']};")
+            t.setStyleSheet(f"font-size:15.5px;font-weight:700;color:{W.T['ink']};")
             sub = QLabel(f"{n} 个卡包已完成")
             sub.setObjectName("sub")
             col.addWidget(t)
@@ -201,7 +201,7 @@ class InsightsPage(Page):
 
             bl.addWidget(W.Pill(f"{n} 个", "brand"))
             arrow = QLabel("›")
-            arrow.setStyleSheet(f"color:{W.T['ink3']};font-size:15px;")
+            arrow.setStyleSheet(f"color:{W.T['ink3']};font-size:16px;")
             bl.addWidget(arrow)
 
             box.clicked.connect(
@@ -224,7 +224,7 @@ class InsightsPage(Page):
         more = QPushButton("详情 ›")
         more.setCursor(Qt.PointingHandCursor)
         more.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;font-size:11.5px;"
+            f"QPushButton{{background:transparent;border:none;font-size:13px;"
             f"color:{W.T['ink2']};}}")
         more.clicked.connect(lambda: self.app.show_page("stats"))
         hl.addWidget(more)
@@ -255,7 +255,7 @@ class InsightsPage(Page):
         more = QPushButton("详情 ›")
         more.setCursor(Qt.PointingHandCursor)
         more.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;font-size:11.5px;"
+            f"QPushButton{{background:transparent;border:none;font-size:13px;"
             f"color:{W.T['ink2']};}}")
         more.clicked.connect(lambda: self.app.show_page("stats"))
         hl.addWidget(more)
@@ -285,7 +285,7 @@ class InsightsPage(Page):
             cl.setSpacing(1)
             v = QLabel(val)
             v.setAlignment(Qt.AlignCenter)
-            v.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+            v.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
             n = QLabel(name)
             n.setAlignment(Qt.AlignCenter)
             n.setObjectName("sub")
@@ -305,7 +305,7 @@ class InsightsPage(Page):
         for name, color, val in (("新学", W.T["accent"], sum(new_s)),
                                  ("复习", W.T["brand"], sum(rev_s))):
             dot = QLabel("●")
-            dot.setStyleSheet(f"color:{color};font-size:10px;")
+            dot.setStyleSheet(f"color:{color};font-size:11.5px;")
             fl.addWidget(dot)
             fl.addWidget(label(f"{name} {val}", "sub"))
         fl.addStretch(1)

@@ -79,7 +79,7 @@ class SyncConflictDialog(QDialog):
         lay.setSpacing(12)
 
         t = QLabel("同步冲突")
-        t.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
         lay.addWidget(t)
         sub = QLabel("本地和云端都有新的修改，选一个方向同步")
         sub.setObjectName("sub")
@@ -99,10 +99,10 @@ class SyncConflictDialog(QDialog):
             cap.setObjectName("sub")
             card.body.addWidget(cap)
             big = QLabel(S.fmt_ts(at))
-            big.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
+            big.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
             card.body.addWidget(big)
             ago = QLabel((f"{n} 张卡片 · " if n else "") + self._ago(at))
-            ago.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
+            ago.setStyleSheet(f"font-size:12.5px;color:{W.T['ink3']};")
             card.body.addWidget(ago)
             rl.addWidget(card, 1)
         lay.addWidget(row)
@@ -111,7 +111,7 @@ class SyncConflictDialog(QDialog):
         tip = QLabel("选择后另一边会被覆盖；被覆盖的一方会先备份到 state.json.bak")
         tip.setWordWrap(True)
         tip.setStyleSheet(
-            f"font-size:11.5px;color:{W.T['ink2']};background:{W.T['paper2']};"
+            f"font-size:13px;color:{W.T['ink2']};background:{W.T['paper2']};"
             f"border-radius:10px;padding:10px 12px;")
         lay.addWidget(tip)
         lay.addStretch(1)
@@ -126,7 +126,7 @@ class SyncConflictDialog(QDialog):
         cancel.setCursor(Qt.PointingHandCursor)
         cancel.setStyleSheet(
             f"QPushButton{{background:transparent;color:{W.T['ink2']};border:none;"
-            f"font-size:12.5px;}}")
+            f"font-size:13.5px;}}")
         cancel.clicked.connect(self.reject)
         bl.addWidget(cancel)
         bl.addStretch(1)
@@ -136,7 +136,7 @@ class SyncConflictDialog(QDialog):
         down.setCursor(Qt.PointingHandCursor)
         down.setStyleSheet(
             f"QPushButton{{background:{W.T['brand_soft']};color:{W.T['brand']};border:none;"
-            f"border-radius:12px;font-size:12.5px;font-weight:600;padding:0 16px;}}")
+            f"border-radius:12px;font-size:13.5px;font-weight:600;padding:0 16px;}}")
         down.clicked.connect(lambda: self._pick("pull"))
         bl.addWidget(down)
 
@@ -145,7 +145,7 @@ class SyncConflictDialog(QDialog):
         up.setCursor(Qt.PointingHandCursor)
         up.setStyleSheet(
             f"QPushButton{{background:{W.T['brand_soft']};color:{W.T['brand']};border:none;"
-            f"border-radius:12px;font-size:12.5px;font-weight:600;padding:0 16px;}}")
+            f"border-radius:12px;font-size:13.5px;font-weight:600;padding:0 16px;}}")
         up.clicked.connect(lambda: self._pick("push"))
         bl.addWidget(up)
         lay.addWidget(btns)
@@ -190,7 +190,7 @@ class SyncPage(Page):
 
         self.status = QLabel(self._status_text())
         self.status.setAlignment(Qt.AlignCenter)
-        self.status.setStyleSheet(f"font-size:16px;font-weight:700;color:{W.T['ink']};")
+        self.status.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
         hl.addWidget(self.status)
 
         sub = QLabel(self._sub_text())
@@ -214,7 +214,7 @@ class SyncPage(Page):
         self.primary.setCursor(Qt.PointingHandCursor)
         self.primary.setStyleSheet(
             f"QPushButton{{background:{W.T['brand']};color:#FFFFFF;border:none;"
-            f"border-radius:14px;font-size:14px;font-weight:700;}}")
+            f"border-radius:14px;font-size:15px;font-weight:700;}}")
         self.primary.clicked.connect(lambda: self._run("auto"))
         card.body.addWidget(self.primary)
 
@@ -226,7 +226,7 @@ class SyncPage(Page):
             b = QPushButton(text)
             b.setCursor(Qt.PointingHandCursor)
             b.setStyleSheet(
-                f"QPushButton{{background:transparent;border:none;font-size:11.5px;"
+                f"QPushButton{{background:transparent;border:none;font-size:13px;"
                 f"color:{W.T['ink2']};}}")
             b.clicked.connect(lambda _, m=mode: self._run(m))
             al.addWidget(b, 1)
@@ -385,7 +385,7 @@ class SyncPage(Page):
         lbl.setText(text)
         lbl.setStyleSheet(
             f"color:{W.T['brand'] if good else W.T['red']};"
-            f"font-size:11.5px;font-weight:600;")
+            f"font-size:13px;font-weight:600;")
         lbl.show()
 
     # ---------------- 表单 ----------------

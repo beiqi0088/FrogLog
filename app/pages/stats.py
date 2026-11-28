@@ -54,7 +54,7 @@ class StatsPage(Page):
             cl.setSpacing(1)
             v = QLabel(val)
             v.setAlignment(Qt.AlignCenter)
-            v.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
+            v.setStyleSheet(f"font-size:19px;font-weight:700;color:{W.T['ink']};")
             n = QLabel(name)
             n.setAlignment(Qt.AlignCenter)
             n.setObjectName("sub")
@@ -108,7 +108,7 @@ class StatsPage(Page):
             row.setSpacing(10)
             for name, color in items[start:start + per_row]:
                 dot = QLabel("●")
-                dot.setStyleSheet(f"color:{color};font-size:10px;")
+                dot.setStyleSheet(f"color:{color};font-size:11.5px;")
                 row.addWidget(dot)
                 lb = QLabel(name)
                 lb.setObjectName("sub")

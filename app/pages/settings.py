@@ -68,7 +68,7 @@ class SettingsPage(Page):
         gl.addWidget(W.AccentBar(11, 3), 0, Qt.AlignVCenter)
         lb = QLabel(title)
         lb.setObjectName("sub")
-        lb.setStyleSheet(f"color:{W.T['ink2']};font-size:10.5px;font-weight:700;letter-spacing:1.2px;")
+        lb.setStyleSheet(f"color:{W.T['ink2']};font-size:12px;font-weight:700;letter-spacing:1.2px;")
         gl.addWidget(lb, 1)
         self.body.addSpacing(6)
         self.body.addWidget(row)
@@ -87,7 +87,7 @@ class SettingsPage(Page):
         col = QVBoxLayout()
         col.setSpacing(2)
         t = W.ElideLabel(title)
-        t.setStyleSheet(f"font-size:13px;font-weight:600;color:{W.T['red'] if danger else W.T['ink']};")
+        t.setStyleSheet(f"font-size:14px;font-weight:600;color:{W.T['red'] if danger else W.T['ink']};")
         col.addWidget(t)
         if desc:
             d = QLabel(desc)
@@ -210,7 +210,7 @@ class AppearancePage(Page):
         cur = getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME)
         tip = QLabel("点一张主题卡立刻生效：整页纸底、卡片、文字和底栏会一起换色。")
         tip.setWordWrap(True)
-        tip.setStyleSheet(f"color:{W.T['ink2']};font-size:11px;")
+        tip.setStyleSheet(f"color:{W.T['ink2']};font-size:12.5px;")
         self.add(tip)
 
         grid_host = QWidget()
@@ -228,6 +228,6 @@ class AppearancePage(Page):
 
         foot = QLabel("7 套完整纸感主题；每套都有独立背景、卡片、文字、边框与点缀配色。")
         foot.setWordWrap(True)
-        foot.setStyleSheet(f"color:{W.T['ink3']};font-size:9.5px;")
+        foot.setStyleSheet(f"color:{W.T['ink3']};font-size:11px;")
         self.add(foot)
         self.stretch()

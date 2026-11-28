@@ -190,7 +190,7 @@ def metric(value: str, caption: str) -> QWidget:
     lay.setContentsMargins(0, 0, 0, 0)
     lay.setSpacing(1)
     v = QLabel(value)
-    v.setStyleSheet("font-size:20px;font-weight:600;")
+    v.setStyleSheet("font-size:21px;font-weight:600;")
     c = QLabel(caption)
     c.setObjectName("sub")
     lay.addWidget(v)

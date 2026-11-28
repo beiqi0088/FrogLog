@@ -97,10 +97,10 @@ class PlanPage(Page):
             on = (key == self.tab)
             b.setStyleSheet(
                 (f"QPushButton{{background:{W.T['panel']};color:{W.T['ink']};"
-                 f"border:none;border-radius:11px;font-size:12px;font-weight:700;}}")
+                 f"border:none;border-radius:11px;font-size:13px;font-weight:700;}}")
                 if on else
                 (f"QPushButton{{background:transparent;color:{W.T['ink2']};"
-                 f"border:none;border-radius:11px;font-size:12px;font-weight:700;}}"))
+                 f"border:none;border-radius:11px;font-size:13px;font-weight:700;}}"))
 
     def set_tab(self, key: str):
         if key == self.tab:
@@ -128,7 +128,7 @@ class PlanPage(Page):
     # ---------------- 任务卡动作 ----------------
     def primary_qss(self) -> str:
         return (f"QPushButton{{background:{W.T['brand2']};color:#FFFFFF;border:none;"
-                f"border-radius:14px;font-size:13px;font-weight:700;}}"
+                f"border-radius:14px;font-size:14px;font-weight:700;}}"
                 f"QPushButton:hover{{background:{W.T['brand']};}}")
 
     def pick_mins(self, mins: int):

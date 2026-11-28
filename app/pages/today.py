@@ -91,17 +91,17 @@ class StatTile(W.Card):
         hl.setSpacing(8)
         hl.addWidget(StatIcon(kind, 26, accent or W.T["ink2"], tint), 0, Qt.AlignVCenter)
         cap = QLabel(name)
-        cap.setStyleSheet(f"font-size:11.5px;color:{W.T['ink2']};font-weight:600;")
+        cap.setStyleSheet(f"font-size:13px;color:{W.T['ink2']};font-weight:600;")
         hl.addWidget(cap)
         hl.addStretch(1)
         chev = QLabel("›")
-        chev.setStyleSheet(f"color:{W.T['ink3']};font-size:14px;")
+        chev.setStyleSheet(f"color:{W.T['ink3']};font-size:15px;")
         hl.addWidget(chev)
         self.body.addWidget(head)
 
         num = QLabel(
-            f"<span style='font-size:29px;font-weight:700;color:{number or W.T['ink']};'>{value}</span>"
-            f"<span style='font-size:11.5px;color:{W.T['ink3']};'> {unit}</span>")
+            f"<span style='font-size:30px;font-weight:700;color:{number or W.T['ink']};'>{value}</span>"
+            f"<span style='font-size:13px;color:{W.T['ink3']};'> {unit}</span>")
         num.setTextFormat(Qt.RichText)
         self.body.addWidget(num)
 
@@ -174,12 +174,12 @@ def learn_card(app, g: dict) -> QWidget:
     hl.setContentsMargins(0, 0, 0, 0)
     hl.setSpacing(8)
     t = OneLineLabel(g["group"])
-    t.setStyleSheet(f"font-size:17px;font-weight:700;color:{W.T['ink']};")
+    t.setStyleSheet(f"font-size:18px;font-weight:700;color:{W.T['ink']};")
     hl.addWidget(t, 1)
     view = QPushButton("查看卡组 ›")
     view.setCursor(Qt.PointingHandCursor)
     view.setStyleSheet(
-        f"QPushButton{{background:transparent;border:none;font-size:11px;"
+        f"QPushButton{{background:transparent;border:none;font-size:12.5px;"
         f"color:{W.T['ink2']};padding:0;}}"
         f"QPushButton:hover{{color:{W.T['brand']};}}")
     view.clicked.connect(lambda: open_deck(app, g))
@@ -187,7 +187,7 @@ def learn_card(app, g: dict) -> QWidget:
     box.body.addWidget(head)
 
     sub = QLabel(f"到期复习 {g['due']} · 待学新卡 {g['new']} · 学习中 {g['learning']}")
-    sub.setStyleSheet(f"font-size:11px;color:{W.T['ink2']};")
+    sub.setStyleSheet(f"font-size:12.5px;color:{W.T['ink2']};")
     box.body.addWidget(sub)
     return box
 
@@ -237,7 +237,7 @@ def _empty_box(title: str, sub: str) -> QWidget:
     box.body.setContentsMargins(18, 26, 18, 26)
     t = QLabel(title)
     t.setAlignment(Qt.AlignCenter)
-    t.setStyleSheet("font-size:13px;font-weight:600;")
+    t.setStyleSheet("font-size:14px;font-weight:600;")
     s2 = QLabel(sub)
     s2.setObjectName("sub")
     s2.setAlignment(Qt.AlignCenter)
@@ -292,11 +292,11 @@ class TodayPage(Page):
         col.setSpacing(1)
         title = QLabel("<span style='color:#FFFDF8;'>今日</span>")
         title.setTextFormat(Qt.RichText)
-        title.setStyleSheet("font-size:24px;font-weight:700;")
+        title.setStyleSheet("font-size:25px;font-weight:700;")
         col.addWidget(title)
         wd = "一二三四五六日"[today.tm_wday]
         sub = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 星期{wd}")
-        sub.setStyleSheet("font-size:11px;color:rgba(255,253,248,0.78);font-weight:500;")
+        sub.setStyleSheet("font-size:12.5px;color:rgba(255,253,248,0.78);font-weight:500;")
         col.addWidget(sub)
         rl.addLayout(col, 1)
         right = QVBoxLayout()
@@ -345,7 +345,7 @@ class TodayPage(Page):
         more = QPushButton("查看全部 ›")
         more.setCursor(Qt.PointingHandCursor)
         more.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;font-size:11px;"
+            f"QPushButton{{background:transparent;border:none;font-size:12.5px;"
             f"color:{W.T['ink2']};}}")
         more.clicked.connect(lambda: self.app.show_page("groups"))
         sl.addWidget(more)
@@ -392,11 +392,11 @@ class TodayPage(Page):
         hl.setContentsMargins(0, 0, 0, 0)
         hl.setSpacing(6)
         t = QLabel("最近 7 天")
-        t.setStyleSheet(f"font-size:10.5px;font-weight:700;color:{W.T['ink']};")
+        t.setStyleSheet(f"font-size:12px;font-weight:700;color:{W.T['ink']};")
         hl.addWidget(t)
         hl.addStretch(1)
         s = QLabel(f"连续 {streak} 天")
-        s.setStyleSheet(f"font-size:8.5px;color:{W.T['ink2']};")
+        s.setStyleSheet(f"font-size:10px;color:{W.T['ink2']};")
         hl.addWidget(s)
         box.body.addWidget(head)
 
