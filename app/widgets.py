@@ -1101,19 +1101,29 @@ class RatingButton(ClickFrame):
         fg = fg or T["ink"]
         edge = edge or T["line"]
         self.setStyleSheet(
-            f"QFrame#rateBtn{{background:{bg};border:1px solid {edge};border-radius:14px;}}"
+            f"QFrame#rateBtn{{background:{bg};border:1px solid {edge};border-radius:16px;}}"
             f"QFrame#rateBtn:hover{{border-color:{color};}}")
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(4, 10, 4, 9)
-        lay.setSpacing(3)
+        lay.setContentsMargins(4, 11, 4, 11)
+        lay.setSpacing(6)
         t = QLabel(label)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:14.5px;font-weight:700;color:{fg};")
+        t.setStyleSheet(f"font-size:15px;font-weight:800;letter-spacing:0.4px;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
-        h.setStyleSheet("font-size:10.5px;color:rgba(255,253,248,0.82);")
+        # 间隔预览做成半透明胶囊，层次更清楚，也更容易扫读
+        h.setStyleSheet(
+            "background:rgba(255,253,248,0.20);border-radius:9px;"
+            "padding:2px 8px;font-size:10.5px;font-weight:600;"
+            "color:rgba(255,253,248,0.96);")
+        hw = QHBoxLayout()
+        hw.setContentsMargins(0, 0, 0, 0)
+        hw.setSpacing(0)
+        hw.addStretch(1)
+        hw.addWidget(h)
+        hw.addStretch(1)
         lay.addWidget(t)
-        lay.addWidget(h)
+        lay.addLayout(hw)
         self._hint = h
         self.clicked.connect(lambda: self.clicked_rating.emit(self.idx))
 

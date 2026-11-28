@@ -18,10 +18,11 @@ from pages.library import OneLineLabel
 
 RATE_DEFS = [
     # idx, 名称, 主色, 实心底色, 描边, 文字色（深底白字，识别度更高）
-    (0, "重来", "#C4562E", "#C4562E", "#C4562E", "#FFFDF8"),
-    (1, "困难", "#B45309", "#B45309", "#B45309", "#FFFDF8"),
+    # 四档颜色按「红 → 橙 → 绿 → 青绿」递进，相邻两档不会看混
+    (0, "重来", "#C0392B", "#C0392B", "#C0392B", "#FFFDF8"),
+    (1, "困难", "#C77E1B", "#C77E1B", "#C77E1B", "#FFFDF8"),
     (2, "记住", "#2F7A4F", "#2F7A4F", "#2F7A4F", "#FFFDF8"),
-    (3, "轻松", "#0E9F6E", "#0E9F6E", "#0E9F6E", "#FFFDF8"),
+    (3, "轻松", "#0F9D6E", "#0F9D6E", "#0F9D6E", "#FFFDF8"),
 ]
 
 
@@ -459,8 +460,8 @@ class ReviewPage(QWidget):
         self.bottom = QWidget()
         self.bottom_lay = QVBoxLayout(self.bottom)
         # 底部只留手势条高度：纸面铺到底，提示文字不被手势条压住。
-        self.bottom_lay.setContentsMargins(20, 10, 20, 26)
-        self.bottom_lay.setSpacing(8)
+        self.bottom_lay.setContentsMargins(20, 8, 20, 10)
+        self.bottom_lay.setSpacing(10)
         outer.addWidget(self.bottom)
 
         self._resize_timer = QTimer(self)
@@ -998,7 +999,7 @@ class ReviewPage(QWidget):
 
         acts = QWidget()
         al = QHBoxLayout(acts)
-        al.setContentsMargins(0, 0, 0, 2)
+        al.setContentsMargins(0, 0, 0, 0)
         al.setSpacing(8)
         self._practice_bolt = PracticeBolt(False)
         al.addWidget(self._practice_bolt, 0, Qt.AlignVCenter)
@@ -1060,19 +1061,39 @@ class ReviewPage(QWidget):
         sl.addWidget(hint2)
         self.bottom_lay.addWidget(self._submit_box)
 
-        # 4 个评分按钮
+        # 4 个评分按钮：上面加一行极简说明，颜色 + 文字 + 间隔胶囊，一眼能选
+        cap = QWidget()
+        capl = QHBoxLayout(cap)
+        capl.setContentsMargins(2, 0, 2, 0)
+        capl.setSpacing(8)
+        title = QLabel("记得怎么样？")
+        title.setStyleSheet(
+            f"font-size:12.5px;font-weight:700;color:{W.T['ink2']};")
+        capl.addWidget(title)
+        capl.addStretch(1)
+        sub = QLabel("间隔按 FSRS 自动计算")
+        sub.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
+        capl.addWidget(sub)
+
         grid = QWidget()
         gl = QHBoxLayout(grid)
         gl.setContentsMargins(0, 0, 0, 0)
-        gl.setSpacing(9)
+        gl.setSpacing(8)
         self._rate_btns = []
         for idx, name, color, bg, edge, fg in RATE_DEFS:
             b = W.RatingButton(idx, name, "", color, bg, fg, edge)
             b.clicked_rating.connect(self._rate)
             gl.addWidget(b, 1)
             self._rate_btns.append(b)
-        self._rate_box = grid
-        self.bottom_lay.addWidget(grid)
+        # 说明行跟评分按钮同显同隐（未翻面时不出现）
+        group = QWidget()
+        rgl = QVBoxLayout(group)
+        rgl.setContentsMargins(0, 0, 0, 0)
+        rgl.setSpacing(8)
+        rgl.addWidget(cap)
+        rgl.addWidget(grid)
+        self._rate_box = group
+        self.bottom_lay.addWidget(group)
         self._bottom_ready = True
 
     def _update_bottom(self, card: dict, ses: dict):
