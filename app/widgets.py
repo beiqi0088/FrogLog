@@ -535,7 +535,7 @@ class BandHeader(QFrame):
         try:
             from stationery import draw_stationery
             draw_stationery(p, self.stationery,
-                            QRectF(self.width() - 112, 20, 34, 34),
+                            QRectF(self.width() - 158, 18, 40, 40),
                             T["ink"], T["paper"])
         except Exception:
             pass

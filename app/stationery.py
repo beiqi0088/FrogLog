@@ -66,10 +66,21 @@ def draw_stationery(p: QPainter, kind: str, rect: QRectF, ink: str, cream: str):
         p.setBrush(QColor("#F6D6D9"))
         p.drawRoundedRect(QRectF(x + w * 0.22, y + h * 0.32, w * 0.50, h * 0.14), 4, 4)
     elif kind == "scissors":
-        p.drawEllipse(QRectF(x + w * 0.16, y + h * 0.52, w * 0.20, h * 0.22))
-        p.drawEllipse(QRectF(x + w * 0.16, y + h * 0.24, w * 0.20, h * 0.22))
-        p.drawLine(QPointF(x + w * 0.32, y + h * 0.42), QPointF(x + w * 0.86, y + h * 0.24))
-        p.drawLine(QPointF(x + w * 0.32, y + h * 0.54), QPointF(x + w * 0.86, y + h * 0.72))
+        # 两片刀刃 + 两个指环 + 转轴
+        p.setBrush(QColor("#C9D4DE"))
+        p.drawPolygon(QPolygonF([QPointF(x + w * 0.24, y + h * 0.34),
+                                 QPointF(x + w * 0.82, y + h * 0.20),
+                                 QPointF(x + w * 0.86, y + h * 0.29),
+                                 QPointF(x + w * 0.28, y + h * 0.44)]))
+        p.drawPolygon(QPolygonF([QPointF(x + w * 0.24, y + h * 0.66),
+                                 QPointF(x + w * 0.82, y + h * 0.80),
+                                 QPointF(x + w * 0.86, y + h * 0.71),
+                                 QPointF(x + w * 0.28, y + h * 0.56)]))
+        p.setBrush(QColor(cream))
+        p.drawEllipse(QRectF(x + w * 0.10, y + h * 0.30, w * 0.26, h * 0.24))
+        p.drawEllipse(QRectF(x + w * 0.10, y + h * 0.46, w * 0.26, h * 0.24))
+        p.setBrush(QColor(ink))
+        p.drawEllipse(QPointF(x + w * 0.34, y + h * 0.50), w * 0.045, w * 0.045)
     elif kind == "clip":
         p.drawArc(QRectF(x + w * 0.30, y + h * 0.18, w * 0.34, h * 0.64), 20 * 16, 300 * 16)
         p.drawArc(QRectF(x + w * 0.38, y + h * 0.24, w * 0.20, h * 0.52), 20 * 16, 300 * 16)
