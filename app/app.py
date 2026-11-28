@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
         col.addWidget(self.stack, 1)
 
         self.nav = QFrame()
-        self.nav.setFixedHeight(64)
+        self.nav.setFixedHeight(44)
         self.nav.setObjectName("navFrame")
         nav_outer = QHBoxLayout(self.nav)
         nav_outer.setContentsMargins(12, 0, 12, 0)
@@ -297,9 +297,9 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper']};}}")
-        # 底部 dock：奶白（paper2），与整页同色系；选中项主题色浅底胶囊
+        # 底部 dock：用主题深色和整页浅底撞色；选中项奶油胶囊 + 深色图标
         self.nav.setStyleSheet(
-            f"QFrame#navFrame{{background:{t['paper2']};border:none;}}"
+            f"QFrame#navFrame{{background:{t['deep']};border:none;}}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
@@ -349,11 +349,11 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         self._sys_top = top
         self._sys_bottom = bottom
-        # dock 固定 64 高、图标在其中垂直居中；下方手势区继续铺 dock 同色，
+        # dock 只有 44 高、图标垂直居中；下方手势区继续铺 dock 同色，
         # 所以整条底栏延伸到内容区最底部。
         if hasattr(self, "nav"):
             pad = min(bottom, 26)
-            self.nav.setFixedHeight(64 + pad)
+            self.nav.setFixedHeight(44 + pad)
             outer = self.nav.layout()
             if outer is not None:
                 outer.setContentsMargins(12, 0, 12, pad)

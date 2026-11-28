@@ -48,7 +48,29 @@ def enable_touch_scroll(area: QScrollArea) -> None:
     # 立即分发按下事件；惯性滑动中点按也直接响应，不必先点一次停滚动。
     props.setScrollMetric(metric.MousePressEventDelay, 0.0)
     props.setScrollMetric(metric.MaximumClickThroughVelocity, 1.0)
+    # 滚动帧率固定 60，减少拖动时的掉帧卡顿。
+    try:
+        props.setScrollMetric(metric.FrameRate,
+                              QScrollerProperties.FrameRates.Fps60)
+    except Exception:
+        pass
     scroller.setScrollerProperties(props)
+
+    # 拖动滚动时清掉悬停高亮：手指划过按钮不会再闪一下深色底。
+    def _on_state(state):
+        if state in (QScroller.State.Scrolling, QScroller.State.ScrollerDragging):
+            win = area.window()
+            if win is None:
+                return
+            for w in win.findChildren(QWidget):
+                if w.underMouse():
+                    w.setAttribute(Qt.WA_UnderMouse, False)
+                    w.update()
+
+    try:
+        scroller.stateChanged.connect(_on_state)
+    except Exception:
+        pass
 
 
 def enable_touch_scroll_deep(root: QWidget) -> None:
@@ -117,6 +139,9 @@ class ClickFrame(QFrame):
             drag = (e.position().toPoint() - self._press_pos).manhattanLength()
             if drag > self._DRAG_THRESHOLD:
                 self._press_pos = None
+                # 滑动过程中不要保留悬停/按下高亮
+                self.setAttribute(Qt.WA_UnderMouse, False)
+                self.update()
         super().mouseMoveEvent(e)
 
 
@@ -491,11 +516,11 @@ class ThemeCard(ClickFrame):
         p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 24), QColor(pal["paper2"]))
         p.fillRect(QRectF(r.left() + 2, r.top() + 26, r.width() - 4, r.height() - 46),
                    QColor(page))
-        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(pal["paper2"]))
+        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(deep))
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(pal["panel"]))
         p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 33, r.width() - 24, 16), 5, 5)
-        p.setBrush(QColor(deep))
+        p.setBrush(QColor(pal["paper"]))
         p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 18, 22, 12), 5, 5)
         p.restore()
 
@@ -773,23 +798,23 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(56)
+        self.setFixedHeight(44)
 
     def sizeHint(self):
-        return QSize(80, 56)
+        return QSize(80, 44)
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         active = self.isChecked()
-        col = QColor(T["brand"]) if active else QColor(T["ink2"])
+        # dock 是主题深色，未选中用奶油图标；选中用奶油胶囊 + 深色图标
+        col = QColor(T["deep"]) if active else QColor(255, 253, 248, 210)
         w, h = self.width(), self.height()
 
-        # 选中：主题色浅底胶囊 + 主题色图标；未选中：奶白底栏上的墨色图标
         if active:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(T["brand_soft"]))
-            p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 16, 16)
+            p.setBrush(QColor(T["paper"]))
+            p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 14, 14)
 
         pen = QPen(col, 1.8)
         pen.setCapStyle(Qt.RoundCap)

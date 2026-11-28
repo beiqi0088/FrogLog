@@ -150,7 +150,7 @@ def build_qss(t: dict) -> str:
 
 
     QFrame#navFrame {{
-        background: {t['paper2']};
+        background: {t['deep']};
         border: none;
     }}
     QFrame#navBar {{ background: transparent; border: none; }}
