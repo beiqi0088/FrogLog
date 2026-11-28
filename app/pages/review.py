@@ -458,6 +458,8 @@ class ReviewPage(QWidget):
 
         # 底部操作条
         self.bottom = QWidget()
+        self.bottom.setObjectName("reviewBottom")
+        self.bottom.setAttribute(Qt.WA_StyledBackground, True)
         self.bottom_lay = QVBoxLayout(self.bottom)
         # 底部只留手势条高度：纸面铺到底，提示文字不被手势条压住。
         self.bottom_lay.setContentsMargins(20, 8, 20, 10)
@@ -531,6 +533,14 @@ class ReviewPage(QWidget):
         if abs(self.width() - self._last_w) > 24:
             self._last_w = self.width()
             self._resize_timer.start(80)
+
+    def _apply_template_bg(self, color: str):
+        """顶栏 + 底部操作条统一铺成卡片模板的底色，整页同色、不再上下割裂。"""
+        if getattr(self, "_tpl_bg", None) == color:
+            return
+        self._tpl_bg = color
+        self.top.setStyleSheet(f"QWidget#reviewTop{{background:{color};border:none;}}")
+        self.bottom.setStyleSheet(f"QWidget#reviewBottom{{background:{color};border:none;}}")
 
     def _toggle_practice(self, card: dict):
         on = not card.get("practice")
@@ -628,6 +638,7 @@ class ReviewPage(QWidget):
         secs = max(1, int((now_ms() - ses["started"]) / 1000))
         pct = round(remembered / reviewed * 100) if reviewed else 0
         pal = CR.palette("sky")
+        self._apply_template_bg(pal["page"])
 
         W.clear_layout(self.top_lay)
         back = W.BackButton(30)
@@ -826,6 +837,7 @@ class ReviewPage(QWidget):
                    and int(card.get("due") or 0) > now_ms())
         self._waiting = waiting
         deck = self.store.deck(card["deck_id"]) or {"name": "", "template": "sky"}
+        self._apply_template_bg(CR.palette(deck.get("template", "sky"))["page"])
         if getattr(self, "_mask_card", None) != card.get("id"):
             self._mask_card = card.get("id")
             self.masks = set()
@@ -933,6 +945,7 @@ class ReviewPage(QWidget):
         W.clear_layout(self.area_lay)
         self.area.color = W.T["paper"]
         self.area.update()
+        self._apply_template_bg(W.T["paper"])
 
         big = QLabel(f"{secs} 秒后继续")
         big.setAlignment(Qt.AlignCenter)
