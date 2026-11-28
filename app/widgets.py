@@ -443,36 +443,19 @@ class FrogMascot(QWidget):
 
 
 class BandHeader(QFrame):
-    """页面顶部的深色色带 + 池塘波浪；appbar/hero 内容放在 self.lay 里。"""
+    """页面顶部：奶白底 + 标题/操作，无深色色带、无波浪。内容放在 self.lay。"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        # 顶部色块统一高度（88px）：内容直接从顶部开始，不再留空的 wordmark 行
-        self.setFixedHeight(88)
+        self.setFixedHeight(62)
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(20, 6, 20, 18)
+        self.lay.setContentsMargins(18, 8, 18, 6)
         self.lay.setSpacing(4)
 
     def paintEvent(self, e):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
-        w, h = self.width(), self.height()
-        p.fillRect(QRectF(0, 0, w, h), QColor(T["deep"]))
-        # 紧凑池塘波浪：底部 ~12px，三瓣
-        y = h - 9
-        path = QPainterPath()
-        path.moveTo(0, y + 6)
-        for i in range(3):
-            x0 = i * w / 3
-            x1 = (i + 1) * w / 3
-            path.cubicTo(x0 + w / 12, y - 4, x1 - w / 12, y - 4, x1, y + 6)
-        path.lineTo(w, h)
-        path.lineTo(0, h)
-        path.closeSubpath()
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(T["paper"]))
-        p.drawPath(path)
+        # 透明：透出整页奶白背景；顶栏只承担排版，不刷色
+        pass
 
 
 class ThemeCard(ClickFrame):
@@ -495,11 +478,12 @@ class ThemeCard(ClickFrame):
         r = QRectF(self.rect()).adjusted(1, 1, -3, -3)
         deep, page = self.info["deep"], self.info["page"]
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(33, 27, 28, 26))
+        p.setBrush(QColor(42, 37, 25, 26))
         p.drawRoundedRect(r.adjusted(2, 2.5, 2, 2.5), 14, 14)
         p.setBrush(QColor(T["panel"]))
         p.drawRoundedRect(r, 14, 14)
-        p.setPen(QPen(QColor(T["ink"]), 2.2 if self.selected else 1.5))
+        p.setPen(QPen(QColor(T["brand"]) if self.selected else QColor(T["line"]),
+                      2.0 if self.selected else 1.0))
         p.setBrush(Qt.NoBrush)
         p.drawRoundedRect(r, 14, 14)
 
@@ -507,17 +491,18 @@ class ThemeCard(ClickFrame):
         clip.addRoundedRect(r.adjusted(2, 2, -2, -2), 12, 12)
         p.save()
         p.setClipPath(clip)
-        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 27), QColor(deep))
-        p.fillRect(QRectF(r.left() + 2, r.top() + 29, r.width() - 4, r.height() - 31),
+        p.fillRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, 24), QColor(T["paper2"]))
+        p.fillRect(QRectF(r.left() + 2, r.top() + 26, r.width() - 4, r.height() - 46),
                    QColor(page))
+        p.fillRect(QRectF(r.left() + 2, r.bottom() - 22, r.width() - 4, 20), QColor(T["paper2"]))
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor("#FFFDF8"))
-        p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 36, r.width() - 24, 20), 6, 6)
+        p.setBrush(QColor(T["panel"]))
+        p.drawRoundedRect(QRectF(r.left() + 12, r.top() + 33, r.width() - 24, 16), 5, 5)
         p.setBrush(QColor(deep))
-        p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 17, r.width() - 24, 9), 4.5, 4.5)
+        p.drawRoundedRect(QRectF(r.left() + 12, r.bottom() - 18, 22, 12), 5, 5)
         p.restore()
 
-        p.setPen(QColor("#FFFDF8"))
+        p.setPen(QColor(T["ink"]))
         f = QFont(theme.FONT, 9)
         f.setBold(True)
         p.setFont(f)
@@ -783,7 +768,7 @@ class StackBar(QWidget):
 
 
 class NavButton(QPushButton):
-    """底部导航：只画图标（无文字），在圆角胶囊里垂直居中；选中态用奶油黄底。"""
+    """底部导航：只画图标（无文字），在圆角胶囊里垂直居中；选中态用主题色浅底。"""
 
     def __init__(self, key: str, label: str, parent=None):
         super().__init__("", parent)
@@ -801,13 +786,13 @@ class NavButton(QPushButton):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         active = self.isChecked()
-        col = QColor(T["deep"]) if active else QColor("#FFFDF8")
+        col = QColor(T["brand"]) if active else QColor(T["ink2"])
         w, h = self.width(), self.height()
 
-        # 选中：奶油黄胶囊，深色图标；未选中：深色 dock 上的白色图标
+        # 选中：主题色浅底胶囊 + 主题色图标；未选中：奶白底栏上的墨色图标
         if active:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor("#FFF3D6"))
+            p.setBrush(QColor(T["brand_soft"]))
             p.drawRoundedRect(QRectF(3, 2, w - 6, h - 4), 16, 16)
 
         pen = QPen(col, 1.8)

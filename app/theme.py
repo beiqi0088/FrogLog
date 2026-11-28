@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 theme.py - 设计令牌 + 全局 QSS
-7 套「池塘纸感」平涂主题（极光/冰川/薄荷/香檟/丁香/珊瑚/潟湖），纯色、无渐变。
+7 套奶白纸感主题（极光/冰川/薄荷/香檟/丁香/珊瑚/潟湖）：全站奶白背景 + 细墨字，
+主题色只用作按钮 / 选中态 / 徽章点缀。纯色、无渐变、无深色顶带 / 底栏。
 """
 
 from PySide6.QtCore import QRectF
@@ -9,25 +10,29 @@ from PySide6.QtGui import QColor, QPainter
 
 
 LIGHT = {
-    "paper":   "#FBF8F1",
-    "paper2":  "#F2F1E7",
-    "panel":   "#FFFFFF",
-    "ink":     "#242721",
-    "ink2":    "#73766F",
-    "ink3":    "#A8A79E",
-    "line":    "#E4E1D6",
-    "brand":   "#2F6A43",
-    "brand2":  "#245637",
-    "brand_soft": "#E9EFE6",
-    "accent":  "#BF5B38",
-    "accent_soft": "#F4E7DF",
-    "green":   "#2E9E67",
-    "green_soft": "#EAF7F0",
-    "red":     "#E8503A",
-    "red_soft": "#FDEDEA",
-    "blue":    "#426A80",
-    "blue_soft": "#E4EDF4",
-    "shadow":  "rgba(36,39,33,0.10)",
+    "paper":   "#F3EEDF",
+    "paper2":  "#E9E1CB",
+    "page":    "#F3EEDF",
+    "panel":   "#FBF6EA",
+    "ink":     "#2A2519",
+    "ink2":    "#8A8066",
+    "ink3":    "#B7AD94",
+    "line":    "#E0D6BE",
+    "brand":   "#B23A5B",
+    "brand2":  "#8E2946",
+    "brand_soft": "#F3DDE4",
+    "deep":    "#B23A5B",
+    "accent":  "#D9A441",
+    "accent_soft": "#F6E8C5",
+    "butter":  "#D9A441",
+    "butter_soft": "#F6E8C5",
+    "green":   "#3E7A52",
+    "green_soft": "#DDEBDF",
+    "red":     "#B85A3A",
+    "red_soft": "#F5DECF",
+    "blue":    "#3E6482",
+    "blue_soft": "#DCE6F0",
+    "shadow":  "rgba(42,37,25,0.10)",
 }
 
 DARK = {
@@ -98,39 +103,38 @@ def build_qss(t: dict) -> str:
     QScrollArea > QWidget > QWidget {{ background: transparent; }}
     QScrollBar:vertical {{ width: 0px; background: transparent; }}
 
-    /* 紧凑深色色带：标题区约 80–100px，内部文字反白 */
+    /* 顶部：奶白底 + 墨色标题（无深色色带、无波浪） */
     QFrame#bandHeader, QWidget#bandHeader {{ background: transparent; border: none; }}
-    QWidget#bandHeader QLabel#h1 {{ color: {cream}; font-size: 23px; font-weight: 700; }}
-    QWidget#bandHeader QLabel#h2 {{ color: {cream}; font-size: 15px; font-weight: 700; }}
-    QWidget#bandHeader QLabel#h3 {{ color: {cream}; font-size: 12px; font-weight: 600; }}
+    QWidget#bandHeader QLabel#h1 {{ color: {t['ink']}; font-size: 24px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h2 {{ color: {t['ink']}; font-size: 16px; font-weight: 700; }}
+    QWidget#bandHeader QLabel#h3 {{ color: {t['ink']}; font-size: 13px; font-weight: 600; }}
     QWidget#bandHeader QLabel#sub,
-    QWidget#bandHeader QLabel#eyebrow {{ color: {band_sub}; font-size: 9px; }}
-    QWidget#bandHeader QLabel {{ color: {cream}; }}
-    QWidget#bandHeader QPushButton {{ color: {cream}; }}
+    QWidget#bandHeader QLabel#eyebrow {{ color: {t['ink2']}; font-size: 10px; }}
+    QWidget#bandHeader QLabel {{ color: {t['ink']}; }}
+    QWidget#bandHeader QPushButton {{ color: {t['ink']}; }}
     QWidget#bandHeader QPushButton#chip {{
-        background: rgba(255,253,248,0.18);
-        color: #FFFDF8;
-        border: 1px solid rgba(255,253,248,0.35);
+        background: {t['panel']}; color: {t['ink2']};
+        border: 1px solid {t['line']};
     }}
     QWidget#bandHeader QPushButton#ghost {{
-        background: transparent; border: 1.5px solid rgba(255,253,248,0.55);
-        color: {cream};
+        background: transparent; border: 1.2px solid {t['line']};
+        color: {t['ink']};
     }}
 
     QFrame#card {{
         background: {t['panel']};
-        border: 1.5px solid {t['ink']};
-        border-radius: 16px;
+        border: 1px solid {t['line']};
+        border-radius: 18px;
     }}
     QFrame#flatCard {{
         background: {t['panel']};
-        border: 1.5px solid {t['ink']};
-        border-radius: 16px;
+        border: 1px solid {t['line']};
+        border-radius: 18px;
     }}
     QFrame#hero {{
-        border-radius: 24px;
+        border-radius: 22px;
         background: {t['brand']};
-        border: 1.5px solid {t['ink']};
+        border: 1px solid {t['line']};
     }}
     QWidget#reviewTop {{ background: {t['paper']}; }}
     QWidget#reviewTop QLabel {{ color: {t['ink']}; }}
@@ -139,14 +143,14 @@ def build_qss(t: dict) -> str:
     QWidget#reviewTop QFrame {{ background: transparent; }}
     QWidget#reviewTop QPushButton#iconBtn {{
         background: {t['panel']};
-        border: 1.5px solid {t['ink']};
+        border: 1px solid {t['line']};
         border-radius: 15px;
         color: {t['ink']};
     }}
 
 
     QFrame#navFrame {{
-        background: {t['deep']};
+        background: {t['paper2']};
         border: none;
     }}
     QFrame#navBar {{ background: transparent; border: none; }}
@@ -167,23 +171,23 @@ def build_qss(t: dict) -> str:
     QPushButton#primary {{
         background: {t['brand']}; color: {cream};
         font-weight: 700; padding: 11px 18px; border-radius: 22px;
-        border: 1.5px solid {t['ink']};
+        border: none;
     }}
     QPushButton#primary:hover {{ background: {t['brand2']}; }}
     QPushButton#ghost {{
-        background: {t['panel']}; border: 1.5px solid {t['ink']};
+        background: {t['panel']}; border: 1px solid {t['line']};
         color: {t['ink']}; padding: 10px 16px; border-radius: 20px;
     }}
     QPushButton#ghost:hover {{ background: {t['butter_soft']}; }}
     QPushButton#chip {{
-        background: {t['panel']}; border: 1.5px solid {t['line']};
+        background: {t['panel']}; border: 1px solid {t['line']};
         color: {t['ink2']}; padding: 7px 14px; border-radius: 15px; font-size: 12px;
     }}
     QPushButton#chip[on="true"] {{
         background: {t['brand']}; color: {cream}; border-color: {t['brand']};
     }}
     QPushButton#iconBtn {{
-        background: {t['panel']}; border: 1.5px solid {t['ink']};
+        background: {t['panel']}; border: 1px solid {t['line']};
         border-radius: 20px; padding: 0px; font-size: 15px; color: {t['ink']};
     }}
     QPushButton#iconBtn:hover {{ background: {t['butter_soft']}; }}
@@ -193,14 +197,14 @@ def build_qss(t: dict) -> str:
     QPushButton#tab[on="true"] {{ color: {t['brand']}; font-weight: 700; }}
 
     QLineEdit, QTextEdit {{
-        background: {t['panel']}; border: 1.5px solid {t['ink']};
+        background: {t['panel']}; border: 1px solid {t['line']};
         border-radius: 14px; padding: 10px 12px; color: {t['ink']};
         selection-background-color: {t['brand']};
     }}
-    QLineEdit:focus, QTextEdit:focus {{ border: 1.5px solid {t['brand']}; }}
+    QLineEdit:focus, QTextEdit:focus {{ border: 1px solid {t['brand']}; }}
 
     QComboBox {{
-        background: {t['panel']}; border: 1.5px solid {t['ink']};
+        background: {t['panel']}; border: 1px solid {t['line']};
         border-radius: 12px; padding: 8px 12px; color: {t['ink']};
     }}
     QComboBox QAbstractItemView {{
@@ -212,73 +216,73 @@ def build_qss(t: dict) -> str:
     QFrame#grabber {{ background: {t['line']}; border-radius: 2px; }}
     QToolTip {{
         background: {t['panel']}; color: {t['ink']};
-        border: 1.5px solid {t['ink']}; border-radius: 10px;
+        border: 1px solid {t['line']}; border-radius: 10px;
         padding: 7px 12px; font-size: 12px;
     }}
     """
 
 # ---------------------------------------------------------------- 主题
-# 「池塘纸感」7 套平涂主题：主题深色 + 浅纸色，全部纯色、无渐变。
-_POND_BASE = {
-    "panel": "#FFFDF8",
-    "ink": "#211B1C", "ink2": "#6F5F60", "ink3": "#A08F90",
-    "green": "#2F7A4F", "green_soft": "#DCEFE2",
-    "red": "#C4562E", "red_soft": "#F8DCCF",
-    "blue": "#2E5E8C", "blue_soft": "#DCE8F5",
-    "accent": "#F2C14E", "accent_soft": "#FCEBC4",
-    "butter": "#F2C14E", "butter_soft": "#FCEBC4",
-    "shadow": "rgba(33,27,28,0.10)",
+# 奶白纸感：全站奶白背景 + 细墨字；每套主题只保留一个强调色（deep/brand），
+# 用作选中态、主按钮、徽章等点缀。纯色、无渐变、无深色顶带 / 底栏。
+_CREAM = {
+    "paper":   "#F3EEDF",
+    "paper2":  "#E9E1CB",
+    "page":    "#F3EEDF",
+    "panel":   "#FBF6EA",
+    "ink":     "#2A2519",
+    "ink2":    "#8A8066",
+    "ink3":    "#B7AD94",
+    "line":    "#E0D6BE",
+    "green":   "#3E7A52", "green_soft": "#DDEBDF",
+    "red":     "#B85A3A", "red_soft":   "#F5DECF",
+    "blue":    "#3E6482", "blue_soft":  "#DCE6F0",
+    "accent":  "#D9A441", "accent_soft":"#F6E8C5",
+    "butter":  "#D9A441", "butter_soft":"#F6E8C5",
+    "shadow":  "rgba(42,37,25,0.10)",
 }
 
 THEMES = {
     "anki-aurora": {
-        "name": "极光", "dark": False, "deep": "#B23A5B", "page": "#F8E9E6",
-        "tokens": {**_POND_BASE,
-                   "paper": "#F8E9E6", "paper2": "#F3DADF", "line": "#E7CFD4",
-                   "brand": "#B23A5B", "brand2": "#8E2946", "brand_soft": "#F3DADF",
-                   "deep": "#B23A5B", "page": "#F8E9E6"},
+        "name": "极光", "dark": False, "deep": "#B23A5B", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#B23A5B", "brand2": "#8E2946", "brand_soft": "#F3DDE4",
+                   "deep": "#B23A5B"},
     },
     "anki-ice": {
-        "name": "冰川", "dark": False, "deep": "#2E5E8C", "page": "#EAF1F7",
-        "tokens": {**_POND_BASE,
-                   "paper": "#EAF1F7", "paper2": "#D9E6F3", "line": "#CFDDEB",
-                   "brand": "#2E5E8C", "brand2": "#234A70", "brand_soft": "#D9E6F3",
-                   "deep": "#2E5E8C", "page": "#EAF1F7"},
+        "name": "冰川", "dark": False, "deep": "#2E5E8C", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#2E5E8C", "brand2": "#234A70", "brand_soft": "#DCE6F3",
+                   "deep": "#2E5E8C"},
     },
     "anki-mint": {
-        "name": "薄荷", "dark": False, "deep": "#2F7A4F", "page": "#EAF4EC",
-        "tokens": {**_POND_BASE,
-                   "paper": "#EAF4EC", "paper2": "#D8EEDD", "line": "#CFE4D5",
-                   "brand": "#2F7A4F", "brand2": "#235F3D", "brand_soft": "#D8EEDD",
-                   "deep": "#2F7A4F", "page": "#EAF4EC"},
+        "name": "薄荷", "dark": False, "deep": "#2F7A4F", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#2F7A4F", "brand2": "#235F3D", "brand_soft": "#DCEFE2",
+                   "deep": "#2F7A4F"},
     },
     "anki-champ": {
-        "name": "香檟", "dark": False, "deep": "#A9761C", "page": "#F8F0E1",
-        "tokens": {**_POND_BASE,
-                   "paper": "#F8F0E1", "paper2": "#F1E2C4", "line": "#E8D7B5",
-                   "brand": "#A9761C", "brand2": "#855A12", "brand_soft": "#F1E2C4",
-                   "deep": "#A9761C", "page": "#F8F0E1"},
+        "name": "香檟", "dark": False, "deep": "#A9761C", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#A9761C", "brand2": "#855A12", "brand_soft": "#F3E7CC",
+                   "deep": "#A9761C"},
     },
     "anki-lilac": {
-        "name": "丁香", "dark": False, "deep": "#6B4EA8", "page": "#F1ECF8",
-        "tokens": {**_POND_BASE,
-                   "paper": "#F1ECF8", "paper2": "#E4DAF5", "line": "#DCCFEF",
-                   "brand": "#6B4EA8", "brand2": "#543B87", "brand_soft": "#E4DAF5",
-                   "deep": "#6B4EA8", "page": "#F1ECF8"},
+        "name": "丁香", "dark": False, "deep": "#6B4EA8", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#6B4EA8", "brand2": "#543B87", "brand_soft": "#E7DEF3",
+                   "deep": "#6B4EA8"},
     },
     "anki-coral": {
-        "name": "珊瑚", "dark": False, "deep": "#C4562E", "page": "#F9ECE4",
-        "tokens": {**_POND_BASE,
-                   "paper": "#F9ECE4", "paper2": "#F5DCCF", "line": "#EBCABC",
-                   "brand": "#C4562E", "brand2": "#9E4423", "brand_soft": "#F5DCCF",
-                   "deep": "#C4562E", "page": "#F9ECE4"},
+        "name": "珊瑚", "dark": False, "deep": "#C4562E", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#C4562E", "brand2": "#9E4423", "brand_soft": "#F5E1D3",
+                   "deep": "#C4562E"},
     },
     "anki-lagoon": {
-        "name": "潟湖", "dark": False, "deep": "#0F7C86", "page": "#E8F4F5",
-        "tokens": {**_POND_BASE,
-                   "paper": "#E8F4F5", "paper2": "#D3EBED", "line": "#C6E1E3",
-                   "brand": "#0F7C86", "brand2": "#0A5F67", "brand_soft": "#D3EBED",
-                   "deep": "#0F7C86", "page": "#E8F4F5"},
+        "name": "潟湖", "dark": False, "deep": "#0F7C86", "page": _CREAM["page"],
+        "tokens": {**_CREAM,
+                   "brand": "#0F7C86", "brand2": "#0A5F67", "brand_soft": "#D4EAEC",
+                   "deep": "#0F7C86"},
     },
 }
 

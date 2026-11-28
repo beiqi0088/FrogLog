@@ -74,7 +74,7 @@ class Page(QWidget):
         lay.setSpacing(8)
         if back:
             btn = W.BackButton(30)
-            btn.set_light(True)
+            btn.set_light(False)
             btn.clicked.connect(back)
             lay.addWidget(btn, 0, Qt.AlignVCenter)
         col = QVBoxLayout()

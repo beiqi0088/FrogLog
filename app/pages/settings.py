@@ -23,7 +23,7 @@ class SettingsPage(Page):
     def build(self):
         super().build()
         s = self.store
-        self.appbar("设置", "外观 · 7 套平涂主题", back=self.app.go_back)
+        self.appbar("设置", "外观 · 7 套奶白纸感主题", back=self.app.go_back)
 
         self.group("卡片与模板")
         tpl_name = TEMPLATES.get(s.settings.get("default_template", "bean"), {}).get("name", "豆沙绿语")
@@ -56,7 +56,7 @@ class SettingsPage(Page):
         for c in range(2):
             grid.setColumnStretch(c, 1)
         themes.body.addWidget(grid_host)
-        foot = QLabel("7 套平涂主题；顶部色带 / 底部 dock = 主题深色；状态栏 / 手势条 = 页面浅纸色。")
+        foot = QLabel("7 套奶白纸感主题；全站奶白背景 + 细墨字，主题色只用作按钮、选中态等点缀。")
         foot.setWordWrap(True)
         foot.setStyleSheet(
             f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")

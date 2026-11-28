@@ -1808,7 +1808,7 @@ class DeckPage(Page):
         bl.setContentsMargins(0, 4, 0, 0)
         bl.setSpacing(8)
         back = W.BackButton(30)
-        back.set_light(True)
+        back.set_light(False)
         back.clicked.connect(self.app.go_back)
         bl.addWidget(back, 0, Qt.AlignVCenter)
         title = QLabel(d["name"])

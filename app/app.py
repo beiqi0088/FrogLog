@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 import threading
 
-from PySide6.QtCore import QEvent, QRectF, QTimer, Qt
+from PySide6.QtCore import QEvent, QTimer, Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPainter
 from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QStackedWidget, QFrame, QLabel, QApplication,
@@ -38,12 +38,13 @@ _FAMILY_CACHE: str | None = None
 _IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能再 move()
 
 
-def _android_edge_to_edge(deep_hex: str | None = None):
-    """安卓：内容铺到系统栏后面，状态栏 / 手势条刷成主题深色 + 白色系统图标。
+def _android_edge_to_edge(bg_hex: str | None = None):
+    """安卓：内容铺到系统栏后面，状态栏 / 手势条透出奶白底色 + 深色系统图标。
 
-    Qt 在窗口首次显示、切换主题（setStyleSheet）时都可能把系统栏重设回主题色
-    （白底 + 深色图标），所以启动和每次换主题之后都要重放。
-    deep_hex 为 None 时只设透明；jnius / android 模块不存在时静默跳过。
+    Qt 在窗口首次显示、切换主题（setStyleSheet）时都可能把系统栏重设，
+    所以启动和每次换主题之后都要重放。bg_hex 传页面奶白色，用来给系统栏
+    和 Activity 窗口底色兜底：即使 Qt 表面没铺到系统栏区域，露出来的也是
+    奶白而不是刺眼的白；图标用深色，在奶白底上清晰。
     """
     try:
         from jnius import autoclass
@@ -52,8 +53,8 @@ def _android_edge_to_edge(deep_hex: str | None = None):
         return
 
     color = 0                       # Color.TRANSPARENT
-    if deep_hex:
-        c = QColor(deep_hex)
+    if bg_hex:
+        c = QColor(bg_hex)
         if c.isValid():
             color = (255 << 24) | (c.red() << 16) | (c.green() << 8) | c.blue()
             if color >= 1 << 31:
@@ -67,15 +68,10 @@ def _android_edge_to_edge(deep_hex: str | None = None):
                 return
             window = activity.getWindow()
             Build = autoclass("android.os.Build$VERSION")
-            # 主题深色直接写给系统栏：即使 Qt 界面没铺到系统栏区域，露出来的
-            # 也是深色而不是白底；Android 15+ 忽略这个颜色时，由 BgLayer 在
-            # 窗口内部铺同样的深色，两条路结果一致。
             window.setStatusBarColor(color)
             window.setNavigationBarColor(color)
-            if deep_hex:
+            if bg_hex:
                 try:
-                    # 白底条带来自 Activity 的 windowBackground 时（Qt 表面没铺到
-                    # 系统栏），把窗口底色也换成深色；其余区域被 Qt 表面盖住，无影响。
                     ColorDrawable = autoclass("android.graphics.drawable.ColorDrawable")
                     window.setBackgroundDrawable(ColorDrawable(color))
                 except Exception:
@@ -87,12 +83,12 @@ def _android_edge_to_edge(deep_hex: str | None = None):
                 window.setDecorFitsSystemWindows(False)
                 ctrl = window.getInsetsController()
                 if ctrl is not None:
-                    # 深色底：清掉 LIGHT 标志，系统时间 / 电量 / 手势条用白色
-                    ctrl.setSystemBarsAppearance(0, 8 | 16)
+                    # 奶白底：保留 LIGHT 标志，系统时间 / 电量 / 手势条用深色
+                    ctrl.setSystemBarsAppearance(8 | 16, 8 | 16)
             else:
-                window.getDecorView().setSystemUiVisibility(0x0100 | 0x0200 | 0x0400)
+                window.getDecorView().setSystemUiVisibility(
+                    0x0100 | 0x0200 | 0x0400 | 0x2000 | 0x4000)
             try:
-                # Java 层启动后还会重放几次，把颜色同步过去，避免被冲回透明
                 autoclass("org.kivy.android.FrogLogSystemBars").barColor = color
             except Exception:
                 pass
@@ -105,9 +101,9 @@ def _android_edge_to_edge(deep_hex: str | None = None):
         pass
 
 
-def _android_edge_to_edge_safe(deep_hex: str | None = None):
+def _android_edge_to_edge_safe(bg_hex: str | None = None):
     try:
-        _android_edge_to_edge(deep_hex)
+        _android_edge_to_edge(bg_hex)
     except Exception:
         pass
 
@@ -148,18 +144,8 @@ class BgLayer(QWidget):
         p.setRenderHint(QPainter.Antialiasing, True)
         win = self.window()
         tid = getattr(win, "theme_id", None)
+        # 整页奶白：系统栏区域也透出奶白，与参考图一致；不再单独刷深色条。
         theme.paint_page_bg(p, self.rect(), tid)
-        # 状态栏 / 手势条区域铺主题深色：与顶部色带、底部 dock 连成一整块，
-        # 色块顶边贴屏幕顶、底边贴屏幕底；内容位置不变（root 布局仍按 inset 内缩）。
-        info = theme.theme_info(tid or theme.DEFAULT_THEME)
-        deep = QColor(info["deep"])
-        w, h = self.width(), self.height()
-        top = max(0, getattr(win, "_sys_top", 0))
-        bottom = max(0, getattr(win, "_sys_bottom", 0))
-        if top > 0:
-            p.fillRect(QRectF(0, 0, w, top), deep)
-        if bottom > 0:
-            p.fillRect(QRectF(0, h - bottom, w, bottom), deep)
 
 
 class MainWindow(QMainWindow):
@@ -311,12 +297,9 @@ class MainWindow(QMainWindow):
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
         self.setStyleSheet(f"QMainWindow{{background:{t['paper']};}}")
-        # 底部 dock：主题深色，与系统手势条同色；选中项奶油黄胶囊
-        info = theme.theme_info(self.theme_id)
-        nav_bg = info.get("deep", t.get("brand", "#B23A5B"))
+        # 底部 dock：奶白（paper2），与整页同色系；选中项主题色浅底胶囊
         self.nav.setStyleSheet(
-            f"QFrame#navFrame{{background:{nav_bg};border:none;"
-            f"border-top-left-radius:22px;border-top-right-radius:22px;}}"
+            f"QFrame#navFrame{{background:{t['paper2']};border:none;}}"
         )
         self.nav_bar.setStyleSheet("QFrame#navBar{background:transparent;border:none;}")
         for b in self.nav_buttons.values():
@@ -326,21 +309,22 @@ class MainWindow(QMainWindow):
         self._apply_android_bars()
 
     def _apply_android_bars(self):
-        """状态栏 / 手势条刷成当前主题深色（换主题后 Qt 可能把它们重置成白底）。"""
+        """状态栏 / 手势条透出奶白底色 + 深色系统图标（换主题后 Qt 可能重置）。"""
         if not _IS_ANDROID:
             return
-        deep = theme.theme_info(self.theme_id)["deep"]
+        t = theme.theme_tokens(self.theme_id)
+        paper = t.get("paper", "#F3EEDF")
         write_log = getattr(sys, "froglog_log", None)
         if callable(write_log):
             try:
                 scr = self.screen().geometry() if self.screen() else None
-                write_log(f"系统栏刷色 deep={deep} 窗口={self.width()}x{self.height()} "
+                write_log(f"系统栏底色 paper={paper} 窗口={self.width()}x{self.height()} "
                           f"屏幕={scr.width() if scr else 0}x{scr.height() if scr else 0} "
                           f"insets={getattr(self, '_sys_top', 0)}/{getattr(self, '_sys_bottom', 0)}")
             except Exception:
                 pass
         for ms in (0, 300, 1200, 3000):
-            QTimer.singleShot(ms, lambda d=deep: _android_edge_to_edge_safe(d))
+            QTimer.singleShot(ms, lambda c=paper: _android_edge_to_edge_safe(c))
 
     def _sync_bg(self):
         # 背景层铺满整个 central widget。安卓上窗口已被拉到全屏，

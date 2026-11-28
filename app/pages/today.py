@@ -288,7 +288,7 @@ class TodayPage(Page):
         rl.setSpacing(10)
         col = QVBoxLayout()
         col.setSpacing(3)
-        title = QLabel("<span style='color:#FFFDF8;'>今日</span>")
+        title = QLabel(f"<span style='color:{W.T['ink']};'>今日</span>")
         title.setTextFormat(Qt.RichText)
         title.setStyleSheet("font-size:23px;font-weight:700;")
         col.addWidget(title)
