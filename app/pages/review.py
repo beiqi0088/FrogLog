@@ -293,13 +293,25 @@ class HomeButton(QWidget):
 
 
 class PracticeBolt(QWidget):
-    """主动练习状态：32×32 圆角方框里放一道闪电（未加入空心灰、已加入实心绿）。"""
+    """主动练习状态的水印：题卡右上角一道半透明闪电（未加入浅灰、已加入品牌色）。
+
+    不再画方框，也不吃点击事件——只是一枚跟在题卡上的淡色印记。
+    """
 
     def __init__(self, on: bool = False, parent=None):
         super().__init__(parent)
         self._on = bool(on)
-        self.setFixedSize(32, 32)
-        self.setToolTip("已加入主动练习" if self._on else "未加入主动练习（右上角 ⋯ 里可加入）")
+        self.setFixedSize(40, 40)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.setToolTip("已加入主动练习" if self._on else "未加入主动练习（点底部计数胶囊可加入）")
+
+    def set_on(self, on: bool):
+        on = bool(on)
+        if on == self._on:
+            return
+        self._on = on
+        self.setToolTip("已加入主动练习" if on else "未加入主动练习（点底部计数胶囊可加入）")
+        self.update()
 
     @staticmethod
     def _bolt_path() -> QPainterPath:
@@ -316,21 +328,19 @@ class PracticeBolt(QWidget):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        # 只画边框（和右边 ⋯ 按钮同款），内部透明
-        p.setPen(QPen(QColor(W.T["line"]), 1))
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(QRectF(0.5, 0.5, 31, 31), 10, 10)
-        # 未加入练习时只留边框，不画闪电
-        if self._on:
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(W.T["brand"]))
-            p.drawPath(self._bolt_path())
+        # 水印：按 32 的原始坐标等比放大到控件尺寸，只画一道半透明闪电
+        p.scale(self.width() / 32.0, self.height() / 32.0)
+        col = QColor(W.T["brand"] if self._on else W.T["ink3"])
+        col.setAlpha(105 if self._on else 46)
+        p.setPen(Qt.NoPen)
+        p.setBrush(col)
+        p.drawPath(self._bolt_path())
 
 
 class QuestPill(QPushButton):
     """顶栏任务计时胶囊：只有停在学习页才跑表，暂停 / 未领取 / 完成各有状态。
 
-    放在「卡组名」和右侧 ⋯ 之间，点一下跳回征途页。
+    放在「卡组名」和右侧挖空按钮之间，点一下跳回征途页。
     """
 
     def __init__(self, app, parent=None):
@@ -367,7 +377,35 @@ class QuestPill(QPushButton):
 
 
 class StatsChip(QWidget):
-    """底部中间的小胶囊底：白底 + 细描边 + 大圆角（自绘，保证圆角一致）。"""
+    """底部中间的小胶囊底：白底 + 细描边 + 大圆角（自绘，保证圆角一致）。
+
+    整颗胶囊可点击：原来右侧 ⋯ 里的卡片操作（加入练习 / 编辑 / 暂停 / 搁置 / 撤销）
+    全部收进这里，点胶囊即弹出。
+    """
+
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._pressed = False
+        self.setCursor(Qt.PointingHandCursor)
+        self.setToolTip("卡片操作：加入练习 / 编辑 / 暂停 / 搁置 / 撤销")
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self._pressed = True
+            e.accept()
+            return
+        super().mousePressEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        was = self._pressed
+        self._pressed = False
+        if was and e.button() == Qt.LeftButton and self.rect().contains(e.position().toPoint()):
+            self.clicked.emit()
+            e.accept()
+            return
+        super().mouseReleaseEvent(e)
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -451,9 +489,13 @@ class ReviewPage(QWidget):
         self.scroll.setFrameShape(QScrollArea.NoFrame)
         self.area = BgArea("#B3E5FC")
         self.area_lay = QVBoxLayout(self.area)
-        self.area_lay.setContentsMargins(16, 24, 16, 16)
+        # 顶部留白尽量小：题卡紧贴顶栏，视线不用先跨过一条空白
+        self.area_lay.setContentsMargins(16, 6, 16, 16)
         self.area_lay.setSpacing(0)
         self.scroll.setWidget(self.area)
+        # 主动练习水印：题卡右上角一枚淡色闪电，跟着卡片走（见 _place_practice_wm）
+        self.practice_wm = PracticeBolt(False, self.area)
+        self.practice_wm.hide()
         outer.addWidget(self.scroll, 1)
 
         # 底部操作条
@@ -517,6 +559,25 @@ class ReviewPage(QWidget):
             b.move(x, y)
         b.raise_()
         b.show()
+
+    def _place_practice_wm(self):
+        """把主动练习水印贴到题卡右上角（卡片换位置/尺寸都跟着走）。"""
+        wm = getattr(self, "practice_wm", None)
+        if wm is None:
+            return
+        host = getattr(self, "_mask_host", None)
+        try:
+            if host is None or host.width() <= 0:
+                wm.hide()
+                return
+            x = host.x() + host.width() - wm.width() - 18
+            y = host.y() + 14
+        except RuntimeError:      # 旧 host 已被 deleteLater 回收
+            wm.hide()
+            return
+        wm.move(max(0, x), max(0, y))
+        wm.show()
+        wm.raise_()
 
     def _home_dropped(self, pos):
         """拖完松手：记成视口比例，下次打开还在这儿。"""
@@ -662,7 +723,10 @@ class ReviewPage(QWidget):
         self.area.update()
         if hasattr(self, "home_btn"):
             self.home_btn.set_bg(pal["page"])
+        self._mask_host = None
         W.clear_layout(self.area_lay)
+        if hasattr(self, "practice_wm"):
+            self.practice_wm.hide()
         self.area_lay.addStretch(1)
 
         box = CR.CardBox(pal["front"], pal["shadow"])
@@ -873,6 +937,7 @@ class ReviewPage(QWidget):
         self.area.update()
         if hasattr(self, "home_btn"):
             self.home_btn.set_bg(pal["page"])
+        self._mask_host = None          # 旧卡马上被删，先断开引用
         W.clear_layout(self.area_lay)
         host = CR.build_cards(card, deck.get("template", "sky"),
                               bool(ses["revealed"]), ses.get("picked"), width,
@@ -881,6 +946,10 @@ class ReviewPage(QWidget):
         self.area_lay.addWidget(host, 0, Qt.AlignHCenter)
         self._mask_host = host
         self.area_lay.addStretch(1)
+        # 主动练习水印：贴在题卡右上角，随卡片位置走
+        self.practice_wm.set_on(bool(card.get("practice")))
+        self._place_practice_wm()
+        QTimer.singleShot(0, self._place_practice_wm)
         self.home_btn.set_on(self.mask_mode == "all"
                              and not getattr(self, "_blank_all", False))
         self._place_home()
@@ -914,7 +983,7 @@ class ReviewPage(QWidget):
                 f"color:{W.T['ink']};font-size:15px;font-weight:700;letter-spacing:0.2px;")
             self.top_lay.addWidget(self._grp_label, 1)
 
-            # 任务计时胶囊：就在「卡组名」和右侧 ⋯ 之间那块空位
+            # 任务计时胶囊：就在「卡组名」和右侧挖空按钮之间那块空位
             self.q_pill = QuestPill(self.app)
             self.top_lay.addWidget(self.q_pill)
 
@@ -951,7 +1020,10 @@ class ReviewPage(QWidget):
         """学习卡还没到点：占位等着，到点自动回来（等同 Anki 的 steps 间隔）。"""
         left = max(0, int(card.get("due") or 0) - now_ms())
         secs = max(1, int(round(left / 1000)))
+        self._mask_host = None
         W.clear_layout(self.area_lay)
+        if hasattr(self, "practice_wm"):
+            self.practice_wm.hide()
         self.area.color = W.T["paper"]
         self.area.update()
         self._apply_template_bg(W.T["paper"])
@@ -1014,7 +1086,7 @@ class ReviewPage(QWidget):
         return wrap
 
     def _ensure_bottom(self):
-        """底部操作条只建一次：主动练习 + 计数胶囊 + ⋯、显示答案/提交、4 个评分按钮。"""
+        """底部操作条只建一次：计数胶囊（点它开卡片操作）、显示答案/提交、4 个评分按钮。"""
         if getattr(self, "_bottom_ready", False):
             return
         W.clear_layout(self.bottom_lay)
@@ -1023,8 +1095,6 @@ class ReviewPage(QWidget):
         al = QHBoxLayout(acts)
         al.setContentsMargins(0, 0, 0, 0)
         al.setSpacing(8)
-        self._practice_bolt = PracticeBolt(False)
-        al.addWidget(self._practice_bolt, 0, Qt.AlignVCenter)
         al.addStretch(1)
         self._stat_lbs = {}
         chip = StatsChip()
@@ -1042,17 +1112,11 @@ class ReviewPage(QWidget):
                              f"color:{W.T['ink3']};")
             cl.addWidget(lb, 0, Qt.AlignVCenter)
             self._stat_lbs[key] = (name, lb)
+        chip.clicked.connect(
+            lambda: self._open_menu(chip, self._current_card))
         al.addWidget(chip, 0, Qt.AlignCenter)
         al.addStretch(1)
-        self._more_btn = QPushButton("⋯")
-        self._more_btn.setFixedSize(32, 32)
-        self._more_btn.setCursor(Qt.PointingHandCursor)
-        self._more_btn.setStyleSheet(
-            f"QPushButton{{background:{W.T['paper']};border:1px solid {W.T['line']};"
-            f"border-radius:10px;font-size:15px;font-weight:700;color:{W.T['ink2']};}}")
-        self._more_btn.clicked.connect(
-            lambda: self._open_menu(self._more_btn, self._current_card))
-        al.addWidget(self._more_btn)
+        self._stat_chip = chip
         self.bottom_lay.addWidget(acts)
 
         # 翻面/提交/评分三态共用一个固定高度容器：高度取三者最高（评分态），
@@ -1119,15 +1183,9 @@ class ReviewPage(QWidget):
             self._bottom_swap.setFixedHeight(target)
 
     def _update_bottom(self, card: dict, ses: dict):
-        """换卡只更新文字/状态：练习星、计数、4 个间隔预览、按钮可见性。"""
+        """换卡只更新文字/状态：计数、4 个间隔预览、按钮可见性。"""
         self._ensure_bottom()
         self._current_card = card
-
-        bolt = self._practice_bolt
-        bolt._on = bool(card.get("practice"))
-        bolt.setToolTip("已加入主动练习" if bolt._on
-                        else "未加入主动练习（右上角 ⋯ 里可加入）")
-        bolt.update()
 
         counts = {"new": 0, "learn": 0, "review": 0}
         seen = set()
