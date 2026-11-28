@@ -668,7 +668,8 @@ def build_back(card: dict, pal: dict, picked=None, width=330,
         + (f"color:rgba(46,158,103,0.16);" if ok else "color:rgba(217,83,79,0.16);")
     )
     wm.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-    wm.move(width - 88, -2)
+    # 压在解析正文区域（箭头所指的位置），作为底层水印
+    wm.move(width // 2 - 55, 96)
     wm.lower()
 
     if not picks:
