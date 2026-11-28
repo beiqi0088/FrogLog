@@ -243,60 +243,44 @@ class OverviewPanel(Panel):
 
     # ---- 首领 ----
     def _boss(self):
-        b = self.store.game["boss"]
-        card = W.Card()
-        card.body.setContentsMargins(14, 11, 14, 12)
-        card.body.setSpacing(6)
+        # 只显示今日吃掉青蛙的数量
+        lt = time.localtime()
+        today_key = (lt.tm_year, lt.tm_yday)
+        today_frogs = 0
+        for c in self.store.checkins:
+            ct = time.localtime((c.get("at") or 0) / 1000)
+            if (ct.tm_year, ct.tm_yday) == today_key:
+                today_frogs += int(c.get("frogs") or 1)
 
-        total = self.store.frogs_eaten()
-        total_min = self.store.study_minutes()
-        cur, nxt = frog_medal(total)
+        card = W.Card()
+        card.body.setContentsMargins(14, 12, 14, 12)
+        card.body.setSpacing(8)
 
         head = QWidget()
         hl = QHBoxLayout(head)
         hl.setContentsMargins(0, 0, 0, 0)
         hl.addWidget(h3("吃掉那只青蛙"))
         hl.addStretch(1)
-        rec = QPushButton("吃蛙记录 ›")
-        rec.setCursor(Qt.PointingHandCursor)
-        rec.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;color:{W.T['ink3']};"
-            f"font-size:10.5px;padding:0;}}"
-            f"QPushButton:hover{{color:{W.T['brand']};}}")
-        rec.clicked.connect(lambda: self.app.show_page("frog_records"))
-        hl.addWidget(rec, 0, Qt.AlignVCenter)
         card.body.addWidget(head)
 
         row = QWidget()
         rl = QHBoxLayout(row)
         rl.setContentsMargins(0, 0, 0, 0)
-        rl.setSpacing(8)
-        mon = Monster()
-        mon.set_scale(0.50)
-        mon.set_state(int(b.get("lv") or 1), False)
-        rl.addWidget(mon, 0, Qt.AlignVCenter)
+        rl.setSpacing(12)
+        rl.addWidget(W.FrogMascot(44, "green"), 0, Qt.AlignVCenter)
 
-        # 两个大数字：吃了多少只 / 累计花了多少时间
-        stats = QWidget()
-        sl = QHBoxLayout(stats)
-        sl.setContentsMargins(0, 0, 0, 0)
-        sl.setSpacing(8)
-        for label, value in (("已吃青蛙", f"{total} 只"),
-                             ("累计学习", _fmt_total(total_min))):
-            cell = QWidget()
-            cell.setStyleSheet(f"background:{W.T['paper2']};border-radius:12px;")
-            cl = QVBoxLayout(cell)
-            cl.setContentsMargins(10, 7, 10, 7)
-            cl.setSpacing(1)
-            lb = _ElideLabel(label)
-            lb.setStyleSheet(f"font-size:10px;color:{W.T['ink3']};")
-            v = _ElideLabel(value)
-            px = 17 if len(value) <= 7 else 14
-            v.setStyleSheet(f"font-size:{px}px;font-weight:700;color:{W.T['brand']};")
-            cl.addWidget(lb)
-            cl.addWidget(v)
-            sl.addWidget(cell, 1)
-        rl.addWidget(stats, 1)
+        num_box = QWidget()
+        nl = QVBoxLayout(num_box)
+        nl.setContentsMargins(0, 0, 0, 0)
+        nl.setSpacing(0)
+        cap = QLabel("今日已吃")
+        cap.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
+        num = QLabel(f"{today_frogs}<span style='font-size:13px;color:{W.T['ink3']};'> 只</span>")
+        num.setTextFormat(Qt.RichText)
+        num.setStyleSheet(f"font-size:30px;font-weight:700;color:{W.T['brand']};")
+        nl.addWidget(cap)
+        nl.addWidget(num)
+        rl.addWidget(num_box, 1)
         card.body.addWidget(row)
 
         self.body.addWidget(card)
