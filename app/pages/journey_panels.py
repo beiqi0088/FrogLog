@@ -146,7 +146,6 @@ class OverviewPanel(Panel):
     def build(self):
         self._q_status = None
         self._quest()
-        self._boss()
         self._medals()
 
     # ---- 任务卡 ----
@@ -189,6 +188,28 @@ class OverviewPanel(Panel):
         self.q_hint.setWordWrap(True)
         self.q_hint.setStyleSheet(f"font-size:10.5px;color:{W.T['ink3']};")
         card.body.addWidget(self.q_hint)
+
+        # 今日吃掉青蛙数量：放进今日任务卡，不再单独用「吃掉那只青蛙」卡
+        lt = time.localtime()
+        today_key = (lt.tm_year, lt.tm_yday)
+        today_frogs = 0
+        for c in self.store.checkins:
+            ct = time.localtime((c.get("at") or 0) / 1000)
+            if (ct.tm_year, ct.tm_yday) == today_key:
+                today_frogs += int(c.get("frogs") or 1)
+        frog_row = QWidget()
+        fr = QHBoxLayout(frog_row)
+        fr.setContentsMargins(0, 2, 0, 0)
+        fr.setSpacing(10)
+        fr.addWidget(W.FrogMascot(34, "green"), 0, Qt.AlignVCenter)
+        cap = QLabel("今日已吃")
+        cap.setStyleSheet(f"font-size:11px;color:{W.T['ink3']};")
+        fr.addWidget(cap)
+        num = QLabel(f"{today_frogs}<span style='font-size:12px;color:{W.T['ink3']};'> 只</span>")
+        num.setTextFormat(Qt.RichText)
+        num.setStyleSheet(f"font-size:24px;font-weight:700;color:{W.T['brand']};")
+        fr.addWidget(num, 1)
+        card.body.addWidget(frog_row)
 
         self.body.addWidget(card)
         self.paint_quest()
