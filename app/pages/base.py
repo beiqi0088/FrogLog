@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QScrollArea)
 
@@ -34,7 +33,8 @@ class Page(QWidget):
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # 滚动视口铺一块不透明纸色：手指上下滑动时只需要重绘露出来的那一条，
         # 不必每帧把整个窗口底色重新合成一遍（原先视口透明，滚动明显发卡）。
-        self.scroll.viewport().setAutoFillBackground(True)
+        # 注意全局 QSS 会把 autoFillBackground 关掉，所以这里用样式表直接铺色。
+        self.scroll.viewport().setAttribute(Qt.WA_OpaquePaintEvent, True)
         self._sync_viewport_bg()
         self.content = QWidget()
         self.content_lay = QVBoxLayout(self.content)
@@ -64,9 +64,8 @@ class Page(QWidget):
 
     def _sync_viewport_bg(self):
         vp = self.scroll.viewport()
-        pal = vp.palette()
-        pal.setColor(QPalette.Window, QColor(W.T["page"]))
-        vp.setPalette(pal)
+        vp.setStyleSheet(f"background:{W.T['page']};")
+        vp.setAttribute(Qt.WA_StyledBackground, True)
 
     def _clear_band(self):
         if hasattr(self, "band_lay"):
