@@ -1069,12 +1069,12 @@ class ReviewPage(QWidget):
         gl.setContentsMargins(0, 0, 0, 0)
         gl.setSpacing(8)
         self._rate_btns = []
-        for idx, name, color, _bg, edge, fg in RATE_DEFS:
-            b = W.RatingButton(idx, name, "", color, fg=fg, edge=edge)
+        for idx, name, _color, _bg, _edge, fg in RATE_DEFS:
+            b = W.RatingButton(idx, name, "", fg=fg)
             b.clicked_rating.connect(self._rate)
             gl.addWidget(b, 1)
             self._rate_btns.append(b)
-        # 4 个评分按钮：白底 + 发丝描边 + 顶部主题色短条，四档靠颜色和时长区分
+        # 4 个评分按钮：纯白卡片 + 轻阴影，四档只靠文字颜色区分
         group = QWidget()
         rgl = QVBoxLayout(group)
         rgl.setContentsMargins(0, 0, 0, 0)

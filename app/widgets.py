@@ -1187,39 +1187,25 @@ class OptionRow(ClickFrame):
 class RatingButton(ClickFrame):
     clicked_rating = Signal(int)
 
-    def __init__(self, idx: int, label: str, hint: str, color: str,
-                 fg: str | None = None,
-                 edge: str | None = None, parent=None):
+    def __init__(self, idx: int, label: str, hint: str,
+                 fg: str | None = None, parent=None):
         super().__init__(parent)
         self.idx = idx
         self.setObjectName("rateBtn")
         fg = fg or T["ink"]
-        edge = edge or T["line"]
-        # 白底卡片 + 发丝描边：四档不再铺彩色块，只留颜色做点缀
+        # 纯白卡片、不加边框和装饰，四档只靠文字颜色区分；
+        # 一层轻阴影让白卡浮在纸面上，不至于糊成一片。
         self.setStyleSheet(
-            f"QFrame#rateBtn{{background:#FFFFFF;border:1px solid {edge};"
-            f"border-radius:16px;}}")
+            "QFrame#rateBtn{background:#FFFFFF;border:none;border-radius:16px;}")
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(4, 8, 4, 8)
+        lay.setContentsMargins(9, 11, 9, 10)
         lay.setSpacing(5)
-        # 装饰：白底顶部一小段主题色短条，一眼看出档位又不占地方
-        tick = QFrame()
-        tick.setFixedSize(20, 3)
-        tick.setStyleSheet(
-            f"background:{color};border:none;border-radius:2px;")
-        tw = QHBoxLayout()
-        tw.setContentsMargins(0, 0, 0, 0)
-        tw.setSpacing(0)
-        tw.addStretch(1)
-        tw.addWidget(tick)
-        tw.addStretch(1)
-        lay.addLayout(tw)
         t = QLabel(label)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:15px;font-weight:800;letter-spacing:0.4px;color:{fg};")
+        t.setStyleSheet(f"font-size:14.5px;font-weight:800;letter-spacing:0.5px;color:{fg};")
         h = QLabel(hint)
         h.setAlignment(Qt.AlignCenter)
-        # 间隔预览：跟按钮同底色，只靠彩色字区分，整块更干净
+        # 间隔预览：同色小字，和白卡一起保持干净
         h.setStyleSheet(
             "background:transparent;border:none;"
             "padding:0px;font-size:10.5px;font-weight:600;"
@@ -1233,8 +1219,7 @@ class RatingButton(ClickFrame):
         lay.addWidget(t)
         lay.addLayout(hw)
         self._hint = h
-        # 白卡片浮在纸面上：一层极轻的阴影，避免纯白块显得贴上去
-        shadow(self, radius=16, alpha=20, dy=3)
+        shadow(self, radius=14, alpha=26, dy=3)
         self.clicked.connect(lambda: self.clicked_rating.emit(self.idx))
 
     def set_hint(self, text: str):
