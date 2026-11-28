@@ -375,11 +375,13 @@ import android.view.WindowInsetsController;
 public final class FrogLogSystemBars {
     private FrogLogSystemBars() {}
 
-    // Python 端按当前主题写入的颜色（ARGB）。默认透明：Qt 界面铺满时由界面
-    // 自己铺主题深色；Python 刷色后，这里的重放也用同一个颜色，不会冲回透明。
-    public static int barColor = Color.TRANSPARENT;
-    // 手势条单独用 dock 深色：即使内容没铺到系统栏后面，这条也跟底部 dock 连成一片。
-    public static int navBarColor = Color.TRANSPARENT;
+    // Python 端按当前主题写入的颜色（ARGB）。
+    // 默认给「主题深色」（DEFAULT_THEME anki-aurora 的 deep）：即使颜色文件还没写出来、
+    // 或者被系统清掉了，安全区那一条也是深色，不会露出主题默认的浅色（奶白条）。
+    // 真正颜色由 Python 写文件后覆盖；上次用过的颜色另外存在 SharedPreferences 里。
+    public static int barColor = 0xFFB23A5B;
+    // 手势条同样用 dock 深色：和底部 dock 连成一片。
+    public static int navBarColor = 0xFFB23A5B;
 
     // Qt 在窗口首次 show 时会重新设置系统栏（恢复主题色、把内容收回安全区），
     // 只在前台 onCreate 里调用一次会被覆盖。这里在启动后多次重放，最后一次
@@ -439,15 +441,13 @@ public final class FrogLogSystemBars {
             if (stamp == fileStamp) return false;
             fileStamp = stamp;
             if (!f.exists()) {
-                // 文件还没写出来（Python 刚启动）→ 先用手上一次的颜色，避免露出主题默认的浅色条
-                if (Color.alpha(barColor) == 0) {
-                    int saved = activity.getPreferences(Activity.MODE_PRIVATE)
-                            .getInt("froglog_bar_color", 0);
-                    if (Color.alpha(saved) != 0) {
-                        barColor = saved;
-                        navBarColor = saved;
-                        return true;
-                    }
+                // 文件还没写出来（Python 刚启动）→ 先用手上一次的颜色
+                int saved = activity.getPreferences(Activity.MODE_PRIVATE)
+                        .getInt("froglog_bar_color", 0);
+                if (Color.alpha(saved) != 0 && saved != barColor) {
+                    barColor = saved;
+                    navBarColor = saved;
+                    return true;
                 }
                 return false;
             }
@@ -479,6 +479,15 @@ public final class FrogLogSystemBars {
         return (0.299 * r + 0.587 * g + 0.114 * b) / 255.0 > 0.58;
     }
 
+    // Python 通过 jnius 直接调用：不依赖颜色文件，立刻生效
+    public static void setColor(int color, Activity activity) {
+        barColor = color;
+        navBarColor = color;
+        if (activity != null) {
+            applyNow(activity, false);   // 不再回读文件，避免被旧颜色覆盖
+        }
+    }
+
     // 换主题、进出复习页都会改颜色：开着时轮询文件时间戳（只是 stat，开销可以忽略），
     // 有变化才重新铺系统栏。之前只在启动后 20 秒内重放，之后颜色就改不动了。
     private static void watchColorChanges(final Activity activity) {
@@ -499,11 +508,17 @@ public final class FrogLogSystemBars {
     }
 
     private static void applyNow(Activity activity) {
+        applyNow(activity, true);
+    }
+
+    private static void applyNow(Activity activity, boolean syncColor) {
         if (activity == null || activity.isFinishing()) return;
         Window window = activity.getWindow();
         // 状态栏必须可见：状态栏藏着的话时间、电量都看不到
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        syncColorFromFile(activity);
+        if (syncColor) {
+            syncColorFromFile(activity);
+        }
         if (Color.alpha(barColor) != 0) {
             // 安卓 15+ 系统栏颜色已失效，安全区那条只能靠窗口背景填；
             // 用和顶部色带 / 底部 dock 完全相同的深色，上下才不会露出浅一截的色带。

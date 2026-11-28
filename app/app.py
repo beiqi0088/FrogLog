@@ -131,6 +131,8 @@ def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None)
                 bars = autoclass("org.kivy.android.FrogLogSystemBars")
                 bars.barColor = color
                 bars.navBarColor = nav_color
+                # 直接让 Java 立刻重铺一次：不依赖颜色文件是否读到（这条最优先）
+                bars.setColor(color, activity)
             except Exception:
                 pass
         except Exception:
