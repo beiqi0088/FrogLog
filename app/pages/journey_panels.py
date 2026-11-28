@@ -327,6 +327,15 @@ class OverviewPanel(Panel):
                          "font-size:10px;font-weight:700;padding:2px 8px;")
         hl.addWidget(lv)
         hl.addStretch(1)
+        rec = QPushButton("吃蛙记录 ›")
+        rec.setCursor(Qt.PointingHandCursor)
+        rec.setToolTip("查看每次吃青蛙的详细记录")
+        rec.setStyleSheet(
+            f"QPushButton{{background:transparent;border:none;color:{W.T['ink3']};"
+            f"font-size:10.5px;padding:0;}}"
+            f"QPushButton:hover{{color:{W.T['brand']};}}")
+        rec.clicked.connect(lambda: self.app.show_page("frog_records"))
+        hl.addWidget(rec, 0, Qt.AlignVCenter)
         link = QPushButton("等级 ›")
         link.setCursor(Qt.PointingHandCursor)
         link.setToolTip("打开怪物图鉴：6 只怪物、吃青蛙数与学习时长")
