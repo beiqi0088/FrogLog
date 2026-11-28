@@ -540,11 +540,13 @@ class BandHeader(QFrame):
             n = len(self.stationery)
             # 固定种子：同一页每次打开位置一致，但看起来像随手丢在桌上
             rnd = random.Random(20261128)
-            x0 = self.width() - 338
+            # 整体居中，左右留出对称空间
+            total = n * 64
+            x0 = (self.width() - total) / 2
             for i, kind in enumerate(self.stationery):
-                box = 18 + rnd.randint(0, 10)          # 18~28，每件大小不同
-                x = x0 + i * 62 + rnd.randint(-6, 8)
-                y = 18 + rnd.randint(-5, 24)
+                box = 15 + rnd.randint(0, 17)          # 15~32，大小差异更明显
+                x = x0 + i * 64 + 16 + rnd.randint(-6, 8) - box / 2
+                y = 22 + rnd.randint(-8, 20)
                 draw_stationery(p, kind, QRectF(x, y, box, box),
                                 T["ink"], T["paper"], rotate=rnd.randint(-30, 24))
         except Exception:
