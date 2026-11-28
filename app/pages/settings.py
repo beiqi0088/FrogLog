@@ -55,11 +55,23 @@ class SettingsPage(Page):
                  on_click=self._reset_frogs, danger=True)
 
         self.group("关于")
-        self.row("版本", "", value="2.0.0")
+        self.row("版本", "", value=self._build_label())
         self.row("数据位置", "", value=os.path.basename(self.store.path))
         self.stretch()
 
     # ---------------------------------------------------------------- 布局件
+    def _build_label(self) -> str:
+        """版本号后面带上构建号：CI 打包时会写 build_number.txt，方便确认装的是哪一版。"""
+        try:
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "build_number.txt")
+            with open(p, encoding="utf-8") as f:
+                n = f.read().strip()
+            if n:
+                return f"2.0.0 · build {n}"
+        except Exception:
+            pass
+        return "2.0.0"
     def group(self, title: str):
         row = QWidget()
         gl = QHBoxLayout(row)

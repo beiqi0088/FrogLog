@@ -253,6 +253,8 @@ jobs:
           cp -v main.py "$STAGE/"
           cp -v app/*.py "$STAGE/app/"
           cp -v app/pages/*.py "$STAGE/app/pages/"
+          # 设置页「版本」显示构建号，方便确认手机装的是哪一版
+          echo "${{ github.run_number }}" > "$STAGE/app/build_number.txt"
           cd "$STAGE"
           # 用包装器把 buildozer.spec 的 android.api/minapi 改成 Android 16 的要求
           # --ndk-path 指向 r28c：p4a 用它编译 CPython/openssl/sqlite 等，保证 16 KB 对齐
