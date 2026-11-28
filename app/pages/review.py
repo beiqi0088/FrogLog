@@ -410,7 +410,7 @@ class StatsChip(QWidget):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        p.setPen(QPen(QColor(W.T["line"]), 1))
+        p.setPen(QPen(QColor(W.T["ink"]), 1.5))
         p.setBrush(QColor(W.T["panel"]))
         r = QRectF(0.5, 0.5, self.width() - 1, self.height() - 1)
         p.drawRoundedRect(r, min(13.0, r.height() / 2), min(13.0, r.height() / 2))
@@ -1150,24 +1150,12 @@ class ReviewPage(QWidget):
         sl.addWidget(hint2)
         sw.addWidget(self._submit_box)
 
-        grid = QWidget()
-        gl = QHBoxLayout(grid)
-        gl.setContentsMargins(0, 0, 0, 0)
-        gl.setSpacing(8)
-        self._rate_btns = []
-        for idx, name, _color, _bg, _edge, fg in RATE_DEFS:
-            b = W.RatingButton(idx, name, "", fg=fg)
-            b.clicked_rating.connect(self._rate)
-            gl.addWidget(b, 1)
-            self._rate_btns.append(b)
-        # 4 个评分按钮：纯白卡片 + 轻阴影，四档只靠文字颜色区分
-        group = QWidget()
-        rgl = QVBoxLayout(group)
-        rgl.setContentsMargins(0, 0, 0, 0)
-        rgl.setSpacing(8)
-        rgl.addWidget(grid)
-        self._rate_box = group
-        sw.addWidget(group)
+        # 4 档合成一张纸感评分条（无阴影）：彩色主文字 + 同色系浅底间隔胶囊
+        rates = W.RateBar(RATE_DEFS)
+        rates.rated.connect(self._rate)
+        self._rate_btns = rates.buttons
+        self._rate_box = rates
+        sw.addWidget(rates)
 
         self.bottom_lay.addWidget(self._bottom_swap)
         self._bottom_ready = True

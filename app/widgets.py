@@ -1227,6 +1227,67 @@ class RatingButton(ClickFrame):
         self._hint.setText(text)
 
 
+class RateSegment(ClickFrame):
+    """评分条里的一段：彩色主文字 + 同色系浅底间隔胶囊，无阴影。"""
+
+    rated = Signal(int)
+
+    def __init__(self, idx: int, name: str, color: str, pale: str, parent=None):
+        super().__init__(parent)
+        self.idx = idx
+        self.setObjectName("rateSeg")
+        self.setStyleSheet(
+            "QFrame#rateSeg{background:transparent;border:none;border-radius:12px;}"
+            f"QFrame#rateSeg:hover{{background:{pale};}}")
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(6, 8, 6, 8)
+        lay.setSpacing(4)
+        t = QLabel(name)
+        t.setAlignment(Qt.AlignCenter)
+        t.setStyleSheet(
+            f"background:transparent;font-size:14.5px;font-weight:700;color:{color};")
+        lay.addWidget(t)
+        h = QLabel("")
+        h.setFixedHeight(19)
+        h.setAlignment(Qt.AlignCenter)
+        h.setStyleSheet(
+            f"background:{pale};border-radius:9px;color:{color};"
+            "font-size:10px;font-weight:700;padding:0 8px;")
+        lay.addWidget(h, 0, Qt.AlignHCenter)
+        self._hint = h
+        self.clicked.connect(lambda: self.rated.emit(self.idx))
+
+    def set_hint(self, text: str):
+        self._hint.setText(text)
+
+
+class RateBar(QFrame):
+    """整条评分条：一张奶油纸卡 + 4 段 + 细分割线，无阴影。"""
+
+    rated = Signal(int)
+
+    def __init__(self, rates, parent=None):
+        super().__init__(parent)
+        self.setObjectName("rateBar")
+        self.setStyleSheet(
+            f"QFrame#rateBar{{background:{T['panel']};border:1.5px solid {T['ink']};"
+            f"border-radius:18px;}}")
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(6, 6, 6, 6)
+        lay.setSpacing(0)
+        self.buttons = []
+        for i, (idx, name, color, pale, _edge, _fg) in enumerate(rates):
+            seg = RateSegment(idx, name, color, pale)
+            seg.rated.connect(self.rated)
+            if i:
+                div = QFrame()
+                div.setFixedWidth(1)
+                div.setStyleSheet(f"background:{T['line']};border:none;")
+                lay.addWidget(div)
+            lay.addWidget(seg, 1)
+            self.buttons.append(seg)
+
+
 class SelectBox(QWidget):
     """卡组前的勾选框（单选，只靠外部保证唯一）。"""
 
