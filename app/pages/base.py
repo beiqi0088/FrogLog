@@ -14,13 +14,13 @@ import widgets as W
 class Page(QWidget):
     """可滚动页面基类：内容放在 self.body 里。"""
 
-    # 所有页面统一使用同一件文具
-    STATIONERY = {"*": "pencil"}
+    # 所有页面统一使用同一组文具
+    STATIONERY = {"*": ("pencil", "book", "ruler", "eraser")}
 
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
-        self.stationery = "pencil"
+        self.stationery = self.STATIONERY["*"]
         self.store = app.store
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)

@@ -507,7 +507,9 @@ class BandHeader(QFrame):
     def __init__(self, stationery: str = "pencil", parent=None):
         super().__init__(parent)
         self.setObjectName("bandHeader")
-        self.stationery = stationery
+        if isinstance(stationery, str):
+            stationery = (stationery,)
+        self.stationery = tuple(stationery)
         self.setFixedHeight(86)
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(18, 6, 18, 8)
@@ -534,9 +536,14 @@ class BandHeader(QFrame):
         # 右侧文具：每页不同
         try:
             from stationery import draw_stationery
-            draw_stationery(p, self.stationery,
-                            QRectF(self.width() - 158, 18, 40, 40),
-                            T["ink"], T["paper"])
+            n = len(self.stationery)
+            box, gap = 30, 4
+            total = n * box + (n - 1) * gap
+            x0 = self.width() - 104 - total
+            for i, kind in enumerate(self.stationery):
+                draw_stationery(p, kind,
+                                QRectF(x0 + i * (box + gap), 22, box, box),
+                                T["ink"], T["paper"])
         except Exception:
             pass
 
