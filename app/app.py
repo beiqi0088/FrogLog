@@ -5,6 +5,7 @@ app.py - 主窗口：手机竖屏单列 + 底部导航 + 页面栈 + Toast
 """
 from __future__ import annotations
 
+import os
 import sys
 import threading
 
@@ -38,13 +39,33 @@ _FAMILY_CACHE: str | None = None
 _IS_ANDROID = sys.platform == "android"   # 安卓窗口由系统铺满，不能再 move()
 
 
+def _write_bar_color_file(hex_str: str | None):
+    """把页面底色写进应用私有目录，供 Java 侧读取。
+
+    安卓 15+ 上 setStatusBarColor/setNavigationBarColor 已经不起作用，安全区
+    那一条只能靠 Activity 窗口背景来填；而窗口背景必须在 Java 里设置才稳，
+    Java 又要知道当前主题色 —— 用文件做一次最简单的桥接，不依赖 jnius 是否可用。
+    """
+    if not hex_str:
+        return
+    try:
+        d = os.environ.get("ANDROID_PRIVATE") or os.environ.get("ANDROID_APP_PATH")
+        if not d:
+            return
+        with open(os.path.join(d, "froglog_bar_color.txt"), "w") as f:
+            f.write(hex_str)
+    except Exception:
+        pass
+
+
 def _android_edge_to_edge(bg_hex: str | None = None, nav_hex: str | None = None):
     """安卓：内容铺到系统栏后面，状态栏与手势条都透出页面底色。
 
     Qt 在窗口首次显示、切换主题（setStyleSheet）时都可能把系统栏重设，
-    所以启动和每次换主题之后都要重放。bg_hex 是页面奶白色，用来给状态栏
+    所以启动和每次换主题之后都要重放。bg_hex 是页面纯色底，用来给状态栏
     和 Activity 窗口底色兜底；nav_hex 是手势条颜色（默认与页面同色）。
     """
+    _write_bar_color_file(bg_hex)
     try:
         from jnius import autoclass
         from android.runnable import run_on_ui_thread
@@ -308,7 +329,10 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         app.setFont(QFont(theme.FONT, 9))
         app.setStyleSheet(theme.build_qss(t))
-        self.setStyleSheet(f"QMainWindow{{background:{t['paper']};}}")
+        # 窗口自身底色就是状态栏安全区那一条的颜色：必须用页面纯色底。
+        # 这行是控件级样式，优先级高于全局表，之前写死 paper 就是顶部色差的根源。
+        page_bg = theme.page_bg_color(self.theme_id).name()
+        self.setStyleSheet(f"QMainWindow{{background:{page_bg};}}")
         # 底部 dock 不再铺深色：和页面同底，选中项用浅色胶囊 + 主题色图标
         self.nav.setStyleSheet(
             "QFrame#navFrame{background:transparent;border:none;}"

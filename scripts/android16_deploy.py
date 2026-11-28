@@ -419,11 +419,45 @@ public final class FrogLogSystemBars {
         });
     }
 
+    private static long fileStamp = -1L;
+
+    // 页面底色由 Python 写进私有目录；Java 侧自己读，不依赖 jnius 调用是否成功。
+    private static void syncColorFromFile(Activity activity) {
+        try {
+            java.io.File f = new java.io.File(activity.getFilesDir(),
+                    "froglog_bar_color.txt");
+            long stamp = f.exists() ? f.lastModified() + f.length() : -1L;
+            if (stamp == fileStamp) return;
+            fileStamp = stamp;
+            if (!f.exists()) return;
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            byte[] buf = new byte[(int) f.length()];
+            int n = in.read(buf);
+            in.close();
+            String s = new String(buf, 0, Math.max(0, n)).trim();
+            if (s.startsWith("#") && (s.length() == 7 || s.length() == 9)) {
+                barColor = Color.parseColor(s);
+                navBarColor = barColor;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static void applyNow(Activity activity) {
         if (activity == null || activity.isFinishing()) return;
         Window window = activity.getWindow();
         // 状态栏必须可见：状态栏藏着的话时间、电量都看不到
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        syncColorFromFile(activity);
+        if (Color.alpha(barColor) != 0) {
+            // 安卓 15+ 系统栏颜色已失效，安全区那条只能靠窗口背景填；
+            // 用和页面完全相同的纯色，顶部/底部才不会露出浅一截的色带。
+            try {
+                window.setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(barColor));
+            } catch (Throwable ignored) {
+            }
+        }
         if (Build.VERSION.SDK_INT >= 30) {
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
