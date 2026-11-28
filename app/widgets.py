@@ -545,10 +545,10 @@ class BandHeader(QFrame):
             offsets = [0, -66, 62, 104, -110, 120]
             center = self.width() / 2
             for i, kind in enumerate(self.stationery):
-                box = 19 + rnd.randint(0, 19)          # 19~38，整体放大
+                box = 24 + rnd.randint(0, 22)          # 24~46，整体再放大
                 cx = center + offsets[i] + rnd.randint(-4, 4)
                 x = cx - box / 2
-                y = 22 + rnd.randint(-8, 20)
+                y = 8 + rnd.randint(0, 44)             # 上下错开，最上/最下都留边
                 draw_stationery(p, kind, QRectF(x, y, box, box),
                                 T["ink"], T["paper"], rotate=rnd.randint(-30, 24))
         except Exception:
