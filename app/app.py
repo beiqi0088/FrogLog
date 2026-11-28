@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
         col.addWidget(self.stack, 1)
 
         self.nav = QFrame()
-        self.nav.setFixedHeight(56)
+        self.nav.setFixedHeight(64)
         self.nav.setObjectName("navFrame")
         nav_outer = QHBoxLayout(self.nav)
         nav_outer.setContentsMargins(12, 0, 12, 0)
@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
         nav_lay = QHBoxLayout(self.nav_bar)
         nav_lay.setContentsMargins(4, 0, 4, 0)
         nav_lay.setSpacing(4)
-        nav_lay.setAlignment(Qt.AlignBottom)
+        nav_lay.setAlignment(Qt.AlignCenter)
         nav_outer.addWidget(self.nav_bar)
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
@@ -349,13 +349,12 @@ class MainWindow(QMainWindow):
                 bottom = max(0, margins.bottom())
         self._sys_top = top
         self._sys_bottom = bottom
-        # dock 直接铺到内容区底边，手势区高度转成 dock 内部下边距，图标不被压住。
+        # dock 高度固定，图标在整条底栏里垂直居中；手势条浮在底栏下沿。
         if hasattr(self, "nav"):
-            pad = min(bottom, 26)
-            self.nav.setFixedHeight(56 + pad)
+            self.nav.setFixedHeight(64)
             outer = self.nav.layout()
             if outer is not None:
-                outer.setContentsMargins(12, 0, 12, pad)
+                outer.setContentsMargins(12, 0, 12, 0)
         # 顶部不再留任何空白：安卓窗口内容本来就从状态栏下方开始，
         # 再叠一次 safeArea 就会多出一条空带。页面顶栏贴住内容区顶部即可。
         if hasattr(self, "root_layout"):

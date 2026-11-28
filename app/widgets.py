@@ -77,8 +77,6 @@ class Card(QFrame):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(16, 14, 16, 14)
         self.body.setSpacing(8)
-        # 柔和投影：模糊半径小于卡片间距，四周都能完整显示、不被相邻卡片盖住。
-        shadow(self, radius=16, alpha=34, dy=4)
 
 
 class ClickFrame(QFrame):
@@ -95,10 +93,6 @@ class ClickFrame(QFrame):
 
     def showEvent(self, e):
         super().showEvent(e)
-        # 列表行、浏览卡片同样使用柔和阴影；只在首次显示时安装一次。
-        if (self.objectName() in {"card", "flatCard", "browseCard"}
-                and self.graphicsEffect() is None):
-            shadow(self, radius=16, alpha=30, dy=4)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
@@ -475,7 +469,6 @@ class ThemeCard(ClickFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("QFrame#themeCard{background:transparent;border:none;}")
-        shadow(self, radius=12, alpha=26, dy=3)
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -781,10 +774,10 @@ class NavButton(QPushButton):
         self.setObjectName("tab")
         self.setCursor(Qt.PointingHandCursor)
         self.setCheckable(True)
-        self.setFixedHeight(52)
+        self.setFixedHeight(56)
 
     def sizeHint(self):
-        return QSize(80, 52)
+        return QSize(80, 56)
 
     def paintEvent(self, e):
         p = QPainter(self)

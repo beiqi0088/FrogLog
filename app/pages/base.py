@@ -39,9 +39,8 @@ class Page(QWidget):
         # 页面正文（浅纸底 + 20px 边距）
         self.body_host = QWidget()
         self.body = QVBoxLayout(self.body_host)
-        self.body.setContentsMargins(20, 4, 20, 16)
-        # 卡片间距略大于阴影模糊范围，保证每张卡的阴影四周完整可见。
-        self.body.setSpacing(14)
+        self.body.setContentsMargins(20, 14, 20, 16)
+        self.body.setSpacing(12)
         self.body.setAlignment(Qt.AlignTop)
         self.content_lay.addWidget(self.body_host, 1)
         self.scroll.setWidget(self.content)

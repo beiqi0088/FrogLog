@@ -307,9 +307,9 @@ class TodayPage(Page):
         # ---------- 四宫格 ----------
         grid_host = QWidget()
         grid = QGridLayout(grid_host)
-        grid.setContentsMargins(0, 2, 0, 0)
-        grid.setHorizontalSpacing(14)
-        grid.setVerticalSpacing(14)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(12)
         AMBER, AMBER_SOFT = "#9A6B12", "#FCEBC4"
         tiles = [
             ("clock", "待复习卡片", str(len(review_due)), W.T["blue"], W.T["blue_soft"], None),

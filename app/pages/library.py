@@ -1822,8 +1822,8 @@ class DeckPage(Page):
         content = QWidget()
         self._head_content = content
         self.body = QVBoxLayout(content)
-        self.body.setContentsMargins(20, 4, 20, 0)
-        self.body.setSpacing(14)
+        self.body.setContentsMargins(20, 14, 20, 0)
+        self.body.setSpacing(12)
         self.top_lay.addWidget(content)
 
         # 三档
