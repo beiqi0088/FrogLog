@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QScrollArea)
 
+import theme
 import widgets as W
 
 
@@ -31,11 +33,9 @@ class Page(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # 滚动视口铺一块不透明纸色：手指上下滑动时只需要重绘露出来的那一条，
-        # 不必每帧把整个窗口底色重新合成一遍（原先视口透明，滚动明显发卡）。
-        # 注意全局 QSS 会把 autoFillBackground 关掉，所以这里用样式表直接铺色。
-        self.scroll.viewport().setAttribute(Qt.WA_OpaquePaintEvent, True)
-        self._sync_viewport_bg()
+        # 页面自己铺底（顶部淡主题色 → 下方纸色），并标记为不透明：
+        # 滚动时 Qt 只需要重绘露出来的那一条，不会把整窗底色重新合成一遍。
+        self.setAttribute(Qt.WA_OpaquePaintEvent, True)
         self.content = QWidget()
         self.content_lay = QVBoxLayout(self.content)
         self.content_lay.setContentsMargins(0, 0, 0, 0)
@@ -59,13 +59,10 @@ class Page(QWidget):
         self._clear_band()
         self.band_host.hide()
         self.body_host.show()
-        # 换主题后页面会重建，视口底色跟着换（否则滚动区域会露出上一套主题）
-        self._sync_viewport_bg()
 
-    def _sync_viewport_bg(self):
-        vp = self.scroll.viewport()
-        vp.setStyleSheet(f"background:{W.T['page']};")
-        vp.setAttribute(Qt.WA_StyledBackground, True)
+    def paintEvent(self, e):
+        p = QPainter(self)
+        theme.paint_page_bg(p, self.rect(), getattr(self.app, "theme_id", None))
 
     def _clear_band(self):
         if hasattr(self, "band_lay"):
@@ -126,6 +123,7 @@ class Page(QWidget):
         lay = QHBoxLayout(row)
         lay.setContentsMargins(2, 10, 2, 0)
         lay.setSpacing(8)
+        lay.addWidget(W.AccentBar(12, 3), 0, Qt.AlignVCenter)
         t = QLabel(title)
         t.setObjectName("h2")
         lay.addWidget(t, 1)

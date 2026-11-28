@@ -328,7 +328,17 @@ def theme_is_dark(tid: str) -> bool:
     return bool(theme_info(tid)["dark"])
 
 
+def _mix(a: str, b: str, t: float) -> QColor:
+    """把 a 按比例 t 混到 b 里（t=1 表示完全取 b）。"""
+    ca, cb = QColor(a), QColor(b)
+    return QColor(
+        round(ca.red() * (1 - t) + cb.red() * t),
+        round(ca.green() * (1 - t) + cb.green() * t),
+        round(ca.blue() * (1 - t) + cb.blue() * t),
+    )
+
+
 def paint_page_bg(p: QPainter, rect, tid: str | None):
-    """平涂纸底：整页只铺主题浅纸色，不再画任何渐变。"""
-    info = theme_info(tid or DEFAULT_THEME)
-    p.fillRect(QRectF(rect), QColor(info["page"]))
+    """页面底色：纯色，主题纸色里掺一点主色，整页统一，不用渐变。"""
+    pal = theme_info(tid or DEFAULT_THEME)["tokens"]
+    p.fillRect(QRectF(rect), _mix(pal["brand"], pal["page"], 0.92))

@@ -30,7 +30,7 @@ from pages.library import LibraryPage, DeckPage
 from pages.review import ReviewPage
 from pages.plan import PlanPage
 from pages.insights import InsightsPage
-from pages.settings import SettingsPage
+from pages.settings import SettingsPage, AppearancePage
 from pages.backup import BackupPage
 from pages.tools import MemoPage, SplitPage, TemplatesPage
 
@@ -134,7 +134,7 @@ def resolve_family() -> str:
 
 MAIN_TABS = [("today", "今日"), ("library", "记忆"), ("plan", "征途"),
              ("insights", "战果")]
-NO_NAV = {"review", "settings", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash"}
+NO_NAV = {"review", "settings", "appearance", "memo", "split", "templates", "deck", "groups", "sync", "archive", "cards", "card_edit", "sched", "stats", "backup", "frog_records", "medals", "trash"}
 
 
 class BgLayer(QWidget):
@@ -601,6 +601,8 @@ class MainWindow(QMainWindow):
             return InsightsPage(self)
         if key == "settings":
             return SettingsPage(self)
+        if key == "appearance":
+            return AppearancePage(self)
         if key == "backup":
             return BackupPage(self)
         if key == "deck":

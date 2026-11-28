@@ -31,37 +31,11 @@ class SettingsPage(Page):
                  on_click=lambda: self.app.show_page("templates"))
 
         self.group("外观")
-        themes = W.Card()
-        head = QWidget()
-        hl = QHBoxLayout(head)
-        hl.setContentsMargins(0, 0, 0, 0)
-        hl.setSpacing(6)
-        hl.addWidget(label("主题", "h3"), 1)
-        tag = QLabel("7 套")
-        tag.setStyleSheet(
-            f"color:{W.T['ink3']};font-size:10px;background:{W.T['paper2']};"
-            f"border:none;border-radius:8px;padding:2px 8px;")
-        hl.addWidget(tag, 0, Qt.AlignVCenter)
-        themes.body.addWidget(head)
-        grid_host = QWidget()
-        grid = QGridLayout(grid_host)
-        grid.setContentsMargins(0, 2, 0, 0)
-        grid.setHorizontalSpacing(8)
-        grid.setVerticalSpacing(8)
-        current = getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME)
-        for i, (tid, info) in enumerate(theme_mod.THEMES.items()):
-            card = W.ThemeCard(tid, info, selected=(tid == current))
-            card.clicked.connect(lambda t=tid: self.app.set_theme(t))
-            grid.addWidget(card, i // 2, i % 2)
-        for c in range(2):
-            grid.setColumnStretch(c, 1)
-        themes.body.addWidget(grid_host)
-        foot = QLabel("7 套完整纸感主题；每套都有独立背景、卡片、文字、边框与点缀配色。")
-        foot.setWordWrap(True)
-        foot.setStyleSheet(
-            f"color:{W.T['ink3']};font-size:9.5px;background:transparent;")
-        themes.body.addWidget(foot)
-        self.add(themes)
+        cur_name = theme_mod.theme_info(
+            getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME))["name"]
+        self.row("主题与外观", "7 套完整纸感主题，点进去切换",
+                 value=cur_name,
+                 on_click=lambda: self.app.show_page("appearance"))
 
         self.group("每日节奏")
         self.row("学习调度", "学习步骤 / 间隔 / 每日上限 / 保持率",
@@ -87,11 +61,17 @@ class SettingsPage(Page):
 
     # ---------------------------------------------------------------- 布局件
     def group(self, title: str):
+        row = QWidget()
+        gl = QHBoxLayout(row)
+        gl.setContentsMargins(2, 0, 2, 0)
+        gl.setSpacing(7)
+        gl.addWidget(W.AccentBar(11, 3), 0, Qt.AlignVCenter)
         lb = QLabel(title)
         lb.setObjectName("sub")
         lb.setStyleSheet(f"color:{W.T['ink2']};font-size:10.5px;font-weight:700;letter-spacing:1.2px;")
+        gl.addWidget(lb, 1)
         self.body.addSpacing(6)
-        self.body.addWidget(lb)
+        self.body.addWidget(row)
 
     def row(self, title: str, desc: str = "", value: str | None = None,
             widget: QWidget | None = None, on_click=None, danger=False):
@@ -219,3 +199,35 @@ class SettingsPage(Page):
             self.store.reset_progress()
             self.app.toast("学习进度已重置")
             self.build()
+
+
+class AppearancePage(Page):
+    """外观：7 套主题切换（从「设置 → 主题与外观」点进来）。"""
+
+    def build(self):
+        super().build()
+        self.appbar("外观", back=self.app.go_back)
+        cur = getattr(self.app, "theme_id", theme_mod.DEFAULT_THEME)
+        tip = QLabel("点一张主题卡立刻生效：整页纸底、卡片、文字和底栏会一起换色。")
+        tip.setWordWrap(True)
+        tip.setStyleSheet(f"color:{W.T['ink2']};font-size:11px;")
+        self.add(tip)
+
+        grid_host = QWidget()
+        grid = QGridLayout(grid_host)
+        grid.setContentsMargins(0, 6, 0, 0)
+        grid.setHorizontalSpacing(10)
+        grid.setVerticalSpacing(10)
+        for i, (tid, info) in enumerate(theme_mod.THEMES.items()):
+            card = W.ThemeCard(tid, info, selected=(tid == cur))
+            card.clicked.connect(lambda t=tid: self.app.set_theme(t))
+            grid.addWidget(card, i // 2, i % 2)
+        for c in range(2):
+            grid.setColumnStretch(c, 1)
+        self.add(grid_host)
+
+        foot = QLabel("7 套完整纸感主题；每套都有独立背景、卡片、文字、边框与点缀配色。")
+        foot.setWordWrap(True)
+        foot.setStyleSheet(f"color:{W.T['ink3']};font-size:9.5px;")
+        self.add(foot)
+        self.stretch()

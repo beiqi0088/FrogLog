@@ -238,6 +238,22 @@ class HLine(QFrame):
         self.setFixedHeight(1)
 
 
+class AccentBar(QWidget):
+    """小节标题前的小竖条：圆角主题色，给标题一个利落的锚点。"""
+
+    def __init__(self, height: int = 12, width: int = 3, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(width, height)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(T["brand"]))
+        p.drawRoundedRect(QRectF(0, 0, self.width(), self.height()),
+                          self.width() / 2, self.width() / 2)
+
+
 # ---------------------------------------------------------------- 按钮
 
 class IconButton(QPushButton):
@@ -551,68 +567,73 @@ class ThemeCard(ClickFrame):
     def _paint(self, p: QPainter):
         pal = self.pal
         r = QRectF(self.rect()).adjusted(1, 1, -3, -3)
+        # 底色直接用这套主题的纸色，让每张卡本身就是一个「主题样品」
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(pal["page"]))
         p.drawRoundedRect(r, 13, 13)
+        inner = r.adjusted(0, 0, 0, 0)
 
         # 迷你卡片：一块白卡 + 主题色标题条 + 灰色副标题线
-        card = QRectF(r.left() + 9, r.top() + 27, r.width() - 18, 22)
+        card = QRectF(inner.left() + 9, inner.top() + 23,
+                      inner.width() - 18, 20)
         p.setPen(QPen(QColor(pal["line"]), 1))
         p.setBrush(QColor(pal["panel"]))
         p.drawRoundedRect(card, 6, 6)
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(pal["brand"]))
-        p.drawRoundedRect(QRectF(card.left() + 7, card.top() + 6, 28, 5), 2.5, 2.5)
+        p.drawRoundedRect(QRectF(card.left() + 6, card.top() + 5, 26, 4.5), 2.25, 2.25)
         p.setBrush(QColor(pal["ink3"]))
-        p.drawRoundedRect(QRectF(card.left() + 7, card.top() + 14, 44, 3), 1.5, 1.5)
+        p.drawRoundedRect(QRectF(card.left() + 6, card.top() + 12.5, 40, 2.6), 1.3, 1.3)
 
         # 迷你底栏：四个点，第一个是主题色胶囊（选中态）
-        dock = QRectF(r.left() + 9, r.bottom() - 17, r.width() - 18, 11)
+        dock = QRectF(inner.left() + 9, inner.bottom() - 15,
+                      inner.width() - 18, 10)
         p.setBrush(QColor(pal["paper2"]))
-        p.drawRoundedRect(dock, 5.5, 5.5)
+        p.drawRoundedRect(dock, 5, 5)
         slot = dock.width() / 4
         for i in range(4):
             cx = dock.left() + slot * i + slot / 2
             if i == 0:
                 p.setBrush(QColor(pal["brand_soft"]))
-                p.drawRoundedRect(QRectF(cx - 6.5, dock.top() + 2.5, 13, 6), 3, 3)
+                p.drawRoundedRect(QRectF(cx - 6, dock.top() + 2.2, 12, 5.6), 2.8, 2.8)
             else:
                 p.setBrush(QColor(pal["ink3"]))
-                p.drawEllipse(QPointF(cx, dock.center().y()), 1.5, 1.5)
+                p.drawEllipse(QPointF(cx, dock.center().y()), 1.4, 1.4)
 
         # 右上：三个色点（主题色 / 强调色 / 绿色），选中时换成勾选圆点
-        top_y = r.top() + 11
+        top_y = inner.top() + 10
         if self.selected:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(pal["brand"]))
-            p.drawEllipse(QPointF(r.right() - 11, top_y), 7.5, 7.5)
-            pen = QPen(QColor("#FFFDF8"), 1.7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            p.drawEllipse(QPointF(inner.right() - 10, top_y), 7.0, 7.0)
+            pen = QPen(QColor("#FFFDF8"), 1.6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             p.setPen(pen)
             p.setBrush(Qt.NoBrush)
             path = QPainterPath()
-            path.moveTo(r.right() - 14.2, top_y + 0.2)
-            path.lineTo(r.right() - 12.0, top_y + 2.6)
-            path.lineTo(r.right() - 7.8, top_y - 2.4)
+            path.moveTo(inner.right() - 13.0, top_y + 0.2)
+            path.lineTo(inner.right() - 11.0, top_y + 2.4)
+            path.lineTo(inner.right() - 7.0, top_y - 2.2)
             p.drawPath(path)
         else:
             p.setPen(Qt.NoPen)
-            dx = r.right() - 11
+            dx = inner.right() - 10
             for c in (pal["green"], pal["accent"], pal["brand"]):
                 p.setBrush(QColor(c))
-                p.drawEllipse(QPointF(dx, top_y), 3.2, 3.2)
-                dx -= 10.0
+                p.drawEllipse(QPointF(dx, top_y), 3.0, 3.0)
+                dx -= 9.5
 
         # 名称
         f = QFont(theme.FONT, 9)
         f.setBold(True)
         p.setFont(f)
         p.setPen(QColor(pal["brand"] if self.selected else pal["ink"]))
-        p.drawText(QRectF(r.left() + 11, r.top() + 2, r.width() - 56, 22),
+        p.drawText(QRectF(inner.left() + 9, inner.top() + 2, inner.width() - 52, 20),
                    Qt.AlignLeft | Qt.AlignVCenter, self.info["name"])
 
-        # 外框：选中描主题色 2px，否则细线
+        # 外框：选中描该主题主色 2px，否则用略深一点的细线，保证在彩色底上也清楚
         p.setBrush(Qt.NoBrush)
-        p.setPen(QPen(QColor(pal["brand"] if self.selected else pal["line"]),
+        p.setPen(QPen(QColor(pal["brand"]) if self.selected
+                      else QColor(pal["line"]).darker(112),
                       2.0 if self.selected else 1.0))
         p.drawRoundedRect(r, 13, 13)
 

@@ -338,6 +338,7 @@ class TodayPage(Page):
         sl = QHBoxLayout(sec)
         sl.setContentsMargins(2, 8, 2, 0)
         sl.setSpacing(8)
+        sl.addWidget(W.AccentBar(13, 3), 0, Qt.AlignVCenter)
         t = QLabel("继续学习")
         t.setObjectName("h2")
         sl.addWidget(t, 1)
