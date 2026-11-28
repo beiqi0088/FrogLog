@@ -283,6 +283,29 @@ class BackButton(QPushButton):
         p.drawPath(path)
 
 
+class PlusButton(QPushButton):
+    """无方框的加号：透明底、无描边，只有圆头笔画的 +（与 BackButton 同一套语言）。"""
+
+    def __init__(self, size: int = 32, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedSize(size, size)
+        self.setStyleSheet("QPushButton{background:transparent;border:none;}")
+        self._stroke = max(2.0, size * 0.085)
+        self._span = size * 0.30
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        pen = QPen(QColor(T["ink"]), self._stroke)
+        pen.setCapStyle(Qt.RoundCap)
+        p.setPen(pen)
+        cx, cy = self.width() / 2, self.height() / 2
+        s = self._span
+        p.drawLine(QPointF(cx - s, cy), QPointF(cx + s, cy))
+        p.drawLine(QPointF(cx, cy - s), QPointF(cx, cy + s))
+
+
 class Chip(QPushButton):
     def __init__(self, text: str, on=False, parent=None):
         super().__init__(text, parent)

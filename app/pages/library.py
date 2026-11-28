@@ -1934,14 +1934,13 @@ class DeckPage(Page):
         # 「卡组」标题固定在滚动区上方
         if self.mode == "learn":
             self.body = self.top_lay
-            new_group = W.IconButton("＋", 32)
+            new_group = W.PlusButton(32)          # 无方框加号
             new_group.setToolTip("新建卡组")
             new_group.clicked.connect(self._new_group)
-            self.section("卡组", new_group)
-            sep = QFrame()
-            sep.setFixedHeight(1)
-            sep.setStyleSheet(f"background:{W.T['line']};")
-            self.body.addWidget(sep)
+            row = self.section("卡组", new_group)
+            # 这一行直接挂在顶栏容器上（没有正文默认的 20px 边距），单独补两侧间距，
+            # 让「卡组」标题和加号跟下方卡片对齐，不再贴到屏幕边缘。
+            row.layout().setContentsMargins(20, 12, 20, 8)
         elif self.mode == "browse":
             self.body = self.top_lay
             self._browse_controls()

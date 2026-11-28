@@ -281,17 +281,27 @@ class TodayPage(Page):
         left_n = len(due_all)
         band = W.BandHeader()
         dirty = self._dirty()
+        # 底部 dock 是深色，顶栏若完全透明会显得头轻脚重：
+        # 给顶栏一块略深于页面的底色 + 底部细线，再补一行日期副标题，压住视觉重心。
+        band.setStyleSheet(
+            f"QFrame#bandHeader{{background:{W.T['paper2']};border:none;"
+            f"border-bottom:1px solid {W.T['line']};}}")
+        band.setFixedHeight(62)
 
         row = QWidget()
         rl = QHBoxLayout(row)
         rl.setContentsMargins(0, 0, 0, 0)
         rl.setSpacing(10)
         col = QVBoxLayout()
-        col.setSpacing(3)
+        col.setSpacing(1)
         title = QLabel(f"<span style='color:{W.T['ink']};'>今日</span>")
         title.setTextFormat(Qt.RichText)
         title.setStyleSheet("font-size:23px;font-weight:700;")
         col.addWidget(title)
+        wd = "一二三四五六日"[today.tm_wday]
+        sub = QLabel(f"{today.tm_mon} 月 {today.tm_mday} 日 · 星期{wd}")
+        sub.setStyleSheet(f"font-size:11px;color:{W.T['ink2']};font-weight:500;")
+        col.addWidget(sub)
         rl.addLayout(col, 1)
         right = QVBoxLayout()
         right.setSpacing(4)
@@ -299,9 +309,9 @@ class TodayPage(Page):
         # 同步：更大的圆形同步图标（奶油圆底 + 深色箭头 + 未同步红点）
         sync = W.SyncCircle(dirty, 44)
         sync.clicked.connect(self._do_sync)
-        right.addWidget(sync, 0, Qt.AlignHCenter)
-        rl.addLayout(right)
-        band.lay.addWidget(row)
+        right.addWidget(sync, 0, Qt.AlignVCenter)
+        rl.addLayout(right, 0)
+        band.lay.addWidget(row, 0, Qt.AlignVCenter)
         self.set_band(band)
 
         # ---------- 四宫格 ----------

@@ -630,9 +630,9 @@ class ReviewPage(QWidget):
         pal = CR.palette("sky")
 
         W.clear_layout(self.top_lay)
-        close = W.IconButton("✕", 30)
-        close.clicked.connect(self.app.exit_review)
-        self.top_lay.addWidget(close)
+        back = W.BackButton(30)
+        back.clicked.connect(self.app.exit_review)
+        self.top_lay.addWidget(back)
         title = QLabel("这一轮完成了")
         title.setObjectName("h2")
         self.top_lay.addWidget(title, 1)
@@ -884,9 +884,9 @@ class ReviewPage(QWidget):
             W.clear_layout(self.top_lay)
             W.clear_layout(self.top_meta)
 
-            close = W.IconButton("✕", 30)
-            close.clicked.connect(self.app.exit_review)
-            self.top_lay.addWidget(close)
+            back = W.BackButton(30)
+            back.clicked.connect(self.app.exit_review)
+            self.top_lay.addWidget(back)
 
             self._grp_label = OneLineLabel("")
             self._grp_label.setStyleSheet(
@@ -1033,7 +1033,14 @@ class ReviewPage(QWidget):
         al.addWidget(self._more_btn)
         self.bottom_lay.addWidget(acts)
 
-        # 问答：显示答案
+        # 翻面/提交/评分三态共用一个固定高度容器：高度取三者最高（评分态），
+        # 这样「显示答案」前后底部底色高度一致，卡片区不会跟着上下跳。
+        self._bottom_swap = QWidget()
+        sw = QVBoxLayout(self._bottom_swap)
+        sw.setContentsMargins(0, 0, 0, 0)
+        sw.setSpacing(8)
+
+        # 问答：显示答案（去掉提示语，只留主按钮）
         self._reveal_box = QWidget()
         bl = QVBoxLayout(self._reveal_box)
         bl.setContentsMargins(0, 0, 0, 0)
@@ -1041,11 +1048,7 @@ class ReviewPage(QWidget):
         btn = W.PrimaryButton("显示答案")
         btn.clicked.connect(self._reveal)
         bl.addWidget(btn)
-        hint = QLabel("先在心里完整回答，再查看答案")
-        hint.setObjectName("sub")
-        hint.setAlignment(Qt.AlignCenter)
-        bl.addWidget(hint)
-        self.bottom_lay.addWidget(self._reveal_box)
+        sw.addWidget(self._reveal_box)
 
         # 多选：提交答案
         self._submit_box = QWidget()
@@ -1059,7 +1062,7 @@ class ReviewPage(QWidget):
         hint2.setObjectName("sub")
         hint2.setAlignment(Qt.AlignCenter)
         sl.addWidget(hint2)
-        self.bottom_lay.addWidget(self._submit_box)
+        sw.addWidget(self._submit_box)
 
         grid = QWidget()
         gl = QHBoxLayout(grid)
@@ -1078,8 +1081,20 @@ class ReviewPage(QWidget):
         rgl.setSpacing(8)
         rgl.addWidget(grid)
         self._rate_box = group
-        self.bottom_lay.addWidget(group)
+        sw.addWidget(group)
+
+        self.bottom_lay.addWidget(self._bottom_swap)
         self._bottom_ready = True
+        self._equalize_bottom()
+
+    def _equalize_bottom(self):
+        """把底部变高区固定到三态里最高的高度，翻面前后底色不跳动。"""
+        target = 0
+        for w in (self._reveal_box, self._submit_box, self._rate_box):
+            w.adjustSize()
+            target = max(target, w.sizeHint().height())
+        if target > 0:
+            self._bottom_swap.setFixedHeight(target)
 
     def _update_bottom(self, card: dict, ses: dict):
         """换卡只更新文字/状态：练习星、计数、4 个间隔预览、按钮可见性。"""
